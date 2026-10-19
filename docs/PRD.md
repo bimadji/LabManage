@@ -310,7 +310,7 @@ Semua tabel di schema `public` mengaktifkan RLS. Peran diambil dari `profiles.ro
 
 | Tabel | Operasi | anggota | admin | advisor |
 | --- | --- | --- | --- | --- |
-| profiles | select | milik sendiri | semua | milik sendiri |
+| profiles | select | milik sendiri | semua | semua |
 | profiles | update | `full_name` milik sendiri, `role` tidak berubah | `full_name` milik sendiri | `full_name` milik sendiri |
 | profiles | insert, delete | tidak (dibuat trigger) | tidak | tidak |
 | rooms | select | semua | semua | semua |
