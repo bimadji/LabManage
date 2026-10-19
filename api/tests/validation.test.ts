@@ -66,13 +66,10 @@ describe('validasi body', () => {
     expect(res.body.error.issues[0].path).toBe('from');
   });
 
-  it('qty bukan bilangan bulat → 400', async () => {
-    const res = await request(app)
-      .post(`/equipment/${crypto.randomUUID()}/loans`)
-      .set(authed())
-      .send({ qty: 'dua' });
+  it('filter inventaris tidak dikenal → 400 dengan pesan field', async () => {
+    const res = await request(app).get('/inventory?kind=alat').set(authed());
     expect(res.status).toBe(400);
-    expect(res.body.error.issues[0].path).toBe('qty');
+    expect(res.body.error.issues[0].path).toBe('kind');
   });
 });
 
