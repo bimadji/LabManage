@@ -1,6 +1,7 @@
 import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { SignIn } from './auth/SignIn';
 import { useSession } from './auth/useSession';
+import { MonitorPage } from './pages/MonitorPage';
 import { NewReservationPage } from './pages/NewReservationPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { supabaseClient } from './lib/supabase';
@@ -18,6 +19,7 @@ function Shell() {
         <nav aria-label="Navigasi utama">
           <NavLink to="/jadwal">Jadwal</NavLink>
           <NavLink to="/reservasi/baru">Reservasi</NavLink>
+          <NavLink to="/monitor">Monitoring</NavLink>
         </nav>
         <button type="button" className="link-back" onClick={() => supabaseClient().auth.signOut()}>
           Keluar
@@ -29,6 +31,7 @@ function Shell() {
           <Route path="/" element={<Navigate to="/jadwal" replace />} />
           <Route path="/jadwal" element={<SchedulePage />} />
           <Route path="/reservasi/baru" element={<NewReservationPage />} />
+          <Route path="/monitor" element={<MonitorPage />} />
           <Route path="*" element={<p className="muted">Halaman tidak ditemukan.</p>} />
         </Routes>
       </main>
