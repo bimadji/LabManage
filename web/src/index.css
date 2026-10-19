@@ -80,8 +80,25 @@ h2 {
 
 .topbar nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
   flex: 1;
+  min-width: 0;
+}
+
+/* Di ponsel navigasi turun ke baris sendiri: brand dan Keluar tetap satu baris,
+   dan empat tautan tersusun 2x2 agar tidak ada scroll horizontal. */
+@media (max-width: 767px) {
+  .topbar nav {
+    order: 3;
+    flex-basis: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar > .link-back {
+    margin-left: auto;
+  }
 }
 
 .topbar nav a {
@@ -284,4 +301,52 @@ select {
 .badge-warn {
   background: #fef3c7;
   color: #92400e;
+}
+
+.badge-ok {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-bad {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Satu kolom di ponsel agar tidak ada scroll horizontal; tiga kolom di layar lebar. */
+.inventory-filters {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.inventory-filters .filter {
+  margin: 0;
+  max-width: none;
+}
+
+.inline-form {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.inline-form label {
+  font-weight: 600;
+}
+
+textarea {
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #fff;
+  color: inherit;
+  resize: vertical;
+}
+
+@media (min-width: 768px) {
+  .inventory-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
