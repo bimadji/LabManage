@@ -139,4 +139,115 @@ const demoReports = [
 const { error: reportError } = await admin.from('facility_reports').insert(demoReports);
 if (reportError) throw reportError;
 
-console.log('data demo: 3 reservasi, 1 sesi kehadiran terbuka, 2 laporan fasilitas');
+// Demo inventaris: laporan ambil dan permintaan pinjam dengan berbagai status.
+// Baris demo dihapus lebih dulu agar rerun tidak menumpuk; riwayat ikut dibersihkan
+// lewat `inventory_history` item yang disentuh.
+await admin.from('component_requests').delete().in('user_id', [anggotaId, adminId]);
+await admin.from('loan_requests').delete().in('user_id', [anggotaId, adminId]);
+
+const { data: itemRows, error: itemError } = await admin
+  .from('equipment')
+  .select('id, name, kind')
+  .in('name', [
+    'Resistor 220 Ohm',
+    'Kabel Jumper',
+    'Osiloskop Rigol DS1054Z',
+    'Laptop Lenovo ThinkPad E14',
+    'Multimeter Fluke 17B+',
+  ]);
+if (itemError) throw itemError;
+function itemId(name: string): string {
+  const item = (itemRows ?? []).find((row) => row.name === name);
+  if (!item) {
+    throw new Error(`Item "${name}" tidak ada. Jalankan "npx supabase db reset" dulu.`);
+  }
+  return item.id;
+}
+
+const demoItemIds = (itemRows ?? []).map((row) => row.id);
+await admin.from('inventory_history').delete().in('item_id', demoItemIds);
+
+const nowIso = new Date().toISOString();
+const { error: componentError } = await admin.from('component_requests').insert([
+  {
+    item_id: itemId('Resistor 220 Ohm'),
+    user_id: anggotaId,
+    qty: 5,
+    note: 'untuk proyek line follower',
+    status: 'menunggu',
+  },
+  {
+    item_id: itemId('Kabel Jumper'),
+    user_id: anggotaId,
+    qty: 10,
+    status: 'dikonfirmasi',
+    decided_by: adminId,
+    decided_at: nowIso,
+  },
+]);
+if (componentError) throw componentError;
+
+// Kabel Jumper ikut berkurang 10 karena laporannya sudah dikonfirmasi.
+const { error: stockError } = await admin
+  .from('equipment')
+  .update({ quantity: 30, updated_at: nowIso })
+  .eq('id', itemId('Kabel Jumper'));
+if (stockError) throw stockError;
+
+const { error: loanError } = await admin.from('loan_requests').insert([
+  {
+    item_id: itemId('Osiloskop Rigol DS1054Z'),
+    user_id: anggotaId,
+    purpose: 'kalibrasi sensor',
+    status: 'menunggu',
+  },
+  {
+    item_id: itemId('Laptop Lenovo ThinkPad E14'),
+    user_id: anggotaId,
+    purpose: 'mengerjakan laporan praktikum',
+    status: 'disetujui',
+    decided_by: adminId,
+    decided_at: nowIso,
+  },
+  {
+    item_id: itemId('Multimeter Fluke 17B+'),
+    user_id: anggotaId,
+    purpose: 'mengukur rangkaian daya',
+    status: 'ditolak',
+    admin_note: 'dipakai lomba',
+    decided_by: adminId,
+    decided_at: nowIso,
+  },
+]);
+if (loanError) throw loanError;
+
+const { error: loanStateError } = await admin
+  .from('equipment')
+  .update({ status: 'dipinjam', borrowed_by: anggotaId, borrowed_at: nowIso, updated_at: nowIso })
+  .eq('id', itemId('Laptop Lenovo ThinkPad E14'));
+if (loanStateError) throw loanStateError;
+
+const { error: historyError } = await admin.from('inventory_history').insert([
+  {
+    item_id: itemId('Kabel Jumper'),
+    actor_id: adminId,
+    action: 'konfirmasi_ambil',
+    before_qty: 40,
+    after_qty: 30,
+    note: 'untuk proyek line follower',
+  },
+  {
+    item_id: itemId('Laptop Lenovo ThinkPad E14'),
+    actor_id: adminId,
+    action: 'setujui_pinjam',
+    before_status: 'tersedia',
+    after_status: 'dipinjam',
+    note: 'mengerjakan laporan praktikum',
+  },
+]);
+if (historyError) throw historyError;
+
+console.log(
+  'data demo: 3 reservasi, 1 sesi kehadiran terbuka, 2 laporan fasilitas, ' +
+    '2 laporan ambil, 3 permintaan pinjam',
+);
