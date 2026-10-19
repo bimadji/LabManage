@@ -511,6 +511,7 @@ Kondisi yang paling mungkin merusak pengalaman pengguna, beserta tahap yang memu
 - File: `supabase/migrations/<ts>_equipment.sql` (tabel, view `equipment_availability`, fungsi `borrow_equipment`), `api/src/equipment/routes.ts`, `api/tests/equipment.test.ts`.
 - Antarmuka: fungsi SQL `borrow_equipment(p_equipment_id uuid, p_qty int) returns equipment_loans` yang mengunci baris dengan `for update`.
 - Test: pinjam melebihi stok 409 `INSUFFICIENT_STOCK`; dua pinjaman paralel untuk sisa 1 hanya satu sukses; anggota POST `/equipment` 403.
+- Digantikan oleh Tahap 1.13-1.14: `equipment_loans`/`borrow_equipment` dihapus, alur pinjam lewat persetujuan admin.
 
 #### Tahap 1.10: laporan fasilitas
 
@@ -530,3 +531,27 @@ Kondisi yang paling mungkin merusak pengalaman pengguna, beserta tahap yang memu
 - Antarmuka: `validate(schema: ZodSchema, source: 'body' | 'query'): RequestHandler`.
 - Test: body tidak valid 400 `VALIDATION_ERROR` dengan daftar field; error tak terduga 500 `INTERNAL` tanpa stack trace.
 - Audit: `git grep -nE "(service_role|eyJhbGci|sk_live|password\s*=)" -- ':!*.md'` kosong; `git grep -n "SERVICE_ROLE" -- web` kosong; responsivitas 375px, 768px, 1280px tanpa scroll horizontal.
+
+#### Tahap 1.13: inventaris komponen dan barang
+
+- File: `supabase/migrations/<ts>_inventory.sql` (kolom item, `inventory_history`, `component_requests`, `loan_requests`, view `inventory_items`, empat fungsi atomik), `api/src/inventory/routes.ts`, `api/tests/inventory.test.ts`, `supabase/seed.sql`.
+- Antarmuka: `adjust_inventory_quantity(item, mode, amount, note)`, `confirm_component_request(id)`, `approve_loan_request(id)`, `return_inventory_item(id)`; endpoint `GET/POST /inventory`, `PATCH/DELETE /inventory/:id`, `PATCH /inventory/:id/quantity`, `PATCH /inventory/:id/return`, `GET /inventory/:id/history`.
+- Test: flag `habis`/`menipis`/`aman` pada batas stok; dua pengurangan bersamaan hanya satu yang lolos; anggota/advisor menulis item 403; hapus item `dipinjam` 409 `ITEM_ON_LOAN`.
+
+#### Tahap 1.14: persetujuan permintaan inventaris
+
+- File: `supabase/migrations/<ts>_inventory_notifications.sql`, `api/src/notifications/create.ts` (`notifyAdmins`), `api/src/inventory/requests.ts`, `api/tests/inventory-requests.test.ts`, `api/scripts/create-demo-users.ts`.
+- Antarmuka: `notifyAdmins(config, { kind, message })`; endpoint `component-requests` dan `loan-requests` (ajukan, daftar, konfirmasi/tolak/setujui/batal/tandai dibaca), `GET /inventory/pending-count`.
+- Test: `user_id` selalu dari token; persetujuan ganda hanya satu sukses; permintaan lain untuk item yang sama otomatis ditolak dengan catatan `barang sudah dipinjam`; konfirmasi kedua 409 `INVALID_STATE`.
+
+#### Tahap 1.15: UI inventaris
+
+- File: `web/src/pages/InventoryPage.tsx`, `web/src/pages/MyRequestsPage.tsx`, `web/src/lib/inventory.ts`, `web/src/auth/useProfile.ts`, `web/src/types.ts`, `web/src/App.tsx`, test kedua halaman.
+- Antarmuka: `itemBadge(item)`, `filterItems(items, { kind, flag, query })`, `useProfile(): { profile, loading }`.
+- Test: badge teks tampil untuk kelima status; filter jenis dan pencarian menyaring kartu; `Lapor ambil` mengirim `{ itemId, qty, note }`; `Batalkan` hanya untuk pinjaman `menunggu`; 375/768/1280 tanpa scroll horizontal.
+
+#### Tahap 1.16: UI admin inventaris
+
+- File: `web/src/pages/InventoryItemPage.tsx`, `web/src/pages/InventoryNewPage.tsx`, `web/src/pages/InventoryInboxPage.tsx`, `web/src/App.tsx` (badge), `web/src/index.css`, test ketiga halaman, `docs/USAGE.md`, `README.md`.
+- Antarmuka: route `/inventaris/:id`, `/inventaris/baru`, `/inventaris/kotak-masuk`; badge `pending-count` di navigasi untuk admin.
+- Test: form komponen mengirim jumlah dan min stok, input jumlah hilang saat jenis `barang`; advisor tidak melihat tombol aksi; konfirmasi/setujui memanggil endpoint yang benar; penanda `Belum dibaca` hilang setelah `admin_read_at` terisi; `window.confirm` yang dibatalkan tidak menghapus item.

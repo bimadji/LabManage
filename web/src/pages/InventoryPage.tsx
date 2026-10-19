@@ -50,6 +50,17 @@ export function InventoryPage() {
         </Link>
       </div>
 
+      {profile?.role === 'admin' && (
+        <div className="page-head">
+          <Link className="link-back" to="/inventaris/kotak-masuk">
+            Kotak masuk
+          </Link>
+          <Link className="link-back" to="/inventaris/baru">
+            Tambah item
+          </Link>
+        </div>
+      )}
+
       <div className="inventory-filters">
         <label className="filter" htmlFor="cari-item">
           <span>Cari</span>
@@ -130,7 +141,9 @@ function ItemCard({ item, canRequest }: ItemCardProps) {
 
   return (
     <li className="card">
-      <p className="reservation-room">{item.name}</p>
+      <p className="reservation-room">
+        <Link to={`/inventaris/${item.id}`}>{item.name}</Link>
+      </p>
       <p className="muted">
         {item.category}
         {item.location ? ` · ${item.location}` : ''}

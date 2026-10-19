@@ -8,6 +8,7 @@ LabManage adalah sistem manajemen fasilitas, penjadwalan, dan monitoring lab Tim
 - `web/`: web React, Vite, TypeScript (mobile-first).
 - `supabase/`: konfigurasi Supabase lokal, migrasi (`migrations/`), dan `seed.sql`.
 - `docs/`: PRD (`PRD.md`) dan panduan penggunaan (`USAGE.md`).
+- `web/src/pages/Inventory*.tsx` dan `api/src/inventory/`: inventaris komponen/barang, laporan ambil, dan permintaan pinjam.
 
 ## Prasyarat
 

@@ -55,11 +55,17 @@ Masuk di web memakai salah satu akun demo di atas.
 - **Jadwal** (`/jadwal`): daftar reservasi dua minggu ke depan, dikelompokkan per hari, bisa difilter per ruang.
 - **Reservasi** (`/reservasi/baru`): pilih ruang atau alat, isi tim, waktu mulai, dan waktu selesai. Reservasi ditolak jika waktunya bertabrakan dengan reservasi aktif lain di ruang yang sama, atau jika berada di luar jam operasional 07:00–21:00 WIB.
 - **Check-in / check-out**: lewat API `POST /attendance/check-in` dan `POST /attendance/check-out`. Satu anggota hanya boleh punya satu sesi terbuka.
+- **Inventaris** (`/inventaris`): daftar komponen habis pakai dan barang satuan. Komponen diberi tanda `HABIS` (stok 0), `MENIPIS` (stok ≤ minimum), atau `AMAN`; barang diberi tanda `TERSEDIA` atau `DIPINJAM` beserta nama peminjam. Pencarian dan filter jenis/status berjalan di browser.
+- **Lapor ambil komponen**: tombol `Lapor ambil` membuka form jumlah dan catatan. Laporan berstatus `MENUNGGU` sampai admin mengonfirmasi; stok baru berkurang saat dikonfirmasi.
+- **Ajukan pinjam barang**: hanya untuk barang `TERSEDIA`. Isi keperluan (wajib) dan perkiraan tanggal kembali (opsional). Permintaan berstatus `MENUNGGU` sampai disetujui admin.
+- **Permintaan saya** (`/inventaris/permintaan-saya`): status laporan ambil dan permintaan pinjam, catatan admin, serta tombol `Batalkan` selama permintaan pinjam masih `MENUNGGU`.
 
 ### Admin
 
 - Melihat semua reservasi, membatalkan reservasi siapa pun.
-- Mengelola katalog alat: `POST /equipment`.
+- **Inventaris**: membuat item (`/inventaris/baru`), mengubah jumlah komponen, menandai barang kembali, mengubah detail, dan menghapus item dari halaman detail `/inventaris/:id`.
+- **Kotak masuk inventaris** (`/inventaris/kotak-masuk`): mengonfirmasi atau menolak laporan ambil komponen, serta menyetujui atau menolak permintaan pinjam barang. Badge di samping tautan `Inventaris` menunjukkan jumlah permintaan yang masih menunggu.
+- Setiap perubahan jumlah, konfirmasi, persetujuan, dan pengembalian tercatat di riwayat item beserta aktor dan waktunya.
 - Mengubah status laporan fasilitas: `baru → ditindaklanjuti → selesai`. Transisi lain ditolak.
 - Melihat dashboard monitoring (`/monitor`).
 
@@ -67,6 +73,7 @@ Masuk di web memakai salah satu akun demo di atas.
 
 - Melihat dashboard monitoring (`/monitor`): siapa yang sedang di lab, jam mulai, durasi berjalan, dan tanda jika sesi melewati 21:00 WIB. Daftar diperbarui otomatis lewat Supabase Realtime.
 - Melihat semua laporan fasilitas tanpa bisa mengubahnya.
+- Melihat inventaris dan kotak masuk permintaan (`/inventaris/kotak-masuk`) tanpa tombol aksi; advisor tidak dapat mengajukan permintaan atau mengubah item.
 - Tidak dapat membuat reservasi, check-in, atau meminjam alat.
 
 ## 4. Endpoint yang sering dipakai
@@ -81,10 +88,25 @@ Masuk di web memakai salah satu akun demo di atas.
 | POST | `/attendance/check-in` | anggota, admin |
 | POST | `/attendance/check-out` | anggota, admin |
 | GET | `/attendance/present` | admin, advisor |
-| GET | `/equipment` | semua peran |
-| POST | `/equipment` | admin |
-| POST | `/equipment/:id/loans` | anggota, admin |
-| PATCH | `/equipment/loans/:loanId/return` | peminjam, admin |
+| GET | `/inventory?kind=&flag=&q=` | semua peran |
+| POST | `/inventory` | admin |
+| PATCH | `/inventory/:id` | admin |
+| DELETE | `/inventory/:id` | admin |
+| PATCH | `/inventory/:id/quantity` | admin |
+| PATCH | `/inventory/:id/return` | admin |
+| GET | `/inventory/:id/history` | semua peran |
+| POST | `/component-requests` | anggota, admin |
+| GET | `/component-requests?status=` | anggota (milik sendiri), admin, advisor (semua) |
+| PATCH | `/component-requests/:id/confirm` | admin |
+| PATCH | `/component-requests/:id/reject` | admin |
+| PATCH | `/component-requests/:id/read` | admin |
+| POST | `/loan-requests` | anggota, admin |
+| GET | `/loan-requests?status=` | anggota (milik sendiri), admin, advisor (semua) |
+| PATCH | `/loan-requests/:id/approve` | admin |
+| PATCH | `/loan-requests/:id/reject` | admin |
+| PATCH | `/loan-requests/:id/cancel` | pemilik |
+| PATCH | `/loan-requests/:id/read` | admin |
+| GET | `/inventory/pending-count` | admin |
 | POST | `/facility-reports` | anggota, admin |
 | GET | `/facility-reports` | anggota (milik sendiri), admin, advisor (semua) |
 | PATCH | `/facility-reports/:id/status` | admin |
