@@ -5,6 +5,8 @@ import { attendanceRouter } from './attendance/routes.js';
 import type { Config } from './config.js';
 import { equipmentRouter } from './equipment/routes.js';
 import { errorHandler } from './errors.js';
+import { jobsRouter } from './jobs/routes.js';
+import { notificationsRouter } from './notifications/routes.js';
 import { reportsRouter } from './reports/routes.js';
 import { reservationsRouter } from './reservations/routes.js';
 
@@ -22,11 +24,15 @@ export function createApp(
     res.json({ status: 'ok' });
   });
 
-  // Everything below /health requires a valid Supabase JWT.
+  // Internal jobs authenticate with X-Job-Secret, not a user JWT.
+  app.use(jobsRouter(config));
+
+  // Everything below requires a valid Supabase JWT.
   app.use(requireAuth(verifier));
   app.use(attendanceRouter(config));
   app.use(equipmentRouter(config));
   app.use(reportsRouter(config));
+  app.use(notificationsRouter(config));
   app.use(reservationsRouter(config));
 
   app.use(errorHandler);

@@ -8,6 +8,7 @@ const config = {
   supabaseAnonKey: 'anon',
   supabaseServiceRoleKey: 'service',
   webOrigin: 'http://localhost:5173',
+  jobSecret: 'uji',
 };
 
 describe('GET /health', () => {

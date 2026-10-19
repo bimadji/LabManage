@@ -2,6 +2,7 @@ import { Router, type Request } from 'express';
 import { requireRole } from '../auth/requireAuth.js';
 import type { Config } from '../config.js';
 import { ApiError, fromDbError } from '../errors.js';
+import { createNotification } from '../notifications/create.js';
 import { userClient } from '../supabase.js';
 import { canTransition, REPORT_STATUSES, type ReportStatus } from './transitions.js';
 
@@ -121,6 +122,13 @@ export function reportsRouter(config: Config): Router {
       }
       throw fromDbError(updateError);
     }
+
+    await createNotification(config, {
+      userId: data.reported_by,
+      kind: 'laporan',
+      message: `Status laporan Anda berubah menjadi ${data.status}.`,
+    });
+
     res.json(toReport(data));
   });
 

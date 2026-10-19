@@ -2,6 +2,7 @@ import { Router, type Request } from 'express';
 import { requireRole } from '../auth/requireAuth.js';
 import type { Config } from '../config.js';
 import { ApiError, fromDbError } from '../errors.js';
+import { createNotification } from '../notifications/create.js';
 import { userClient } from '../supabase.js';
 import { isWithinLabHours } from './hours.js';
 
@@ -129,6 +130,13 @@ export function reservationsRouter(config: Config): Router {
       .select(RESERVATION_COLUMNS)
       .single<ReservationRow>();
     if (error) throw fromDbError(error);
+
+    await createNotification(config, {
+      userId: data.user_id,
+      kind: 'reservasi',
+      message: `Reservasi ${data.team} pada ${data.starts_at} tercatat.`,
+    });
+
     res.status(201).json(toReservation(data));
   });
 
@@ -157,6 +165,13 @@ export function reservationsRouter(config: Config): Router {
     // RLS filtered the row out of the update: the caller is not allowed to change it.
     if (!updated)
       throw new ApiError(403, 'FORBIDDEN', 'Anda tidak berhak membatalkan reservasi ini');
+
+    await createNotification(config, {
+      userId: updated.user_id,
+      kind: 'reservasi',
+      message: `Reservasi ${updated.team} pada ${updated.starts_at} dibatalkan.`,
+    });
+
     res.json(toReservation(updated));
   });
 
