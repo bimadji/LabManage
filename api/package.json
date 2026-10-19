@@ -12,7 +12,8 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "test": "vitest run",
-    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js,json}\""
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.{ts,js,json}\"",
+    "db:seed-users": "tsx scripts/create-demo-users.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0",
