@@ -27,7 +27,7 @@
     "@mermaid-js/mermaid-cli": "12.0.0",
     "markdownlint-cli2": "0.23.3",
     "mermaid": "12.2.0",
-    "puppeteer": "24.37.4",
+    "puppeteer": "25.14.0",
     "supabase": "2.121.0"
   },
   "private": true
