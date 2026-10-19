@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express from 'express';
 import { requireAuth, supabaseVerifier, type AuthVerifier } from './auth/requireAuth.js';
 import type { Config } from './config.js';
@@ -10,6 +11,8 @@ export function createApp(
   verifier: AuthVerifier = supabaseVerifier(config),
 ): express.Express {
   const app = express();
+  // The web app is served from another origin, so browsers need this to call the API.
+  app.use(cors({ origin: config.webOrigin, allowedHeaders: ['Authorization', 'Content-Type'] }));
   app.use(express.json());
 
   app.get('/health', (_req, res) => {
