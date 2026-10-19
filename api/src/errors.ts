@@ -1,15 +1,23 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import type { ErrorRequestHandler } from 'express';
 
+export interface ValidationIssue {
+  path: string;
+  message: string;
+}
+
 /** An error with an HTTP status and a stable code, rendered as `{"error":{"code","message"}}`. */
 export class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-    message: string,
-    options?: ErrorOptions,
-  ) {
+  readonly status: number;
+  readonly code: string;
+  /** Field-level details, present for validation failures. */
+  issues?: ValidationIssue[];
+
+  constructor(status: number, code: string, message: string, options?: ErrorOptions) {
     super(message, options);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
   }
 }
 
@@ -38,7 +46,12 @@ export function fromDbError(error: PostgrestError): ApiError {
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof ApiError) {
     if (err.status >= 500) console.error(err.cause ?? err);
-    res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    const body: { code: string; message: string; issues?: ValidationIssue[] } = {
+      code: err.code,
+      message: err.message,
+    };
+    if (err.issues && err.issues.length > 0) body.issues = err.issues;
+    res.status(err.status).json({ error: body });
     return;
   }
   if (err?.type === 'entity.parse.failed') {

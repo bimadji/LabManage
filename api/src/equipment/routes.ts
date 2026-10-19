@@ -3,6 +3,8 @@ import { requireRole } from '../auth/requireAuth.js';
 import type { Config } from '../config.js';
 import { ApiError, fromDbError } from '../errors.js';
 import { userClient } from '../supabase.js';
+import { validate } from '../validation.js';
+import { z } from 'zod';
 
 interface EquipmentRow {
   id: string;
@@ -23,6 +25,17 @@ interface LoanRow {
 }
 
 const LOAN_COLUMNS = 'id, equipment_id, user_id, qty, borrowed_at, returned_at';
+
+const createEquipmentSchema = z.object({
+  name: z.string().trim().min(1, 'name wajib diisi'),
+  category: z.string().trim().min(1, 'category wajib diisi'),
+  totalQty: z.number().int().min(0, 'totalQty harus bilangan bulat >= 0'),
+  location: z.string().optional(),
+});
+
+const borrowSchema = z.object({
+  qty: z.number().int().positive('qty harus bilangan bulat lebih dari 0'),
+});
 
 function toLoan(row: LoanRow) {
   return {
@@ -58,68 +71,65 @@ export function equipmentRouter(config: Config): Router {
     );
   });
 
-  router.post('/equipment', requireRole('admin'), async (req, res) => {
-    const body = (req.body ?? {}) as Record<string, unknown>;
-    const name = typeof body.name === 'string' ? body.name.trim() : '';
-    const category = typeof body.category === 'string' ? body.category.trim() : '';
-    const totalQty = Number(body.totalQty);
-    if (name === '' || category === '') {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'name dan category wajib diisi');
-    }
-    if (!Number.isInteger(totalQty) || totalQty < 0) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'totalQty harus bilangan bulat >= 0');
-    }
+  router.post(
+    '/equipment',
+    requireRole('admin'),
+    validate(createEquipmentSchema),
+    async (req, res) => {
+      const body = req.body as z.infer<typeof createEquipmentSchema>;
 
-    const { data, error } = await dbFor(req)
-      .from('equipment')
-      .insert({
-        name,
-        category,
-        total_qty: totalQty,
-        location: typeof body.location === 'string' ? body.location : null,
-      })
-      .select('id, name, category, total_qty, location')
-      .single<Omit<EquipmentRow, 'available'>>();
-    if (error) throw fromDbError(error);
-    res.status(201).json({
-      id: data.id,
-      name: data.name,
-      category: data.category,
-      totalQty: data.total_qty,
-      location: data.location,
-    });
-  });
+      const { data, error } = await dbFor(req)
+        .from('equipment')
+        .insert({
+          name: body.name,
+          category: body.category,
+          total_qty: body.totalQty,
+          location: body.location ?? null,
+        })
+        .select('id, name, category, total_qty, location')
+        .single<Omit<EquipmentRow, 'available'>>();
+      if (error) throw fromDbError(error);
+      res.status(201).json({
+        id: data.id,
+        name: data.name,
+        category: data.category,
+        totalQty: data.total_qty,
+        location: data.location,
+      });
+    },
+  );
 
-  router.post('/equipment/:id/loans', requireRole('anggota', 'admin'), async (req, res) => {
-    const body = (req.body ?? {}) as Record<string, unknown>;
-    const qty = Number(body.qty);
-    if (!Number.isInteger(qty) || qty <= 0) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'qty harus bilangan bulat lebih dari 0');
-    }
+  router.post(
+    '/equipment/:id/loans',
+    requireRole('anggota', 'admin'),
+    validate(borrowSchema),
+    async (req, res) => {
+      const { qty } = req.body as z.infer<typeof borrowSchema>;
 
-    // The function locks the equipment row, so stock cannot be oversold.
-    const { data, error } = await dbFor(req).rpc('borrow_equipment', {
-      p_equipment_id: req.params.id,
-      p_qty: qty,
-    });
-    if (error) {
-      if (error.code === 'P0001') {
-        throw new ApiError(409, 'INSUFFICIENT_STOCK', 'Stok alat tidak mencukupi', {
-          cause: error,
-        });
+      // The function locks the equipment row, so stock cannot be oversold.
+      const { data, error } = await dbFor(req).rpc('borrow_equipment', {
+        p_equipment_id: req.params.id,
+        p_qty: qty,
+      });
+      if (error) {
+        if (error.code === 'P0001') {
+          throw new ApiError(409, 'INSUFFICIENT_STOCK', 'Stok alat tidak mencukupi', {
+            cause: error,
+          });
+        }
+        if (error.code === 'P0002') {
+          throw new ApiError(404, 'NOT_FOUND', 'Alat tidak ditemukan', { cause: error });
+        }
+        if (error.code === '22023') {
+          throw new ApiError(400, 'VALIDATION_ERROR', 'qty harus bilangan bulat lebih dari 0', {
+            cause: error,
+          });
+        }
+        throw fromDbError(error);
       }
-      if (error.code === 'P0002') {
-        throw new ApiError(404, 'NOT_FOUND', 'Alat tidak ditemukan', { cause: error });
-      }
-      if (error.code === '22023') {
-        throw new ApiError(400, 'VALIDATION_ERROR', 'qty harus bilangan bulat lebih dari 0', {
-          cause: error,
-        });
-      }
-      throw fromDbError(error);
-    }
-    res.status(201).json(toLoan(data as LoanRow));
-  });
+      res.status(201).json(toLoan(data as LoanRow));
+    },
+  );
 
   router.patch('/equipment/loans/:loanId/return', async (req, res) => {
     const db = dbFor(req);

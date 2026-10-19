@@ -8,7 +8,8 @@
     "check:mermaid": "node scripts/check-mermaid.mjs",
     "check:links": "node scripts/check-links.mjs",
     "db:start": "supabase start",
-    "db:stop": "supabase stop"
+    "db:stop": "supabase stop",
+    "setup:mermaid-browser": "puppeteer browsers install chrome-headless-shell"
   },
   "repository": {
     "type": "git",
@@ -26,6 +27,7 @@
     "@mermaid-js/mermaid-cli": "12.0.0",
     "markdownlint-cli2": "0.23.3",
     "mermaid": "12.2.0",
+    "puppeteer": "24.37.4",
     "supabase": "2.121.0"
   },
   "private": true

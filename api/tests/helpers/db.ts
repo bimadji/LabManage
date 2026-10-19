@@ -21,11 +21,11 @@ export function testConfig(): Config {
 export async function createTestUser(config: Config, role: Role): Promise<TestUser> {
   const admin = serviceClient(config);
   const email = `test-${role}-${randomUUID()}@labmanage.test`;
-  const password = randomUUID();
+  const userPassword = randomUUID();
 
   const { data, error } = await admin.auth.admin.createUser({
     email,
-    password,
+    password: userPassword,
     email_confirm: true,
     user_metadata: { full_name: `Test ${role}` },
   });
@@ -39,7 +39,7 @@ export async function createTestUser(config: Config, role: Role): Promise<TestUs
 
   const { data: session, error: signInError } = await anonClient(config).auth.signInWithPassword({
     email,
-    password,
+    password: userPassword,
   });
   if (signInError) throw signInError;
   const token = session.session.access_token;

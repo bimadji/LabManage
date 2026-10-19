@@ -7,7 +7,7 @@ LabManage adalah sistem manajemen fasilitas, penjadwalan, dan monitoring lab Tim
 - `api/`: API Node.js 22, Express 5, TypeScript.
 - `web/`: web React, Vite, TypeScript (mobile-first).
 - `supabase/`: konfigurasi Supabase lokal, migrasi (`migrations/`), dan `seed.sql`.
-- `docs/`: PRD dan dokumentasi.
+- `docs/`: PRD (`PRD.md`) dan panduan penggunaan (`USAGE.md`).
 
 ## Prasyarat
 
@@ -43,6 +43,8 @@ npm run dev --prefix web
 npm run db:stop            # menghentikan Supabase lokal
 ```
 
+Panduan pemakaian per peran ada di [docs/USAGE.md](docs/USAGE.md).
+
 ## Test dan pemeriksaan
 
 ```bash
@@ -52,7 +54,7 @@ cd api && npm run lint && npm test && npm run build
 # Web
 cd web && npm run lint && npm test && npm run build
 
-# Dokumen (dari root)
+# Dokumen (dari root). Sekali setelah clone: npm run setup:mermaid-browser
 npm run lint:md && npm run check:mermaid && npm run check:links
 ```
 
