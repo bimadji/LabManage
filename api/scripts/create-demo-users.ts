@@ -40,6 +40,8 @@ for (const demo of DEMO_USERS) {
     const { data, error } = await admin.auth.admin.createUser({ email: demo.email, ...attributes });
     if (error) throw error;
     id = data.user.id;
+    // Keep the map current: later steps resolve demo ids from it.
+    idByEmail.set(demo.email, id);
   }
 
   const { error: profileError } = await admin
@@ -52,16 +54,34 @@ for (const demo of DEMO_USERS) {
 }
 
 // Demo activity that must reference auth users, so it lives here instead of seed.sql.
-const anggotaId = idByEmail.get('anggota@labmanage.test')!;
-const adminId = idByEmail.get('admin@labmanage.test')!;
+const anggotaId = idByEmail.get('anggota@labmanage.test');
+const adminId = idByEmail.get('admin@labmanage.test');
+if (!anggotaId || !adminId) {
+  throw new Error('User demo tidak ditemukan setelah dibuat');
+}
 
-const { data: rooms, error: roomError } = await admin.from('rooms').select('id, name');
+const { data: roomRows, error: roomError } = await admin.from('rooms').select('id, name');
 if (roomError) throw roomError;
-const roomId = (name: string) => rooms.find((room) => room.name === name)?.id;
+const rooms = roomRows ?? [];
+function roomId(name: string): string {
+  const room = rooms.find((row) => row.name === name);
+  if (!room) {
+    throw new Error(`Ruang "${name}" tidak ada. Jalankan "npx supabase db reset" dulu.`);
+  }
+  return room.id;
+}
 
+const WIB_DATE = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Jakarta',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/** Local lab time (WIB) as an ISO string with +07:00, `dayOffset` days from today in WIB. */
 function wibIso(dayOffset: number, hour: number, minute = 0): string {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + dayOffset);
+  const [year, month, day] = WIB_DATE.format(new Date()).split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + dayOffset));
   const key = date.toISOString().slice(0, 10);
   const hh = String(hour).padStart(2, '0');
   const mm = String(minute).padStart(2, '0');
