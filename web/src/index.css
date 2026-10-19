@@ -275,3 +275,13 @@ select {
     transition: none !important;
   }
 }
+
+.badge-live {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-warn {
+  background: #fef3c7;
+  color: #92400e;
+}
