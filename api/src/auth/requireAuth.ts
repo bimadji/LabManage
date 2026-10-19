@@ -13,6 +13,8 @@ export interface AuthUser {
 declare module 'express-serve-static-core' {
   interface Request {
     user?: AuthUser;
+    /** Raw bearer token of the verified user, for building an RLS-scoped Supabase client. */
+    accessToken?: string;
   }
 }
 
@@ -66,6 +68,7 @@ export function requireAuth(verifier: AuthVerifier): RequestHandler {
     }
 
     req.user = user;
+    req.accessToken = match[1];
     next();
   };
 }
