@@ -243,6 +243,12 @@ select {
   font-weight: 600;
 }
 
+.item-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 .badge {
   display: inline-block;
   margin-top: var(--space-2);

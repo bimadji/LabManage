@@ -142,7 +142,7 @@ function ItemCard({ item, canRequest }: ItemCardProps) {
   return (
     <li className="card">
       <p className="reservation-room">
-        <Link to={`/inventaris/${item.id}`}>{item.name}</Link>
+        <Link className="item-link" to={`/inventaris/${item.id}`}>{item.name}</Link>
       </p>
       <p className="muted">
         {item.category}
