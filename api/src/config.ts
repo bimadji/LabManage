@@ -6,6 +6,8 @@ export interface Config {
   supabaseAnonKey: string;
   // Only place in the codebase that reads the service role key.
   supabaseServiceRoleKey: string;
+  /** Origin allowed by CORS; the Vite dev server by default. */
+  webOrigin: string;
 }
 
 const LOCAL_HOSTS: Record<string, true> = { '127.0.0.1': true, localhost: true };
@@ -45,6 +47,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     supabaseUrl,
     supabaseAnonKey: required(env, 'SUPABASE_ANON_KEY'),
     supabaseServiceRoleKey: required(env, 'SUPABASE_SERVICE_ROLE_KEY'),
+    webOrigin: env.WEB_ORIGIN ?? 'http://localhost:5173',
   };
 }
 

@@ -7,6 +7,7 @@ const config = {
   supabaseUrl: 'http://127.0.0.1:54321',
   supabaseAnonKey: 'anon',
   supabaseServiceRoleKey: 'service',
+  webOrigin: 'http://localhost:5173',
 };
 
 describe('GET /health', () => {
@@ -20,5 +21,14 @@ describe('GET /health', () => {
     const res = await request(createApp(config)).get('/rooms');
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe('UNAUTHENTICATED');
+  });
+});
+
+describe('CORS', () => {
+  it('mengizinkan origin web yang dikonfigurasi', async () => {
+    const res = await request(createApp(config))
+      .get('/health')
+      .set('Origin', 'http://localhost:5173');
+    expect(res.headers['access-control-allow-origin']).toBe('http://localhost:5173');
   });
 });
