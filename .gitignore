@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.env.test
+*.log
+supabase/.branches/
+supabase/.temp/
+.tmp/
+.DS_Store
+Thumbs.db
