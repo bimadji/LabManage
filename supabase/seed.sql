@@ -1,0 +1,3 @@
+-- Data seed non-user untuk Supabase lokal.
+-- Dijalankan otomatis oleh `npx supabase db reset`.
+-- User demo dibuat oleh `npm run db:seed-users` di api/, bukan lewat file ini.
