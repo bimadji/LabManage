@@ -3,7 +3,7 @@ import express from 'express';
 import { requireAuth, supabaseVerifier, type AuthVerifier } from './auth/requireAuth.js';
 import { attendanceRouter } from './attendance/routes.js';
 import type { Config } from './config.js';
-import { equipmentRouter } from './equipment/routes.js';
+import { inventoryRouter } from './inventory/routes.js';
 import { errorHandler } from './errors.js';
 import { jobsRouter } from './jobs/routes.js';
 import { notificationsRouter } from './notifications/routes.js';
@@ -30,7 +30,7 @@ export function createApp(
   // Everything below requires a valid Supabase JWT.
   app.use(requireAuth(verifier));
   app.use(attendanceRouter(config));
-  app.use(equipmentRouter(config));
+  app.use(inventoryRouter(config));
   app.use(reportsRouter(config));
   app.use(notificationsRouter(config));
   app.use(reservationsRouter(config));
