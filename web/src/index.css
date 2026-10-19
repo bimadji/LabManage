@@ -117,6 +117,13 @@ h2 {
   color: var(--color-primary);
 }
 
+/* Badge jumlah permintaan menempel pada label tautan, bukan turun ke baris baru. */
+.topbar nav a .badge {
+  margin: 0 0 0 var(--space-1);
+  padding: 0 var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
 .page-head {
   display: flex;
   flex-wrap: wrap;
