@@ -3,6 +3,8 @@ import { requireRole } from '../auth/requireAuth.js';
 import type { Config } from '../config.js';
 import { ApiError, fromDbError } from '../errors.js';
 import { userClient } from '../supabase.js';
+import { durationMinutes } from './duration.js';
+import { isOverNightLimit } from './policy.js';
 
 interface AttendanceRow {
   id: string;
@@ -87,11 +89,20 @@ export function attendanceRouter(config: Config): Router {
       }
     }
 
+    const now = new Date();
     res.json(
-      (sessions as AttendanceRow[]).map((row) => ({
-        ...toSession(row),
-        fullName: names.get(row.user_id) ?? 'Tanpa nama',
-      })),
+      (sessions as AttendanceRow[]).map((row) => {
+        const session = {
+          checkedInAt: new Date(row.checked_in_at),
+          checkedOutAt: row.checked_out_at ? new Date(row.checked_out_at) : null,
+        };
+        return {
+          ...toSession(row),
+          fullName: names.get(row.user_id) ?? 'Tanpa nama',
+          durationMinutes: durationMinutes(session, now),
+          overNightLimit: isOverNightLimit(session, now),
+        };
+      }),
     );
   });
 
