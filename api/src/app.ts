@@ -5,6 +5,7 @@ import { attendanceRouter } from './attendance/routes.js';
 import type { Config } from './config.js';
 import { equipmentRouter } from './equipment/routes.js';
 import { errorHandler } from './errors.js';
+import { reportsRouter } from './reports/routes.js';
 import { reservationsRouter } from './reservations/routes.js';
 
 /** Builds the Express app without listening, so tests can drive it with Supertest. */
@@ -25,6 +26,7 @@ export function createApp(
   app.use(requireAuth(verifier));
   app.use(attendanceRouter(config));
   app.use(equipmentRouter(config));
+  app.use(reportsRouter(config));
   app.use(reservationsRouter(config));
 
   app.use(errorHandler);
