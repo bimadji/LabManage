@@ -4,6 +4,13 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NewReservationPage } from './NewReservationPage';
 
+// The form renders without a real Supabase client; apiFetch is stubbed via fetch.
+vi.mock('../lib/supabase', () => ({
+  supabaseClient: () => ({
+    auth: { getSession: async () => ({ data: { session: { access_token: 'test-token' } } }) },
+  }),
+}));
+
 const ROOMS = [{ id: 'room-1', name: 'Ruang Robotik A', kind: 'ruang' }];
 
 function jsonResponse(status: number, body: unknown) {

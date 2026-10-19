@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabaseClient } from '../lib/supabase';
 
 export interface SessionState {
   session: Session | null;
@@ -14,11 +14,13 @@ export function useSession(): SessionState {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) setState({ session: data.session, loading: false });
-    });
+    supabaseClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (active) setState({ session: data.session, loading: false });
+      });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabaseClient().auth.onAuthStateChange((_event, session) => {
       setState({ session, loading: false });
     });
 

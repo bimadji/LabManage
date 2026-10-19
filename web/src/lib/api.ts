@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabaseClient } from './supabase';
 
 export interface ApiErrorBody {
   code: string;
@@ -21,7 +21,7 @@ export class ApiRequestError extends Error {
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
 async function currentToken(): Promise<string | null> {
-  const { data } = await supabase.auth.getSession();
+  const { data } = await supabaseClient().auth.getSession();
   return data.session?.access_token ?? null;
 }
 

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabaseClient } from '../lib/supabase';
 
 /** Minimal email/password gate so every page has a bearer token to send. */
 export function SignIn() {
@@ -12,7 +12,10 @@ export function SignIn() {
     event.preventDefault();
     setError(null);
     setBusy(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: signInError } = await supabaseClient().auth.signInWithPassword({
+      email,
+      password,
+    });
     setBusy(false);
     if (signInError) setError('Email atau kata sandi salah.');
   }

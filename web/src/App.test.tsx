@@ -4,13 +4,13 @@ import App from '../src/App';
 
 // App renders the auth gate, which reads a Supabase session.
 vi.mock('../src/lib/supabase', () => ({
-  supabase: {
+  supabaseClient: () => ({
     auth: {
       getSession: async () => ({ data: { session: null } }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
       signOut: async () => ({ error: null }),
     },
-  },
+  }),
 }));
 
 describe('App', () => {

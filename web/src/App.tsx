@@ -3,7 +3,7 @@ import { SignIn } from './auth/SignIn';
 import { useSession } from './auth/useSession';
 import { NewReservationPage } from './pages/NewReservationPage';
 import { SchedulePage } from './pages/SchedulePage';
-import { supabase } from './lib/supabase';
+import { supabaseClient } from './lib/supabase';
 
 function Shell() {
   const { session, loading } = useSession();
@@ -19,7 +19,7 @@ function Shell() {
           <NavLink to="/jadwal">Jadwal</NavLink>
           <NavLink to="/reservasi/baru">Reservasi</NavLink>
         </nav>
-        <button type="button" className="link-back" onClick={() => supabase.auth.signOut()}>
+        <button type="button" className="link-back" onClick={() => supabaseClient().auth.signOut()}>
           Keluar
         </button>
       </header>
