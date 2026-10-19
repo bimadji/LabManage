@@ -20,6 +20,10 @@ export function fromDbError(error: PostgrestError): ApiError {
     case '23503': // foreign_key_violation
     case '23514': // check_violation
       return new ApiError(400, 'VALIDATION_ERROR', 'Data tidak valid', { cause: error });
+    case '23P01': // exclusion_violation (overlapping active reservation)
+      return new ApiError(409, 'CONFLICT', 'Ruang sudah dipesan pada rentang waktu tersebut', {
+        cause: error,
+      });
     case '42501': // insufficient_privilege / RLS violation
       return new ApiError(403, 'FORBIDDEN', 'Anda tidak berhak melakukan aksi ini', {
         cause: error,

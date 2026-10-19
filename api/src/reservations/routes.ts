@@ -3,6 +3,7 @@ import { requireRole } from '../auth/requireAuth.js';
 import type { Config } from '../config.js';
 import { ApiError, fromDbError } from '../errors.js';
 import { userClient } from '../supabase.js';
+import { isWithinLabHours } from './hours.js';
 
 interface ReservationRow {
   id: string;
@@ -84,7 +85,38 @@ export function reservationsRouter(config: Config): Router {
       throw new ApiError(400, 'VALIDATION_ERROR', 'Waktu selesai harus setelah waktu mulai');
     }
 
-    const { data, error } = await dbFor(req)
+    const db = dbFor(req);
+
+    const { data: hours, error: hoursError } = await db
+      .from('lab_hours')
+      .select('weekday, opens_at, closes_at');
+    if (hoursError) throw fromDbError(hoursError);
+    const labHours = (hours as { weekday: number; opens_at: string; closes_at: string }[]).map(
+      (row) => ({ weekday: row.weekday, opensAt: row.opens_at, closesAt: row.closes_at }),
+    );
+    if (!isWithinLabHours(startsAt, endsAt, labHours)) {
+      throw new ApiError(
+        422,
+        'OUTSIDE_HOURS',
+        'Reservasi harus berada di dalam jam operasional lab (07:00-21:00 WIB)',
+      );
+    }
+
+    // Friendly pre-check; the exclusion constraint on reservations is the real guard.
+    const { data: conflicting, error: conflictError } = await db
+      .from('reservations')
+      .select('id')
+      .eq('room_id', body.roomId)
+      .eq('status', 'aktif')
+      .lt('starts_at', endsAt.toISOString())
+      .gt('ends_at', startsAt.toISOString())
+      .limit(1);
+    if (conflictError) throw fromDbError(conflictError);
+    if (conflicting.length > 0) {
+      throw new ApiError(409, 'CONFLICT', 'Ruang sudah dipesan pada rentang waktu tersebut');
+    }
+
+    const { data, error } = await db
       .from('reservations')
       .insert({
         room_id: body.roomId,
