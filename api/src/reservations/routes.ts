@@ -1,9 +1,11 @@
 import { Router, type Request } from 'express';
+import { z } from 'zod';
 import { requireRole } from '../auth/requireAuth.js';
 import type { Config } from '../config.js';
 import { ApiError, fromDbError } from '../errors.js';
 import { createNotification } from '../notifications/create.js';
 import { userClient } from '../supabase.js';
+import { isoInstant, uuid, validate } from '../validation.js';
 import { isWithinLabHours } from './hours.js';
 
 interface ReservationRow {
@@ -20,6 +22,18 @@ interface ReservationRow {
 const RESERVATION_COLUMNS = 'id, room_id, team, user_id, starts_at, ends_at, status, created_at';
 const MAX_TEAM_LENGTH = 100;
 
+const createReservationSchema = z.object({
+  roomId: uuid,
+  team: z.string().trim().min(1, 'team wajib diisi').max(MAX_TEAM_LENGTH),
+  startsAt: isoInstant,
+  endsAt: isoInstant,
+});
+
+const listReservationsSchema = z.object({
+  from: isoInstant.optional(),
+  to: isoInstant.optional(),
+});
+
 function toReservation(row: ReservationRow) {
   return {
     id: row.id,
@@ -31,14 +45,6 @@ function toReservation(row: ReservationRow) {
     status: row.status,
     createdAt: row.created_at,
   };
-}
-
-function parseInstant(value: unknown, field: string): Date {
-  const date = typeof value === 'string' && value.trim() !== '' ? new Date(value) : null;
-  if (!date || Number.isNaN(date.getTime())) {
-    throw new ApiError(400, 'VALIDATION_ERROR', `${field} wajib berupa waktu ISO 8601`);
-  }
-  return date;
 }
 
 /** Rooms and reservations. Must be mounted after `requireAuth`. */
@@ -53,92 +59,86 @@ export function reservationsRouter(config: Config): Router {
     res.json(data);
   });
 
-  router.get('/reservations', async (req, res) => {
+  router.get('/reservations', validate(listReservationsSchema, 'query'), async (req, res) => {
+    const { from, to } = req.query as { from?: string; to?: string };
     let query = dbFor(req).from('reservations').select(RESERVATION_COLUMNS).order('starts_at');
     // Overlap filter: a reservation is in [from, to) when it ends after `from` and starts before `to`.
-    if (req.query.from !== undefined) {
-      query = query.gt('ends_at', parseInstant(req.query.from, 'from').toISOString());
-    }
-    if (req.query.to !== undefined) {
-      query = query.lt('starts_at', parseInstant(req.query.to, 'to').toISOString());
-    }
+    if (from) query = query.gt('ends_at', new Date(from).toISOString());
+    if (to) query = query.lt('starts_at', new Date(to).toISOString());
+
     const { data, error } = await query;
     if (error) throw fromDbError(error);
     res.json((data as ReservationRow[]).map(toReservation));
   });
 
-  router.post('/reservations', requireRole('anggota', 'admin'), async (req, res) => {
-    const body = (req.body ?? {}) as Record<string, unknown>;
-    if (typeof body.roomId !== 'string' || body.roomId === '') {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'roomId wajib diisi');
-    }
-    const team = typeof body.team === 'string' ? body.team.trim() : '';
-    if (team === '' || team.length > MAX_TEAM_LENGTH) {
-      throw new ApiError(
-        400,
-        'VALIDATION_ERROR',
-        `team wajib diisi (maks ${MAX_TEAM_LENGTH} karakter)`,
+  router.post(
+    '/reservations',
+    requireRole('anggota', 'admin'),
+    validate(createReservationSchema),
+    async (req, res) => {
+      const { roomId, team, startsAt, endsAt } = req.body as z.infer<
+        typeof createReservationSchema
+      >;
+      const starts = new Date(startsAt);
+      const ends = new Date(endsAt);
+      if (ends <= starts) {
+        throw new ApiError(400, 'VALIDATION_ERROR', 'Waktu selesai harus setelah waktu mulai');
+      }
+
+      const db = dbFor(req);
+
+      const { data: hours, error: hoursError } = await db
+        .from('lab_hours')
+        .select('weekday, opens_at, closes_at');
+      if (hoursError) throw fromDbError(hoursError);
+      const labHours = (hours as { weekday: number; opens_at: string; closes_at: string }[]).map(
+        (row) => ({ weekday: row.weekday, opensAt: row.opens_at, closesAt: row.closes_at }),
       );
-    }
-    const startsAt = parseInstant(body.startsAt, 'startsAt');
-    const endsAt = parseInstant(body.endsAt, 'endsAt');
-    if (endsAt <= startsAt) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'Waktu selesai harus setelah waktu mulai');
-    }
+      if (!isWithinLabHours(starts, ends, labHours)) {
+        throw new ApiError(
+          422,
+          'OUTSIDE_HOURS',
+          'Reservasi harus berada di dalam jam operasional lab (07:00-21:00 WIB)',
+        );
+      }
 
-    const db = dbFor(req);
+      // Friendly pre-check; the exclusion constraint on reservations is the real guard.
+      const { data: conflicting, error: conflictError } = await db
+        .from('reservations')
+        .select('id')
+        .eq('room_id', roomId)
+        .eq('status', 'aktif')
+        .lt('starts_at', ends.toISOString())
+        .gt('ends_at', starts.toISOString())
+        .limit(1);
+      if (conflictError) throw fromDbError(conflictError);
+      if (conflicting.length > 0) {
+        throw new ApiError(409, 'CONFLICT', 'Ruang sudah dipesan pada rentang waktu tersebut');
+      }
 
-    const { data: hours, error: hoursError } = await db
-      .from('lab_hours')
-      .select('weekday, opens_at, closes_at');
-    if (hoursError) throw fromDbError(hoursError);
-    const labHours = (hours as { weekday: number; opens_at: string; closes_at: string }[]).map(
-      (row) => ({ weekday: row.weekday, opensAt: row.opens_at, closesAt: row.closes_at }),
-    );
-    if (!isWithinLabHours(startsAt, endsAt, labHours)) {
-      throw new ApiError(
-        422,
-        'OUTSIDE_HOURS',
-        'Reservasi harus berada di dalam jam operasional lab (07:00-21:00 WIB)',
-      );
-    }
+      const { data, error } = await db
+        .from('reservations')
+        .insert({
+          room_id: roomId,
+          team,
+          // Owner always comes from the verified token, never from the request body.
+          user_id: req.user!.id,
+          starts_at: starts.toISOString(),
+          ends_at: ends.toISOString(),
+        })
+        .select(RESERVATION_COLUMNS)
+        .single<ReservationRow>();
+      if (error) throw fromDbError(error);
 
-    // Friendly pre-check; the exclusion constraint on reservations is the real guard.
-    const { data: conflicting, error: conflictError } = await db
-      .from('reservations')
-      .select('id')
-      .eq('room_id', body.roomId)
-      .eq('status', 'aktif')
-      .lt('starts_at', endsAt.toISOString())
-      .gt('ends_at', startsAt.toISOString())
-      .limit(1);
-    if (conflictError) throw fromDbError(conflictError);
-    if (conflicting.length > 0) {
-      throw new ApiError(409, 'CONFLICT', 'Ruang sudah dipesan pada rentang waktu tersebut');
-    }
+      await createNotification(config, {
+        userId: data.user_id,
+        kind: 'reservasi',
+        message: `Reservasi ${data.team} pada ${data.starts_at} tercatat.`,
+      });
 
-    const { data, error } = await db
-      .from('reservations')
-      .insert({
-        room_id: body.roomId,
-        team,
-        // Owner always comes from the verified token, never from the request body.
-        user_id: req.user!.id,
-        starts_at: startsAt.toISOString(),
-        ends_at: endsAt.toISOString(),
-      })
-      .select(RESERVATION_COLUMNS)
-      .single<ReservationRow>();
-    if (error) throw fromDbError(error);
-
-    await createNotification(config, {
-      userId: data.user_id,
-      kind: 'reservasi',
-      message: `Reservasi ${data.team} pada ${data.starts_at} tercatat.`,
-    });
-
-    res.status(201).json(toReservation(data));
-  });
+      res.status(201).json(toReservation(data));
+    },
+  );
 
   router.patch('/reservations/:id/cancel', async (req, res) => {
     const user = req.user!;
@@ -163,8 +163,9 @@ export function reservationsRouter(config: Config): Router {
       .maybeSingle<ReservationRow>();
     if (updateError) throw fromDbError(updateError);
     // RLS filtered the row out of the update: the caller is not allowed to change it.
-    if (!updated)
+    if (!updated) {
       throw new ApiError(403, 'FORBIDDEN', 'Anda tidak berhak membatalkan reservasi ini');
+    }
 
     await createNotification(config, {
       userId: updated.user_id,
