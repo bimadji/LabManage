@@ -89,3 +89,78 @@ Modul C: inventaris dan laporan fasilitas
   - AC-C9: setiap perubahan status membuat satu notifikasi untuk pelapor.
 - US-C6. Sebagai advisor, saya ingin melihat seluruh laporan fasilitas, agar saya dapat memantau respons pengurus.
   - AC-C10: advisor dapat melihat semua laporan beserta statusnya, tanpa dapat mengubahnya.
+
+## 7. Requirement fungsional
+
+Jam operasional lab adalah 07:00 sampai 21:00 WIB setiap hari. Batas malam untuk pemantauan kehadiran adalah 21:00 WIB. Kedua angka ini adalah asumsi awal (lihat bagian 9) dan berlaku sebagai konfigurasi, bukan konstanta yang tersebar di kode.
+
+### 7.1 Modul A: reservasi ruang dan alat
+
+- FR-A.1. Sistem menampilkan reservasi per hari dan dapat difilter per ruang. Memenuhi US-A1.
+- FR-A.2. Sistem menerima pengajuan reservasi berisi ruang, nama tim, waktu mulai, dan waktu selesai. Waktu selesai harus setelah waktu mulai; jika tidak, pengajuan ditolak dengan kode `VALIDATION_ERROR`.
+- FR-A.3. Sistem menolak pengajuan yang rentang waktunya bertabrakan dengan reservasi aktif di ruang atau alat yang sama. Rentang yang hanya bersentuhan di batas (selesai tepat saat mulai berikutnya) tidak dianggap tabrakan.
+- FR-A.4. Sistem menolak reservasi yang tidak seluruhnya berada dalam jam operasional lab.
+- FR-A.5. Pemilik reservasi dapat membatalkannya. Admin dapat membatalkan reservasi siapa pun. Pembatalan mengubah status menjadi dibatalkan dan tidak menghapus data.
+- FR-A.6. Reservasi berstatus dibatalkan tidak memblokir slot waktu.
+- FR-A.7. Sistem mencatat pengaju (`user_id`) pada setiap reservasi, diisi dari sesi login, bukan dari input klien.
+
+### 7.2 Modul B: kehadiran dan durasi
+
+- FR-B.1. Anggota dapat check-in. Check-in membuka satu sesi dengan waktu mulai saat itu. Check-in saat masih ada sesi terbuka ditolak.
+- FR-B.2. Anggota dapat check-out. Check-out menutup sesi terbuka. Check-out tanpa sesi terbuka ditolak.
+- FR-B.3. Sistem menampilkan daftar anggota yang sedang memiliki sesi terbuka, beserta nama, waktu mulai, dan durasi berjalan.
+- FR-B.4. Durasi sesi adalah waktu selesai dikurangi waktu mulai untuk sesi tertutup, dan waktu sekarang dikurangi waktu mulai untuk sesi terbuka.
+- FR-B.5. Sesi terbuka yang masih berjalan setelah 21:00 WIB ditandai pada daftar kehadiran dan memicu notifikasi kepada pemilik sesi (US-B4).
+- FR-B.6. Admin dan advisor dapat melihat seluruh sesi. Anggota hanya dapat melihat dan mengubah sesi miliknya.
+
+### 7.3 Modul C: inventaris dan laporan fasilitas
+
+- FR-C.1. Sistem menampilkan katalog alat dengan jumlah total dan jumlah tersedia.
+- FR-C.2. Jumlah tersedia dihitung dari total dikurangi jumlah pinjaman yang belum dikembalikan.
+- FR-C.3. Anggota dapat meminjam alat dengan jumlah tertentu. Pinjaman yang melebihi jumlah tersedia ditolak, termasuk pada permintaan yang bersamaan.
+- FR-C.4. Peminjam dapat menandai pengembalian pinjamannya. Anggota lain tidak dapat menandai pengembalian pinjaman tersebut.
+- FR-C.5. Admin dapat menambah dan mengubah katalog alat.
+- FR-C.6. Anggota dapat membuat laporan dengan kategori `lampu`, `ventilasi`, atau `kerusakan`, lokasi, dan deskripsi 5 sampai 1000 karakter.
+- FR-C.7. Status laporan berpindah hanya dalam urutan `baru`, `ditindaklanjuti`, `selesai`. Transisi lain ditolak dengan kode `INVALID_TRANSITION`.
+- FR-C.8. Setiap perubahan status laporan membuat tepat satu notifikasi untuk pelapor.
+- FR-C.9. Advisor dapat melihat seluruh laporan dan statusnya tanpa dapat mengubahnya.
+
+## 8. Requirement non-fungsional
+
+Kerangka karakteristik mengikuti ISO/IEC 25010.
+
+| Karakteristik | Requirement | Cara verifikasi |
+| --- | --- | --- |
+| Keamanan (security) | Setiap tabel memakai Row Level Security. Kunci `service_role` hanya dibaca di server dan tidak pernah dikirim ke browser. Semua endpoint API memerlukan token yang valid, kecuali endpoint kesehatan. | Test RLS dengan klien anon dan JWT per peran; audit `git grep` pada tahap hardening |
+| Keamanan (integritas data) | Konflik reservasi dan batas stok dijaga oleh database, tidak hanya oleh aplikasi. | Test konkurensi pada tahap terkait |
+| Performa (performance efficiency) | Respons API untuk daftar jadwal dan daftar kehadiran di bawah 500 ms pada data demo, diukur secara lokal. | Pengukuran manual dengan `curl` pada data seed |
+| Usability | Alur reservasi selesai dalam satu halaman form. Pesan error berbahasa Indonesia dan menyebut penyebabnya. | Uji manual alur pada tahap 1.5 |
+| Responsivitas | Tampilan utama diuji pada lebar 375px, 768px, dan 1280px. Pada setiap lebar tidak ada scroll horizontal. Layout default satu kolom, grid mingguan hanya pada 768px ke atas. | Cek `document.documentElement.scrollWidth <= window.innerWidth` di ketiga lebar |
+| Reliabilitas | Sesi kehadiran tidak hilang saat halaman dimuat ulang. Sistem tetap mencatat check-out walaupun klien terputus setelah request terkirim. | Test API dan pengujian manual |
+| Maintainability | Aturan transisi status dan perhitungan durasi berada dalam fungsi murni yang dapat diuji tanpa database. | Unit test pada tahap terkait |
+| Compatibility | Web berjalan di browser modern (Chrome, Edge, Firefox, Safari versi terbaru). | Uji manual pada Chrome dan Edge |
+
+## 9. Asumsi, risiko, dan dependensi
+
+### 9.1 Asumsi
+
+- Jam operasional 07:00 sampai 21:00 WIB berlaku setiap hari. Jika pengurus memberi angka lain, konstanta dan data `lab_hours` diubah tanpa mengubah desain.
+- Jumlah pengguna awal kurang dari 100 akun. Desain tidak ditujukan untuk skala besar pada fase ini.
+- Setiap anggota hanya boleh memiliki satu sesi kehadiran terbuka pada satu waktu.
+- Akun peran `admin` dan `advisor` dibuat dan ditetapkan oleh pengurus, bukan lewat pendaftaran publik.
+
+### 9.2 Risiko
+
+| Risiko | Dampak | Mitigasi |
+| --- | --- | --- |
+| Anggota lupa check-out | Sesi terbuka menggantung dan durasi menjadi tidak akurat | Tanda sesi melewati 21:00 WIB (FR-B.5) dan notifikasi (US-B4) |
+| Pengguna mengira aplikasi native tersedia | Permintaan fitur di luar lingkup | Non-goal dicatat di bagian 5 |
+| Ketergantungan pada layanan Supabase | Layanan tidak tersedia berarti aplikasi tidak bisa dipakai | Dokumentasi setup lokal dengan Supabase CLI untuk pengembangan dan uji |
+| Realtime tidak andal di jaringan kampus | Dashboard advisor tidak diperbarui | Muat ulang data awal dari API; pembaruan realtime hanya tambahan |
+
+### 9.3 Dependensi
+
+- Supabase (PostgreSQL, Auth, Realtime) sebagai layanan utama.
+- Docker Desktop untuk menjalankan Supabase lokal saat pengembangan dan pengujian.
+- Node.js 22 LTS untuk API dan web.
+- GitHub Actions untuk CI sejak tahap 1.1.
