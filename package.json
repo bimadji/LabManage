@@ -1,0 +1,29 @@
+{
+  "name": "labmanage",
+  "version": "1.0.0",
+  "description": "LabManage tooling dokumen",
+  "main": "index.js",
+  "scripts": {
+    "lint:md": "markdownlint-cli2 \"docs/**/*.md\" \"README.md\"",
+    "check:mermaid": "node scripts/check-mermaid.mjs",
+    "check:links": "node scripts/check-links.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bimadji/LabManage.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/bimadji/LabManage/issues"
+  },
+  "homepage": "https://github.com/bimadji/LabManage#readme",
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "12.0.0",
+    "markdownlint-cli2": "0.23.3",
+    "mermaid": "12.2.0"
+  },
+  "private": true
+}
