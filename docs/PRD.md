@@ -396,3 +396,137 @@ sequenceDiagram
     RT-->>M: postgres_changes INSERT (payload new)
     M->>M: applyAttendanceChange(list, event)
 ```
+
+## 11. Roadmap implementasi
+
+### 11.1 Urutan tahap Fase 1
+
+Setiap tahap dikerjakan dalam satu branch `stage-<nomor>-<deskripsi>` dan satu pull request, lalu di-squash merge ke `main` setelah build dan semua test lulus.
+
+```mermaid
+flowchart TD
+    T11["1.1 Scaffold proyek"] --> T12["1.2 Autentikasi dan peran"]
+    T12 --> T13["1.3 Reservasi API"]
+    T13 --> T14["1.4 Konflik dan jam operasional"]
+    T14 --> T15["1.5 UI jadwal dan form"]
+    T12 --> T16["1.6 Check-in dan check-out"]
+    T16 --> T17["1.7 Durasi dan batas malam"]
+    T17 --> T18["1.8 Dashboard monitoring"]
+    T12 --> T19["1.9 Inventaris"]
+    T12 --> T110["1.10 Laporan fasilitas"]
+    T13 --> T111["1.11 Notifikasi"]
+    T17 --> T111
+    T110 --> T111
+    T111 --> T112["1.12 Hardening"]
+    T15 --> T112
+    T18 --> T112
+    T19 --> T112
+```
+
+Panah menunjukkan dependensi teknis. Eksekusi tetap berurutan dari 1.1 sampai 1.12.
+
+### 11.2 Definisi selesai untuk setiap tahap
+
+Sebuah tahap selesai jika semua butir berikut terpenuhi:
+
+1. Perubahan hanya mencakup lingkup tahap tersebut.
+2. Di `api/` dan `web/` (yang tersentuh): `npm ci`, `npm run lint`, `npm test`, dan `npm run build` keluar dengan kode 0.
+3. Tahap yang mengubah skema menyertakan file migrasi di `supabase/migrations/` dan test RLS yang membuktikan peran tidak berhak ditolak.
+4. Smoke test perilaku yang tercantum pada tahap dijalankan dan hasilnya ditempel di body PR.
+5. CI di GitHub Actions hijau (sejak 1.1).
+6. PR di-squash merge ke `main`, dan branch tahap dihapus.
+
+### 11.3 Batasan global
+
+- Node.js `>=22 <23` di `api/package.json` dan `web/package.json`; `node-version: 22` di CI.
+- npm, dua proyek terpisah `api/` dan `web/`, tanpa npm workspaces.
+- Vitest di kedua proyek; Supertest untuk HTTP; Testing Library dan jsdom untuk UI.
+- ESLint flat config dengan `typescript-eslint`; Prettier dengan script `format:check`.
+- Env API: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT` (default 4000), `JOB_SECRET`, `DEMO_PASSWORD`. Env web: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+- `SUPABASE_SERVICE_ROLE_KEY` hanya dibaca di `api/src/config.ts`. `config.ts` menolak start jika `NODE_ENV=test` dan `SUPABASE_URL` bukan `127.0.0.1` atau `localhost`.
+- Format error API: `{"error":{"code":"...","message":"..."}}`.
+- Zona waktu aturan bisnis: `Asia/Jakarta`. Jam operasional 07:00 sampai 21:00; batas malam 21.
+
+### 11.4 Fokus review
+
+Kondisi yang paling mungkin merusak pengalaman pengguna, beserta tahap yang memuat test-nya:
+
+- Reservasi berdampingan (selesai 10:00, berikutnya mulai 10:00) harus diterima. Test di tahap 1.4.
+- Input waktu dengan offset zona selain `+07:00` (misalnya `Z`) harus dinilai terhadap jam operasional WIB, bukan zona server. Test di tahap 1.4.
+- Dua permintaan bersamaan untuk sisa stok 1 hanya boleh meloloskan satu. Test di tahap 1.9.
+- Check-in ganda dari dua tab sekaligus tidak boleh membuka dua sesi; unique index menjadi penjaga terakhir. Test di tahap 1.6.
+- Job peringatan malam yang dijalankan berulang tidak boleh membuat notifikasi ganda. Test di tahap 1.11.
+
+### 11.5 Tugas per tahap
+
+#### Tahap 1.1: scaffold proyek
+
+- File: `api/package.json`, `api/tsconfig.json`, `api/eslint.config.js`, `api/src/app.ts`, `api/src/server.ts`, `api/src/config.ts`, `api/tests/health.test.ts`, `web/` (template Vite `react-ts`), `web/src/App.tsx`, `web/src/App.test.tsx`, `web/src/lib/supabase.ts`, `supabase/config.toml`, `supabase/seed.sql`, `.github/workflows/ci.yml`, `.env.example`, `api/.env.example`, `web/.env.example`, `README.md`.
+- Antarmuka: `createApp(): express.Express`; `loadConfig(env = process.env): Config`.
+- Test: `GET /health` mengembalikan 200 dan `{"status":"ok"}`; `loadConfig` melempar error saat `NODE_ENV=test` dan `SUPABASE_URL` bukan host lokal; render `App` memuat teks "LabManage".
+
+#### Tahap 1.2: autentikasi dan peran
+
+- File: `supabase/migrations/<ts>_profiles.sql`, `api/src/auth/requireAuth.ts`, `api/src/supabase.ts`, `api/scripts/create-demo-users.ts`, `api/tests/auth.test.ts`, `api/tests/rls/profiles.test.ts`.
+- Antarmuka: `requireAuth: RequestHandler` mengisi `req.user: { id: string; role: Role }`; `requireRole(...roles: Role[]): RequestHandler`; `userClient(jwt: string): SupabaseClient`; `serviceClient(): SupabaseClient`.
+- Test: tanpa header 401; anggota ke route admin 403; admin 200; anggota A tidak dapat membaca profil anggota B; anggota tidak dapat mengubah `role` miliknya.
+
+#### Tahap 1.3: reservasi API
+
+- File: `supabase/migrations/<ts>_reservations.sql`, `api/src/errors.ts` (kelas `ApiError`), `api/src/reservations/routes.ts`, `api/src/reservations/service.ts`, `api/tests/reservations.test.ts`.
+- Antarmuka: `new ApiError(status: number, code: string, message: string)`; route `GET /rooms`, `GET /reservations`, `POST /reservations`, `PATCH /reservations/:id/cancel`.
+- Test: pemilik membuat lalu membatalkan reservasi; anggota B membatalkan milik A ditolak 403; `endsAt <= startsAt` 400.
+
+#### Tahap 1.4: konflik dan jam operasional
+
+- File: `supabase/migrations/<ts>_reservation_rules.sql` (`btree_gist`, exclusion constraint, tabel `lab_hours`), `api/src/reservations/hours.ts`, `api/tests/reservations-rules.test.ts`, `api/tests/hours.test.ts`.
+- Antarmuka: `isWithinLabHours(startsAt: Date, endsAt: Date, hours: LabHours[]): boolean`.
+- Test: overlap kedua 409 `CONFLICT`; berdampingan sukses; selesai 21:30 WIB 422 `OUTSIDE_HOURS`; reservasi dibatalkan tidak memblokir; input `Z` dinilai dalam WIB.
+
+#### Tahap 1.5: UI jadwal dan form reservasi
+
+- File: `web/src/lib/api.ts`, `web/src/pages/Schedule.tsx`, `web/src/pages/NewReservation.tsx`, `web/src/pages/NewReservation.test.tsx`, routing di `web/src/App.tsx`.
+- Antarmuka: `apiFetch<T>(path: string, init?: RequestInit): Promise<T>` melempar `ApiRequestError { status, code, message }`.
+- Test: selesai <= mulai menampilkan pesan error tanpa request; respons 409 menampilkan pesan konflik; tombol submit nonaktif selama request.
+
+#### Tahap 1.6: check-in dan check-out
+
+- File: `supabase/migrations/<ts>_attendance.sql` (termasuk publikasi Realtime), `api/src/attendance/routes.ts`, `api/tests/attendance.test.ts`.
+- Test: check-in ganda 409 `ALREADY_IN`; check-out tanpa sesi 404 `NOT_IN`; anggota A tidak dapat membaca atau mengubah sesi anggota B; dua check-in bersamaan hanya membuka satu sesi.
+
+#### Tahap 1.7: durasi dan batas malam
+
+- File: `api/src/attendance/duration.ts`, `api/src/attendance/policy.ts`, `api/tests/duration.test.ts`.
+- Antarmuka: `durationMinutes(session: { checkedInAt: Date; checkedOutAt: Date | null }, now: Date): number`; `isOverNightLimit(session, now: Date): boolean`; konstanta `NIGHT_LIMIT_HOUR = 21`, `TZ = 'Asia/Jakarta'`.
+- Test: durasi 0 dan 90 menit; sesi terbuka memakai `now`; `overNightLimit` true pada 21:01 WIB dan false pada 20:59 WIB.
+
+#### Tahap 1.8: dashboard monitoring
+
+- File: `web/src/pages/Monitor.tsx`, `web/src/monitor/applyAttendanceChange.ts`, `web/src/monitor/applyAttendanceChange.test.ts`, route guard di `web/src/App.tsx`.
+- Antarmuka: `applyAttendanceChange(list: PresentSession[], event: AttendanceChange): PresentSession[]`.
+- Test: `INSERT` menambah; `UPDATE` dengan `checked_out_at` menghapus; event untuk sesi yang sudah ada tidak menduplikasi.
+
+#### Tahap 1.9: inventaris
+
+- File: `supabase/migrations/<ts>_equipment.sql` (tabel, view `equipment_availability`, fungsi `borrow_equipment`), `api/src/equipment/routes.ts`, `api/tests/equipment.test.ts`.
+- Antarmuka: fungsi SQL `borrow_equipment(p_equipment_id uuid, p_qty int) returns equipment_loans` yang mengunci baris dengan `for update`.
+- Test: pinjam melebihi stok 409 `INSUFFICIENT_STOCK`; dua pinjaman paralel untuk sisa 1 hanya satu sukses; anggota POST `/equipment` 403.
+
+#### Tahap 1.10: laporan fasilitas
+
+- File: `supabase/migrations/<ts>_facility_reports.sql` (tabel dan trigger transisi), `api/src/reports/transitions.ts`, `api/src/reports/routes.ts`, `api/tests/transitions.test.ts`, `api/tests/reports.test.ts`.
+- Antarmuka: `canTransition(from: ReportStatus, to: ReportStatus): boolean`.
+- Test: `baru` ke `selesai` 422 `INVALID_TRANSITION`; anggota mengubah status 403; deskripsi 4 karakter 400.
+
+#### Tahap 1.11: notifikasi
+
+- File: `supabase/migrations/<ts>_notifications.sql`, `api/src/notifications/create.ts`, `api/src/notifications/routes.ts`, `api/src/jobs/overnight.ts`, `api/tests/notifications.test.ts`.
+- Antarmuka: `createNotification(input: { userId: string; kind: NotificationKind; message: string; dedupeKey?: string }): Promise<void>`; `runOvernightJob(now: Date): Promise<number>`.
+- Test: perubahan status laporan membuat tepat satu notifikasi; job tanpa secret 401; job dengan secret membuat notifikasi untuk sesi terbuka setelah 21:00 WIB; job dua kali tidak menggandakan.
+
+#### Tahap 1.12: hardening
+
+- File: `api/src/validation.ts`, `api/src/errors.ts` (handler global), `supabase/seed.sql`, `docs/USAGE.md`, `api/tests/validation.test.ts`.
+- Antarmuka: `validate(schema: ZodSchema, source: 'body' | 'query'): RequestHandler`.
+- Test: body tidak valid 400 `VALIDATION_ERROR` dengan daftar field; error tak terduga 500 `INTERNAL` tanpa stack trace.
+- Audit: `git grep -nE "(service_role|eyJhbGci|sk_live|password\s*=)" -- ':!*.md'` kosong; `git grep -n "SERVICE_ROLE" -- web` kosong; responsivitas 375px, 768px, 1280px tanpa scroll horizontal.
