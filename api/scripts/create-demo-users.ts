@@ -5,19 +5,26 @@ import type { Role } from '../src/auth/requireAuth.js';
 import { loadConfig } from '../src/config.js';
 import { serviceClient } from '../src/supabase.js';
 
-const DEMO_USERS: { email: string; fullName: string; role: Role }[] = [
-  { email: 'anggota@labmanage.test', fullName: 'Anggota Demo', role: 'anggota' },
-  { email: 'admin@labmanage.test', fullName: 'Admin Demo', role: 'admin' },
-  { email: 'advisor@labmanage.test', fullName: 'Advisor Demo', role: 'advisor' },
+// Kata sandi demo sengaja sederhana dan per akun; akun ini hanya ada di Supabase lokal.
+const DEMO_USERS: { email: string; fullName: string; role: Role; password: string }[] = [
+  {
+    email: 'anggota@labmanage.test',
+    fullName: 'Anggota Demo',
+    role: 'anggota',
+    password: 'anggota123',
+  },
+  { email: 'admin@labmanage.test', fullName: 'Admin Demo', role: 'admin', password: 'admin123' },
+  {
+    email: 'advisor@labmanage.test',
+    fullName: 'Advisor Demo',
+    role: 'advisor',
+    password: 'advisor123',
+  },
 ];
 
 loadDotenv({ path: '.env.test', quiet: true });
 // NODE_ENV=test makes loadConfig refuse any non-local SUPABASE_URL.
 const config = loadConfig({ ...process.env, NODE_ENV: 'test' });
-const demoPassword = process.env.DEMO_PASSWORD;
-if (!demoPassword) {
-  throw new Error('DEMO_PASSWORD wajib diisi di api/.env.test');
-}
 
 const admin = serviceClient(config);
 
@@ -28,7 +35,7 @@ const idByEmail = new Map(existing.users.map((u) => [u.email, u.id]));
 for (const demo of DEMO_USERS) {
   let id = idByEmail.get(demo.email);
   const attributes = {
-    password: demoPassword,
+    password: demo.password,
     email_confirm: true,
     user_metadata: { full_name: demo.fullName },
   };

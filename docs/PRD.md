@@ -442,7 +442,7 @@ Sebuah tahap selesai jika semua butir berikut terpenuhi:
 - npm, dua proyek terpisah `api/` dan `web/`, tanpa npm workspaces.
 - Vitest di kedua proyek; Supertest untuk HTTP; Testing Library dan jsdom untuk UI.
 - ESLint flat config dengan `typescript-eslint`; Prettier dengan script `format:check`.
-- Env API: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT` (default 4000), `JOB_SECRET`, `DEMO_PASSWORD`. Env web: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+- Env API: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT` (default 4000), `JOB_SECRET`. Env web: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 - `SUPABASE_SERVICE_ROLE_KEY` hanya dibaca di `api/src/config.ts`. `config.ts` menolak start jika `NODE_ENV=test` dan `SUPABASE_URL` bukan `127.0.0.1` atau `localhost`.
 - Format error API: `{"error":{"code":"...","message":"..."}}`.
 - Zona waktu aturan bisnis: `Asia/Jakarta`. Jam operasional 07:00 sampai 21:00; batas malam 21.

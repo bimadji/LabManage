@@ -19,7 +19,7 @@ Isi tiga file env (semua diabaikan git):
 | File | Variabel |
 | --- | --- |
 | `api/.env` | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT`, `WEB_ORIGIN`, `JOB_SECRET` |
-| `api/.env.test` | sama seperti `api/.env`, ditambah `DEMO_PASSWORD`; `SUPABASE_URL` wajib `127.0.0.1` atau `localhost` |
+| `api/.env.test` | sama seperti `api/.env`; `SUPABASE_URL` wajib `127.0.0.1` atau `localhost` |
 | `web/.env` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL` |
 
 Menyiapkan database dan data demo:
@@ -31,13 +31,11 @@ cd api && npm run db:seed-users
 
 `db:seed-users` membuat tiga akun demo dan aktivitasnya. Aman dijalankan berulang.
 
-| Akun | Peran |
-| --- | --- |
-| `anggota@labmanage.test` | anggota |
-| `admin@labmanage.test` | admin |
-| `advisor@labmanage.test` | advisor |
-
-Kata sandi ketiganya adalah nilai `DEMO_PASSWORD` di `api/.env.test`.
+| Akun | Kata sandi | Peran |
+| --- | --- | --- |
+| `anggota@labmanage.test` | `anggota123` | anggota |
+| `admin@labmanage.test` | `admin123` | admin |
+| `advisor@labmanage.test` | `advisor123` | advisor |
 
 ## 2. Menjalankan aplikasi
 
