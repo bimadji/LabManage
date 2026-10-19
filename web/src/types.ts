@@ -1,5 +1,19 @@
 export type Role = 'anggota' | 'admin' | 'advisor';
 
+export type ReportCategory = 'lampu' | 'ventilasi' | 'kerusakan';
+export type ReportStatus = 'baru' | 'ditindaklanjuti' | 'selesai';
+
+export interface FacilityReport {
+  id: string;
+  category: ReportCategory;
+  description: string;
+  location: string;
+  reportedBy: string;
+  status: ReportStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Room {
   id: string;
   name: string;

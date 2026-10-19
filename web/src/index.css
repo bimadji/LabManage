@@ -87,7 +87,7 @@ h2 {
 }
 
 /* Di ponsel navigasi turun ke baris sendiri: brand dan Keluar tetap satu baris,
-   dan empat tautan tersusun 2x2 agar tidak ada scroll horizontal. */
+   dan tautan tersusun dua kolom agar tidak ada scroll horizontal. */
 @media (max-width: 767px) {
   .topbar nav {
     order: 3;
@@ -346,6 +346,30 @@ select {
 
 .inline-form label {
   font-weight: 600;
+}
+
+.facility-report-intro,
+.facility-report-form {
+  margin-bottom: var(--space-4);
+}
+
+.facility-report-form {
+  margin-top: var(--space-4);
+  width: 100%;
+}
+
+.facility-report-form :is(input, select, textarea),
+.facility-report-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.facility-report-description {
+  white-space: pre-wrap;
+}
+
+.facility-report-action {
+  margin-top: var(--space-3);
 }
 
 textarea {
