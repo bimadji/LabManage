@@ -164,3 +164,235 @@ Kerangka karakteristik mengikuti ISO/IEC 25010.
 - Docker Desktop untuk menjalankan Supabase lokal saat pengembangan dan pengujian.
 - Node.js 22 LTS untuk API dan web.
 - GitHub Actions untuk CI sejak tahap 1.1.
+
+## 10. Arsitektur dan desain teknis
+
+### 10.1 Keputusan tech stack
+
+Keputusan berikut sudah final untuk Fase 1.
+
+| Lapisan | Keputusan |
+| --- | --- |
+| Backend | Node.js 22 LTS, Express 5, TypeScript |
+| Database, Auth, Realtime | Supabase (PostgreSQL, Supabase Auth, Supabase Realtime) |
+| Otorisasi data | Row Level Security per peran: `anggota`, `admin`, `advisor` |
+| Frontend | React, Vite, TypeScript; web responsif mobile-first |
+| Aplikasi native | Tidak ada |
+| Test | Vitest, Supertest untuk API, Testing Library dan jsdom untuk UI |
+
+### 10.2 Arsitektur tingkat tinggi
+
+Browser memanggil API dengan JWT dari Supabase Auth. API memverifikasi token, lalu membaca dan menulis ke PostgreSQL dengan klien yang membawa JWT pengguna, sehingga RLS tetap berlaku. Kunci `service_role` hanya dipakai API untuk tugas server (job peringatan malam dan pembuatan notifikasi). Dashboard monitoring berlangganan perubahan tabel `attendance` langsung lewat Supabase Realtime.
+
+```mermaid
+flowchart LR
+    subgraph Klien["Browser (ponsel atau laptop)"]
+        WEB["Web React + Vite"]
+    end
+    subgraph Server["Server aplikasi"]
+        API["API Express + TypeScript"]
+        JOB["Job peringatan malam"]
+    end
+    subgraph Supabase["Supabase"]
+        AUTH["Supabase Auth"]
+        DB[("PostgreSQL + RLS")]
+        RT["Supabase Realtime"]
+    end
+    SCHED["Penjadwal eksternal"]
+
+    WEB -->|"login, dapat JWT"| AUTH
+    WEB -->|"HTTPS + Bearer JWT"| API
+    API -->|"verifikasi token"| AUTH
+    API -->|"query dengan JWT pengguna"| DB
+    SCHED -->|"POST /internal/jobs/overnight + X-Job-Secret"| JOB
+    JOB -->|"service role: tulis notifikasi"| DB
+    DB -->|"perubahan attendance"| RT
+    RT -->|"postgres_changes"| WEB
+```
+
+### 10.3 ERD skema awal
+
+```mermaid
+erDiagram
+    AUTH_USERS ||--|| PROFILES : "memiliki"
+    PROFILES ||--o{ RESERVATIONS : "membuat"
+    ROOMS ||--o{ RESERVATIONS : "dipesan dalam"
+    PROFILES ||--o{ ATTENDANCE : "mencatat"
+    EQUIPMENT ||--o{ EQUIPMENT_LOANS : "dipinjam dalam"
+    PROFILES ||--o{ EQUIPMENT_LOANS : "meminjam"
+    PROFILES ||--o{ FACILITY_REPORTS : "melaporkan"
+    PROFILES ||--o{ NOTIFICATIONS : "menerima"
+
+    AUTH_USERS {
+        uuid id PK
+        text email
+    }
+    PROFILES {
+        uuid id PK, FK
+        text full_name
+        text role "anggota | admin | advisor"
+        timestamptz created_at
+    }
+    ROOMS {
+        uuid id PK
+        text name UK
+        text kind "ruang | alat"
+        timestamptz created_at
+    }
+    RESERVATIONS {
+        uuid id PK
+        uuid room_id FK
+        text team
+        uuid user_id FK
+        timestamptz starts_at
+        timestamptz ends_at
+        text status "aktif | dibatalkan"
+        timestamptz created_at
+    }
+    LAB_HOURS {
+        int weekday PK "0-6"
+        time opens_at
+        time closes_at
+    }
+    ATTENDANCE {
+        uuid id PK
+        uuid user_id FK
+        timestamptz checked_in_at
+        timestamptz checked_out_at "null jika terbuka"
+    }
+    EQUIPMENT {
+        uuid id PK
+        text name
+        text category
+        int total_qty
+        text location
+    }
+    EQUIPMENT_LOANS {
+        uuid id PK
+        uuid equipment_id FK
+        uuid user_id FK
+        int qty
+        timestamptz borrowed_at
+        timestamptz returned_at
+    }
+    FACILITY_REPORTS {
+        uuid id PK
+        text category "lampu | ventilasi | kerusakan"
+        text description
+        text location
+        uuid reported_by FK
+        text status "baru | ditindaklanjuti | selesai"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id FK
+        text kind "reservasi | lembur | laporan"
+        text message
+        text dedupe_key UK
+        timestamptz read_at
+        timestamptz created_at
+    }
+```
+
+Constraint utama:
+
+- `reservations`: `check (ends_at > starts_at)` dan `exclude using gist (room_id with =, tstzrange(starts_at, ends_at) with &&) where (status = 'aktif')` dengan extension `btree_gist`. Rentang `tstzrange` default `[)`, sehingga reservasi berdampingan tidak bertabrakan.
+- `attendance`: unique partial index `(user_id) where checked_out_at is null`, sehingga hanya ada satu sesi terbuka per pengguna.
+- `equipment_availability`: view `total_qty - sum(qty) where returned_at is null`. Peminjaman mengunci baris `equipment` dengan `select ... for update` di dalam transaksi.
+- `facility_reports`: trigger yang hanya mengizinkan transisi `baru` ke `ditindaklanjuti` dan `ditindaklanjuti` ke `selesai`.
+- `notifications.dedupe_key`: unique, berisi `overnight:<userId>:<YYYY-MM-DD>` untuk peringatan malam.
+
+### 10.4 Kebijakan RLS per peran
+
+Semua tabel di schema `public` mengaktifkan RLS. Peran diambil dari `profiles.role` milik `auth.uid()`. "Milik sendiri" berarti kolom pemilik (`id`, `user_id`, atau `reported_by`) sama dengan `auth.uid()`. Tanda "tidak" berarti tidak ada policy, sehingga operasi ditolak.
+
+| Tabel | Operasi | anggota | admin | advisor |
+| --- | --- | --- | --- | --- |
+| profiles | select | milik sendiri | semua | milik sendiri |
+| profiles | update | `full_name` milik sendiri, `role` tidak berubah | `full_name` milik sendiri | `full_name` milik sendiri |
+| profiles | insert, delete | tidak (dibuat trigger) | tidak | tidak |
+| rooms | select | semua | semua | semua |
+| rooms | insert, update, delete | tidak | ya | tidak |
+| reservations | select | semua | semua | semua |
+| reservations | insert | `user_id = auth.uid()` | `user_id = auth.uid()` | tidak |
+| reservations | update | `status` menjadi `dibatalkan` pada milik sendiri | semua | tidak |
+| reservations | delete | tidak | semua | tidak |
+| lab_hours | select | semua | semua | semua |
+| lab_hours | update | tidak | ya | tidak |
+| attendance | select | milik sendiri | semua | semua |
+| attendance | insert | milik sendiri | milik sendiri | tidak |
+| attendance | update | `checked_out_at` milik sendiri | `checked_out_at` milik sendiri | tidak |
+| equipment | select | semua | semua | semua |
+| equipment | insert, update, delete | tidak | ya | tidak |
+| equipment_loans | select | milik sendiri | semua | semua |
+| equipment_loans | insert | milik sendiri | milik sendiri | tidak |
+| equipment_loans | update | `returned_at` milik sendiri | semua | tidak |
+| facility_reports | select | milik sendiri | semua | semua |
+| facility_reports | insert | `reported_by = auth.uid()` | `reported_by = auth.uid()` | tidak |
+| facility_reports | update | tidak | `status` | tidak |
+| notifications | select | milik sendiri | milik sendiri | milik sendiri |
+| notifications | update | `read_at` milik sendiri | `read_at` milik sendiri | `read_at` milik sendiri |
+| notifications | insert | tidak (dibuat server dengan service role) | tidak | tidak |
+
+### 10.5 Daftar endpoint API
+
+Semua endpoint kecuali `GET /health` dan `POST /internal/jobs/overnight` memerlukan header `Authorization: Bearer <jwt>`. Format error: `{"error":{"code":"...","message":"..."}}`.
+
+| Method | Path | Peran | Keterangan |
+| --- | --- | --- | --- |
+| GET | `/health` | publik | Cek kesehatan, mengembalikan `{"status":"ok"}` |
+| GET | `/rooms` | anggota, admin, advisor | Daftar ruang dan alat yang dapat dipesan |
+| GET | `/reservations?from=&to=` | anggota, admin, advisor | Daftar reservasi dalam rentang waktu |
+| POST | `/reservations` | anggota, admin | Buat reservasi; `409 CONFLICT`, `422 OUTSIDE_HOURS` |
+| PATCH | `/reservations/:id/cancel` | pemilik, admin | Batalkan reservasi |
+| POST | `/attendance/check-in` | anggota, admin | Buka sesi; `409 ALREADY_IN` |
+| POST | `/attendance/check-out` | anggota, admin | Tutup sesi; `404 NOT_IN` |
+| GET | `/attendance/present` | admin, advisor | Sesi terbuka dengan nama, durasi, dan `overNightLimit` |
+| GET | `/equipment` | anggota, admin, advisor | Katalog dengan jumlah `available` |
+| POST | `/equipment` | admin | Tambah alat |
+| POST | `/equipment/:id/loans` | anggota, admin | Pinjam alat; `409 INSUFFICIENT_STOCK` |
+| PATCH | `/equipment/loans/:loanId/return` | peminjam, admin | Tandai pengembalian |
+| POST | `/facility-reports` | anggota, admin | Buat laporan |
+| GET | `/facility-reports` | anggota (milik sendiri), admin, advisor (semua) | Daftar laporan |
+| PATCH | `/facility-reports/:id/status` | admin | Ubah status; `422 INVALID_TRANSITION` |
+| GET | `/notifications` | anggota, admin, advisor | Notifikasi milik sendiri |
+| PATCH | `/notifications/:id/read` | pemilik | Tandai sudah dibaca |
+| POST | `/internal/jobs/overnight` | job (header `X-Job-Secret`) | Buat peringatan malam; `401` jika secret salah |
+
+### 10.6 Strategi Realtime untuk Modul B
+
+Keputusan ini wajib diikuti pada Tahap 1.6 dan 1.8.
+
+| Aspek | Keputusan |
+| --- | --- |
+| Mekanisme | Supabase Realtime `postgres_changes` |
+| Tabel yang dipublikasikan | Hanya `public.attendance`, lewat `alter publication supabase_realtime add table public.attendance` |
+| Nama channel | `attendance-monitor` |
+| Event | `INSERT` (check-in) dan `UPDATE` (check-out) |
+| Pelanggan | Halaman `/monitor` untuk peran admin dan advisor |
+| Otorisasi | RLS `select` pada `attendance` berlaku untuk Realtime. Admin dan advisor menerima semua baris; anggota hanya baris miliknya |
+| Payload | Baris `new` dari tabel: `id`, `user_id`, `checked_in_at`, `checked_out_at` |
+| Nama anggota | Tidak ada di payload. Klien memakai daftar nama dari `GET /attendance/present`, dan memuat ulang daftar itu jika `user_id` belum dikenal |
+| Penerapan di klien | Fungsi murni `applyAttendanceChange(list, event)`: `INSERT` menambah sesi, `UPDATE` dengan `checked_out_at` terisi menghapus sesi |
+| Saat koneksi putus | Saat status channel kembali `SUBSCRIBED`, klien memuat ulang `GET /attendance/present` |
+
+```mermaid
+sequenceDiagram
+    participant A as Anggota (web)
+    participant API as API Express
+    participant DB as PostgreSQL
+    participant RT as Supabase Realtime
+    participant M as Advisor (/monitor)
+
+    M->>API: GET /attendance/present
+    API-->>M: daftar sesi terbuka
+    M->>RT: subscribe channel attendance-monitor
+    A->>API: POST /attendance/check-in
+    API->>DB: insert attendance
+    API-->>A: 201 sesi dibuka
+    DB-->>RT: perubahan INSERT
+    RT-->>M: postgres_changes INSERT (payload new)
+    M->>M: applyAttendanceChange(list, event)
+```

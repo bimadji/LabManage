@@ -26,7 +26,9 @@ async function collectBlocks() {
 }
 
 async function renderWithMmdc(file) {
-  await run('npx', ['mmdc', '-i', file, '-o', `${file}.svg`], {
+  // shell: true is required for npx on Windows; it joins args without escaping,
+  // so paths (which may contain spaces) are quoted explicitly.
+  await run('npx', ['mmdc', '-i', `"${file}"`, '-o', `"${file}.svg"`], {
     cwd: root,
     shell: true,
     windowsHide: true,
