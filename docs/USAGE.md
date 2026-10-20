@@ -52,7 +52,7 @@ Masuk di web memakai salah satu akun demo di atas.
 
 - **Jadwal** (`/jadwal`): daftar reservasi dua minggu ke depan, dikelompokkan per hari, bisa difilter per ruang.
 - **Reservasi** (`/reservasi/baru`): pilih ruang atau alat, isi tim, waktu mulai, dan waktu selesai. Reservasi ditolak jika waktunya bertabrakan dengan reservasi aktif lain di ruang yang sama, atau jika berada di luar jam operasional 07:00–21:00 WIB.
-- **Check-in / check-out**: lewat API `POST /attendance/check-in` dan `POST /attendance/check-out`. Satu anggota hanya boleh punya satu sesi terbuka.
+- **Kehadiran** (`/kehadiran`): tekan **Check-in** saat mulai riset, lalu **Check-out** saat selesai. Halaman menampilkan sesi sendiri yang terakhir, waktu mulai/selesai dalam WIB, dan durasi. Sesi aktif tetap terlihat setelah halaman dimuat ulang; data diperbarui setiap 30 detik dan saat kembali ke tab. Satu anggota hanya boleh punya satu sesi terbuka. Jika koneksi gagal, gunakan **Coba lagi** sebelum mengirim aksi berikutnya.
 - **Laporan fasilitas** (`/laporan-fasilitas`): pilih kategori lampu, ventilasi, atau kerusakan; isi lokasi dan deskripsi 5–1000 karakter. Anggota melihat laporan miliknya sendiri beserta status tindak lanjutnya.
 - **Inventaris** (`/inventaris`): daftar komponen habis pakai dan barang satuan. Komponen diberi tanda `HABIS` (stok 0), `MENIPIS` (stok ≤ minimum), atau `AMAN`; barang diberi tanda `TERSEDIA` atau `DIPINJAM` beserta nama peminjam. Pencarian dan filter jenis/status berjalan di browser.
 - **Lapor ambil komponen**: tombol `Lapor ambil` membuka form jumlah dan catatan. Laporan berstatus `MENUNGGU` sampai admin mengonfirmasi; stok baru berkurang saat dikonfirmasi.
@@ -61,6 +61,7 @@ Masuk di web memakai salah satu akun demo di atas.
 
 ### Admin
 
+- **Kehadiran** (`/kehadiran`): check-in/check-out dan melihat sesi pribadi dengan alur yang sama seperti anggota.
 - Melihat semua reservasi, membatalkan reservasi siapa pun.
 - **Inventaris**: membuat item (`/inventaris/baru`), mengubah jumlah komponen, menandai barang kembali, mengubah detail, dan menghapus item dari halaman detail `/inventaris/:id`.
 - **Kotak masuk inventaris** (`/inventaris/kotak-masuk`): mengonfirmasi atau menolak laporan ambil komponen, serta menyetujui atau menolak permintaan pinjam barang. Badge di samping tautan `Inventaris` menunjukkan jumlah permintaan yang masih menunggu.
@@ -87,6 +88,7 @@ Masuk di web memakai salah satu akun demo di atas.
 | POST | `/attendance/check-in` | anggota, admin |
 | POST | `/attendance/check-out` | anggota, admin |
 | GET | `/attendance/present` | admin, advisor |
+| GET | `/attendance/me` | anggota, admin (sesi sendiri yang terakhir beserta `durationMinutes`; `null` jika belum ada) |
 | GET | `/inventory?kind=&flag=&q=` | semua peran |
 | POST | `/inventory` | admin |
 | PATCH | `/inventory/:id` | admin |

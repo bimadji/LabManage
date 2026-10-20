@@ -29,6 +29,32 @@ export function attendanceRouter(config: Config): Router {
   const router = Router();
   const dbFor = (req: Request) => userClient(config, req.accessToken!);
 
+  // Sesi pribadi terakhir untuk memulihkan tampilan setelah halaman dimuat ulang.
+  router.get('/attendance/me', requireRole('anggota', 'admin'), async (req, res) => {
+    const { data, error } = await dbFor(req)
+      .from('attendance')
+      .select(COLUMNS)
+      .eq('user_id', req.user!.id)
+      .order('checked_in_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<AttendanceRow>();
+    if (error) throw fromDbError(error);
+    if (!data) {
+      res.json(null);
+      return;
+    }
+    res.json({
+      ...toSession(data),
+      durationMinutes: durationMinutes(
+        {
+          checkedInAt: new Date(data.checked_in_at),
+          checkedOutAt: data.checked_out_at ? new Date(data.checked_out_at) : null,
+        },
+        new Date(),
+      ),
+    });
+  });
+
   router.post('/attendance/check-in', requireRole('anggota', 'admin'), async (req, res) => {
     const { data, error } = await dbFor(req)
       .from('attendance')
