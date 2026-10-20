@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import { requireAuth, supabaseVerifier, type AuthVerifier } from './auth/requireAuth.js';
 import { attendanceRouter } from './attendance/routes.js';
+import { researchAttendanceRouter } from './attendance/research.js';
 import type { Config } from './config.js';
 import { requestsRouter } from './inventory/requests.js';
 import { inventoryRouter } from './inventory/routes.js';
@@ -31,6 +32,7 @@ export function createApp(
   // Everything below requires a valid Supabase JWT.
   app.use(requireAuth(verifier));
   app.use(attendanceRouter(config));
+  app.use(researchAttendanceRouter(config));
   app.use(inventoryRouter(config));
   app.use(requestsRouter(config));
   app.use(reportsRouter(config));

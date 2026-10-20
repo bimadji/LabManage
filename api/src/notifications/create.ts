@@ -1,7 +1,7 @@
 import type { Config } from '../config.js';
 import { serviceClient } from '../supabase.js';
 
-export type NotificationKind = 'reservasi' | 'lembur' | 'laporan' | 'inventaris';
+export type NotificationKind = 'reservasi' | 'lembur' | 'laporan' | 'inventaris' | 'kehadiran';
 
 export interface NewNotification {
   userId: string;

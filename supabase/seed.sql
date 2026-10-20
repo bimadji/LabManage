@@ -25,3 +25,6 @@ insert into public.equipment (name, category, kind, quantity, min_stock, locatio
   ('Laptop Lenovo ThinkPad E14', 'komputer', 'barang', 1, 0, 'Lemari D'),
   ('Multimeter Fluke 17B+', 'alat ukur', 'barang', 1, 0, 'Meja 1')
 on conflict (name) do nothing;
+-- Target awal; pengulangan seed tidak mengganti target yang sudah diatur admin.
+insert into public.attendance_settings (id, weekly_target_minutes)
+values (true, 600) on conflict (id) do nothing;
