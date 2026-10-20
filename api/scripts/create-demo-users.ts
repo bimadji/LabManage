@@ -2,6 +2,7 @@
 // Run after `npm run db:start`: `npm run db:seed-users` (from api/).
 import { config as loadDotenv } from 'dotenv';
 import type { Role } from '../src/auth/requireAuth.js';
+import { researchDemo } from '../src/attendance/demo.js';
 import { loadConfig } from '../src/config.js';
 import { serviceClient } from '../src/supabase.js';
 
@@ -63,7 +64,8 @@ for (const demo of DEMO_USERS) {
 // Demo activity that must reference auth users, so it lives here instead of seed.sql.
 const anggotaId = idByEmail.get('anggota@labmanage.test');
 const adminId = idByEmail.get('admin@labmanage.test');
-if (!anggotaId || !adminId) {
+const advisorId = idByEmail.get('advisor@labmanage.test');
+if (!anggotaId || !adminId || !advisorId) {
   throw new Error('User demo tidak ditemukan setelah dibuat');
 }
 
@@ -97,6 +99,11 @@ function wibIso(dayOffset: number, hour: number, minute = 0): string {
 
 // Reset demo-owned rows so reruns stay idempotent.
 await admin.from('reservations').delete().in('user_id', [anggotaId, adminId]);
+// Log memiliki foreign key ke sesi/notifikasi; bersihkan hanya akun demo dahulu.
+for (const table of ['attendance_corrections', 'attendance_warnings']) {
+  const { error } = await admin.from(table).delete().in('user_id', [anggotaId, adminId]);
+  if (error) throw error;
+}
 await admin.from('attendance').delete().in('user_id', [anggotaId, adminId]);
 await admin.from('facility_reports').delete().in('reported_by', [anggotaId, adminId]);
 await admin.from('notifications').delete().in('user_id', [anggotaId, adminId]);
@@ -124,10 +131,46 @@ const demoReservations = [
 const { error: reservationError } = await admin.from('reservations').insert(demoReservations);
 if (reservationError) throw reservationError;
 
-const { error: attendanceError } = await admin
-  .from('attendance')
-  .insert({ user_id: anggotaId, checked_in_at: new Date(Date.now() - 45 * 60_000).toISOString() });
+const research = researchDemo(new Date());
+const { error: attendanceError } = await admin.from('attendance').insert([
+  {
+    user_id: anggotaId,
+    checked_in_at: new Date(Date.now() - 45 * 60_000).toISOString(),
+    checked_out_at: null,
+  },
+  ...research.sessions.map((session) => ({
+    user_id: anggotaId,
+    checked_in_at: session.checkedInAt,
+    checked_out_at: session.checkedOutAt,
+  })),
+]);
 if (attendanceError) throw attendanceError;
+
+const { data: warningNotification, error: warningNotificationError } = await admin
+  .from('notifications')
+  .insert({
+    user_id: anggotaId,
+    kind: 'kehadiran',
+    message: research.warning.message,
+    dedupe_key: `attendance-warning:${anggotaId}:${research.warning.warningDate}`,
+    created_at: research.warning.createdAt,
+  })
+  .select('id')
+  .single();
+if (warningNotificationError) throw warningNotificationError;
+const { error: warningError } = await admin.from('attendance_warnings').insert({
+  user_id: anggotaId,
+  advisor_id: advisorId,
+  week_start: research.warning.weekStart,
+  warning_date: research.warning.warningDate,
+  total_minutes: research.warning.totalMinutes,
+  target_minutes: research.warning.targetMinutes,
+  note: research.warning.note,
+  message: research.warning.message,
+  notification_id: warningNotification.id,
+  created_at: research.warning.createdAt,
+});
+if (warningError) throw warningError;
 
 const demoReports = [
   {
@@ -255,6 +298,6 @@ const { error: historyError } = await admin.from('inventory_history').insert([
 if (historyError) throw historyError;
 
 console.log(
-  'data demo: 3 reservasi, 1 sesi kehadiran terbuka, 2 laporan fasilitas, ' +
+  'data demo: 3 reservasi, 1 sesi terbuka, 3 sesi selesai, 1 peringatan kehadiran, 2 laporan fasilitas, ' +
     '2 laporan ambil, 3 permintaan pinjam',
 );

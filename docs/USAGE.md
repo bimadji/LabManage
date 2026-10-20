@@ -95,6 +95,14 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 | POST | `/attendance/check-out` | anggota, admin |
 | GET | `/attendance/present` | admin, advisor |
 | GET | `/attendance/me` | anggota, admin (sesi sendiri yang terakhir beserta `durationMinutes`; `null` jika belum ada) |
+| GET | `/attendance/target` | semua peran |
+| PUT | `/attendance/target` | admin |
+| GET | `/attendance/summary?period=&date=&userId=` | anggota (sendiri), admin/advisor (anggota pilihan atau semua) |
+| GET | `/attendance/statistics?period=&date=&weeks=` | admin |
+| GET | `/attendance/warnings?userId=` | anggota (sendiri), admin/advisor (semua) |
+| POST | `/attendance/warnings` | advisor |
+| PATCH | `/attendance/:id/correct-check-out` | admin |
+| GET | `/attendance/corrections?userId=` | anggota (sendiri), admin/advisor (semua) |
 | GET | `/inventory?kind=&flag=&q=` | semua peran |
 | POST | `/inventory` | admin |
 | PATCH | `/inventory/:id` | admin |
@@ -154,3 +162,48 @@ curl -X POST http://localhost:4000/internal/jobs/overnight -H "X-Job-Secret: $JO
 ```
 
 `dedupe_key` `overnight:<userId>:<YYYY-MM-DD>` memastikan satu notifikasi per anggota per hari, berapa kali pun job dijalankan. Tanpa `JOB_SECRET` di env API, endpoint ini selalu 401.
+
+## 7. Backend absensi riset
+
+Tugas 2A menyediakan API berikut dengan header `Authorization: Bearer <JWT>`. UI rekap per peran dilanjutkan pada Tugas 2B–2D. Check-in/check-out dan halaman notifikasi yang sudah ada tetap dapat digunakan.
+
+### Periode dan perhitungan
+
+- `period` adalah `week` (default) atau `month`; `date` adalah tanggal kalender valid `YYYY-MM-DD`, default hari ini dalam WIB.
+- Minggu berlangsung Senin 00:00 sampai Senin berikutnya 00:00 WIB; bulan mengikuti kalender. Batas akhir tidak termasuk periode.
+- Sesi dibagi pada batas hari/periode dan dibatasi waktu sekarang, termasuk sesi terbuka. Akumulasi memakai milidetik, kemudian dikonversi ke menit pecahan tanpa pembulatan sebelum membandingkan target. Presisi timestamp di bawah milidetik dipotong agar SQL dan JavaScript konsisten.
+- Target mingguan global default 600 menit (10 jam). Target bulanan = target mingguan × jumlah hari bulan ÷ 7. `KURANG` berarti total menit di bawah target; tepat target berstatus `TERCAPAI`.
+- Hari hadir memiliki durasi positif. `attendanceRate` = hari hadir ÷ hari kalender yang sudah berlalu dalam periode, termasuk hari berjalan; 0 untuk periode yang belum dimulai.
+- `averageWeeklyHours` = total jam ÷ (jumlah hari periode ÷ 7). Minggu/bulan berjalan tetap memakai panjang periode penuh.
+- `overNightSessionRatio` = sesi dengan irisan positif setelah 21:00 sampai 24:00 WIB ÷ jumlah sesi dalam periode. Sesi lintas tengah malam tetap dihitung sekali; bagian sesi di luar periode tidak dihitung.
+- Rekap memakai roster anggota dan target yang berlaku saat permintaan, termasuk untuk periode historis. Log peringatan menyimpan snapshot target dan durasi saat dikirim.
+
+`GET /attendance/summary` mengembalikan `{period, weeklyTargetMinutes, targetMinutes, members}`. `period` berisi `kind`, `start`, `end` (ISO UTC), dan `days` (tanggal WIB). Setiap anggota berisi `userId`, `fullName`, `totalMinutes`, `totalHours`, `sessionCount`, `targetMinutes`, `status`, `days` (`date`, `minutes`, `sessionCount`), `daysPresent`, `elapsedDays`, `attendanceRate`, `averageWeeklyHours`, `overNightSessionCount`, dan `overNightSessionRatio`.
+
+Anggota hanya dapat membaca rekap sendiri; permintaan `userId` orang lain mendapat 403. Admin/advisor dapat memilih satu anggota atau menghilangkan `userId` untuk seluruh anggota. Profil admin/advisor tidak termasuk roster riset.
+
+`GET /attendance/statistics` menambahkan `aggregate` dan `trend` pada respons rekap. `weeks` adalah integer 1–52 (default 8); tren berakhir pada minggu yang mengandung tanggal pilihan. Agregat berisi jumlah anggota, total menit/jam, jumlah sesi, jumlah anggota KURANG, rata-rata jam mingguan per anggota, tingkat kehadiran keseluruhan, serta jumlah/rasio sesi malam. Rasio memakai jumlah pembilang dan penyebut keseluruhan, bukan rata-rata rasio sesi per anggota. Setiap baris tren memiliki periode minggu dan agregat yang sama. Daftar dibaca berhalaman secara internal agar tidak terpotong batas 1.000 baris Supabase.
+
+### Target, peringatan, dan koreksi
+
+- `PUT /attendance/target`: body `{"weeklyTargetMinutes":600}`; integer 0–10080. Respons `{weeklyTargetMinutes, updatedAt, updatedBy}` juga dipakai GET. Hanya admin dapat mengubah target; aktor/waktu audit berasal dari database.
+- `POST /attendance/warnings`: body `{"userId":"<uuid>","note":"Jadwalkan riset"}`. Catatan opsional, maksimal 1.000 karakter setelah trim. Advisor hanya dapat mengingatkan anggota KURANG pada **minggu berjalan**, bukan periode yang sedang dilihat di UI.
+- Satu anggota menerima maksimal satu peringatan per tanggal WIB, lintas advisor dan permintaan bersamaan. Notifikasi jenis `kehadiran` dan log dibuat dalam satu transaksi. Target tercapai atau kuota harian terpakai menghasilkan 409 (`TARGET_MET`/`WARNING_ALREADY_SENT`). Penerima yang bukan anggota menghasilkan 404.
+- Respons peringatan dan daftar riwayat memuat `id`, `userId`, `advisorId`, `weekStart`, `warningDate`, `note`, `message`, `totalMinutes`, `targetMinutes`, `notificationId`, `createdAt`. Notifikasi dapat dibaca dan ditandai melalui halaman `/notifikasi`.
+- `PATCH /attendance/:id/correct-check-out`: body `{"checkedOutAt":"2026-10-20T18:00:00+07:00","reason":"Lupa check-out setelah riset"}`. Admin hanya dapat menutup sesi yang masih terbuka; waktu selesai harus setelah mulai dan tidak melebihi sekarang. Alasan wajib 5–1.000 karakter setelah trim.
+- Koreksi dan audit disimpan atomik. Respons koreksi/riwayat berisi `id`, `attendanceId`, `userId`, `actorId`, `oldCheckedOutAt`, `checkedOutAt`, `reason`, `createdAt`. Sesi yang sudah ditutup menghasilkan 409 `SESSION_NOT_OPEN`.
+- Riwayat peringatan/koreksi hanya dapat dibaca pemilik, admin, dan advisor. Klien tidak dapat menulis atau menghapus log langsung. Advisor tidak dapat mengubah sesi; koreksi admin ke sesi anggota wajib melalui endpoint/RPC agar tercatat.
+
+### Memperbarui database lokal tanpa reset
+
+Untuk database lokal yang sudah berisi data, terapkan hanya migrasi tertunda:
+
+```bash
+npm run db:start
+npx supabase migration up --local
+npm test --prefix api
+```
+
+Migrasi menambahkan target awal hanya jika belum ada. Tidak perlu reset database untuk pembaruan ini. CI menguji seluruh urutan migrasi pada Supabase baru.
+
+Seed akun demo menambahkan tiga sesi selesai minggu lalu (termasuk lintas tengah malam), satu sesi terbuka, serta satu peringatan historis dengan snapshot 360/600 menit dan notifikasi terkait. Target yang sudah diatur admin dipertahankan. `npm run db:seed-users --prefix api` membuat ulang aktivitas akun demo; jalankan hanya pada lingkungan demo yang memang hendak diisi ulang. Untuk memeriksa perubahan tanpa mengganti aktivitas pengguna lokal, jalankan test yang memakai fixture pengguna terpisah.
