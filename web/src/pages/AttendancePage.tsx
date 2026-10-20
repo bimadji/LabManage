@@ -158,5 +158,14 @@ export function AttendancePage() {
       </section>
     );
   }
-  return <SessionContent key={profile.id} />;
+  return (
+    <>
+      {profile.role === 'anggota' && (
+        <Link className="button attendance-summary-link" to="/kehadiran/rekap">
+          Rekap dan peringatan saya
+        </Link>
+      )}
+      <SessionContent key={profile.id} />
+    </>
+  );
 }

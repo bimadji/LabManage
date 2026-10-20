@@ -140,6 +140,72 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.attendance-summary-link {
+  margin-bottom: var(--space-4);
+}
+.summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.summary-filters {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-5) 0;
+}
+.summary-filters label {
+  display: grid;
+  gap: var(--space-1);
+  font-weight: 600;
+  min-width: 0;
+}
+.summary-filters :is(input, select) {
+  width: 100%;
+  min-width: 0;
+}
+.personal-summary-page :is(.card, section) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.summary-period {
+  font-weight: 600;
+}
+.summary-metrics {
+  display: grid;
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+}
+.summary-metrics dt {
+  color: var(--color-muted-foreground);
+}
+.summary-metrics dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.summary-days h4 {
+  margin: 0;
+}
+.summary-days p {
+  margin-bottom: 0;
+}
+.summary-warnings {
+  margin-top: var(--space-6);
+}
+.summary-warnings > .muted {
+  margin-bottom: var(--space-4);
+}
+@media (min-width: 768px) {
+  .summary-filters {
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+  }
+  .summary-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .button,
 button {
   display: inline-flex;

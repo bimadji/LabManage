@@ -13,6 +13,7 @@ import { InventoryNewPage } from './pages/InventoryNewPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { MonitorPage } from './pages/MonitorPage';
 import { MyRequestsPage } from './pages/MyRequestsPage';
+import { MyAttendanceSummaryPage } from './pages/MyAttendanceSummaryPage';
 import { NewReservationPage } from './pages/NewReservationPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { SchedulePage } from './pages/SchedulePage';
@@ -86,6 +87,10 @@ function Shell() {
           <Route path="/inventaris/:id" element={<InventoryItemPage />} />
           <Route path="/monitor" element={<MonitorPage />} />
           <Route path="/kehadiran" element={<AttendancePage />} />
+          <Route
+            path="/kehadiran/rekap"
+            element={<MyAttendanceSummaryPage key={session.user?.id} />}
+          />
           <Route path="/laporan-fasilitas" element={<FacilityReportsPage />} />
           <Route path="/notifikasi" element={<NotificationsPage key={session.user?.id} />} />
           <Route path="*" element={<p className="muted">Halaman tidak ditemukan.</p>} />
