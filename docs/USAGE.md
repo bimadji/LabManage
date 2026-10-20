@@ -53,6 +53,7 @@ Masuk di web memakai salah satu akun demo di atas.
 - **Jadwal** (`/jadwal`): daftar reservasi dua minggu ke depan, dikelompokkan per hari, bisa difilter per ruang.
 - **Reservasi** (`/reservasi/baru`): pilih ruang atau alat, isi tim, waktu mulai, dan waktu selesai. Reservasi ditolak jika waktunya bertabrakan dengan reservasi aktif lain di ruang yang sama, atau jika berada di luar jam operasional 07:00–21:00 WIB.
 - **Check-in / check-out**: lewat API `POST /attendance/check-in` dan `POST /attendance/check-out`. Satu anggota hanya boleh punya satu sesi terbuka.
+- **Laporan fasilitas** (`/laporan-fasilitas`): pilih kategori lampu, ventilasi, atau kerusakan; isi lokasi dan deskripsi 5–1000 karakter. Anggota melihat laporan miliknya sendiri beserta status tindak lanjutnya.
 - **Inventaris** (`/inventaris`): daftar komponen habis pakai dan barang satuan. Komponen diberi tanda `HABIS` (stok 0), `MENIPIS` (stok ≤ minimum), atau `AMAN`; barang diberi tanda `TERSEDIA` atau `DIPINJAM` beserta nama peminjam. Pencarian dan filter jenis/status berjalan di browser.
 - **Lapor ambil komponen**: tombol `Lapor ambil` membuka form jumlah dan catatan. Laporan berstatus `MENUNGGU` sampai admin mengonfirmasi; stok baru berkurang saat dikonfirmasi.
 - **Ajukan pinjam barang**: hanya untuk barang `TERSEDIA`. Isi keperluan (wajib) dan perkiraan tanggal kembali (opsional). Permintaan berstatus `MENUNGGU` sampai disetujui admin.
@@ -64,13 +65,13 @@ Masuk di web memakai salah satu akun demo di atas.
 - **Inventaris**: membuat item (`/inventaris/baru`), mengubah jumlah komponen, menandai barang kembali, mengubah detail, dan menghapus item dari halaman detail `/inventaris/:id`.
 - **Kotak masuk inventaris** (`/inventaris/kotak-masuk`): mengonfirmasi atau menolak laporan ambil komponen, serta menyetujui atau menolak permintaan pinjam barang. Badge di samping tautan `Inventaris` menunjukkan jumlah permintaan yang masih menunggu.
 - Setiap perubahan jumlah, konfirmasi, persetujuan, dan pengembalian tercatat di riwayat item beserta aktor dan waktunya.
-- Mengubah status laporan fasilitas: `baru → ditindaklanjuti → selesai`. Transisi lain ditolak.
+- **Laporan fasilitas** (`/laporan-fasilitas`): melihat semua laporan, membuat laporan, serta mengubah status dengan tombol **Tindak lanjuti**, lalu **Tandai selesai**. Alurnya `baru → ditindaklanjuti → selesai`; transisi lain ditolak. Pelapor mendapat notifikasi saat status berubah.
 - Melihat dashboard monitoring (`/monitor`).
 
 ### Advisor
 
 - Melihat dashboard monitoring (`/monitor`): siapa yang sedang di lab, jam mulai, durasi berjalan, dan tanda jika sesi melewati 21:00 WIB. Daftar diperbarui otomatis lewat Supabase Realtime.
-- Melihat semua laporan fasilitas tanpa bisa mengubahnya.
+- **Laporan fasilitas** (`/laporan-fasilitas`): melihat semua laporan dan statusnya tanpa formulir pembuatan atau tombol perubahan status.
 - Melihat inventaris dan kotak masuk permintaan (`/inventaris/kotak-masuk`) tanpa tombol aksi; advisor tidak dapat mengajukan permintaan atau mengubah item.
 - Tidak dapat membuat reservasi, check-in, atau meminjam alat.
 
