@@ -14,6 +14,7 @@ import { InventoryPage } from './pages/InventoryPage';
 import { MonitorPage } from './pages/MonitorPage';
 import { MyRequestsPage } from './pages/MyRequestsPage';
 import { NewReservationPage } from './pages/NewReservationPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { SchedulePage } from './pages/SchedulePage';
 
 /** Admin badge: how many inventory requests still wait for a decision. */
@@ -66,6 +67,7 @@ function Shell() {
           <NavLink to="/monitor">Monitoring</NavLink>
           <NavLink to="/kehadiran">Kehadiran</NavLink>
           <NavLink to="/laporan-fasilitas">Laporan</NavLink>
+          <NavLink to="/notifikasi">Notifikasi</NavLink>
         </nav>
         <button type="button" className="link-back" onClick={() => supabaseClient().auth.signOut()}>
           Keluar
@@ -85,6 +87,7 @@ function Shell() {
           <Route path="/monitor" element={<MonitorPage />} />
           <Route path="/kehadiran" element={<AttendancePage />} />
           <Route path="/laporan-fasilitas" element={<FacilityReportsPage />} />
+          <Route path="/notifikasi" element={<NotificationsPage key={session.user?.id} />} />
           <Route path="*" element={<p className="muted">Halaman tidak ditemukan.</p>} />
         </Routes>
       </main>

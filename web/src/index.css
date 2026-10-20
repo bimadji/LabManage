@@ -380,6 +380,24 @@ select {
   margin-top: var(--space-3);
 }
 
+.notifications-refresh {
+  margin: var(--space-3) 0 var(--space-4);
+}
+
+.notification-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.notification-card .notification-message {
+  margin: var(--space-3) 0;
+  white-space: pre-wrap;
+}
+
+.notification-read {
+  margin-top: var(--space-3);
+}
+
 textarea {
   font: inherit;
   padding: var(--space-2) var(--space-3);
