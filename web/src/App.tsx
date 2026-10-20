@@ -5,6 +5,7 @@ import { useProfile } from './auth/useProfile';
 import { useSession } from './auth/useSession';
 import { apiFetch } from './lib/api';
 import { supabaseClient } from './lib/supabase';
+import { AttendancePage } from './pages/AttendancePage';
 import { FacilityReportsPage } from './pages/FacilityReportsPage';
 import { InventoryInboxPage } from './pages/InventoryInboxPage';
 import { InventoryItemPage } from './pages/InventoryItemPage';
@@ -63,6 +64,7 @@ function Shell() {
             <PendingBadge />
           </NavLink>
           <NavLink to="/monitor">Monitoring</NavLink>
+          <NavLink to="/kehadiran">Kehadiran</NavLink>
           <NavLink to="/laporan-fasilitas">Laporan</NavLink>
         </nav>
         <button type="button" className="link-back" onClick={() => supabaseClient().auth.signOut()}>
@@ -81,6 +83,7 @@ function Shell() {
           <Route path="/inventaris/kotak-masuk" element={<InventoryInboxPage />} />
           <Route path="/inventaris/:id" element={<InventoryItemPage />} />
           <Route path="/monitor" element={<MonitorPage />} />
+          <Route path="/kehadiran" element={<AttendancePage />} />
           <Route path="/laporan-fasilitas" element={<FacilityReportsPage />} />
           <Route path="*" element={<p className="muted">Halaman tidak ditemukan.</p>} />
         </Routes>

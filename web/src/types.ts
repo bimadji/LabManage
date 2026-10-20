@@ -1,5 +1,13 @@
 export type Role = 'anggota' | 'admin' | 'advisor';
 
+export interface AttendanceSession {
+  id: string;
+  userId: string;
+  checkedInAt: string;
+  checkedOutAt: string | null;
+  durationMinutes: number;
+}
+
 export type ReportCategory = 'lampu' | 'ventilasi' | 'kerusakan';
 export type ReportStatus = 'baru' | 'ditindaklanjuti' | 'selesai';
 

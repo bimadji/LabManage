@@ -132,6 +132,14 @@ h2 {
   gap: var(--space-3);
 }
 
+.attendance-page {
+  max-width: 42rem;
+}
+
+.attendance-page .card {
+  overflow-wrap: anywhere;
+}
+
 .button,
 button {
   display: inline-flex;
