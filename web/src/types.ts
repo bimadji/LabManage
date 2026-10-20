@@ -1,5 +1,13 @@
 export type Role = 'anggota' | 'admin' | 'advisor';
 
+export interface UserNotification {
+  id: string;
+  kind: string;
+  message: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export interface AttendanceSession {
   id: string;
   userId: string;

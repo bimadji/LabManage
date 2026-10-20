@@ -48,6 +48,12 @@ Masuk di web memakai salah satu akun demo di atas.
 
 ## 3. Memakai aplikasi per peran
 
+### Notifikasi pribadi (semua peran)
+
+Buka **Notifikasi** (`/notifikasi`) untuk melihat pesan akun Anda, terbaru terlebih dahulu: reservasi, lembur, laporan fasilitas, dan inventaris. Setiap pesan menampilkan waktu dalam WIB serta label **Belum dibaca** atau **Sudah dibaca**. Tekan **Tandai sudah dibaca** pada pesan yang belum dibaca; jika penyimpanan gagal, status tetap dipertahankan dan aksi dapat dicoba lagi.
+
+Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lagi** jika daftar gagal dimuat. Admin dan advisor juga hanya melihat notifikasi miliknya sendiri.
+
 ### Anggota
 
 - **Jadwal** (`/jadwal`): daftar reservasi dua minggu ke depan, dikelompokkan per hari, bisa difilter per ruang.
