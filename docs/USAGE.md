@@ -68,6 +68,10 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 
 ### Admin
 
+- Dari Monitoring, buka **Statistik, target, dan koreksi absensi** (`/monitor/admin`). Pilih minggu/bulan, tanggal WIB, dan jumlah minggu tren (1–52) untuk melihat total jam, rata-rata mingguan, kehadiran, jumlah anggota KURANG, serta porsi sesi lewat 21:00 WIB. Statistik anggota dan ringkasan memakai hasil perhitungan server; target historis mengikuti target yang berlaku saat dimuat.
+- **Target mingguan** menerima menit bulat 0–10080 dan berlaku global bagi anggota. Simpan target untuk memperbarui statistik; target bulanan dihitung proporsional terhadap panjang bulan.
+- **Koreksi sesi terbuka**: isi waktu check-out yang sebenarnya dalam **WIB** dan alasan 5–1000 karakter. Waktu harus sesudah check-in dan tidak di masa depan. Hanya sesi terbuka yang dapat ditutup; bila anggota sudah check-out, server menolak koreksi dan menampilkan alasannya. Riwayat menampilkan waktu selesai, alasan, aktor, waktu pencatatan, dan identitas audit. Gunakan **Muat ulang semua** untuk menyegarkan data; draf formulir akan dimuat ulang juga.
+
 - **Kehadiran** (`/kehadiran`): check-in/check-out dan melihat sesi pribadi dengan alur yang sama seperti anggota.
 - Melihat semua reservasi, membatalkan reservasi siapa pun.
 - **Inventaris**: membuat item (`/inventaris/baru`), mengubah jumlah komponen, menandai barang kembali, mengubah detail, dan menghapus item dari halaman detail `/inventaris/:id`.
@@ -168,7 +172,7 @@ curl -X POST http://localhost:4000/internal/jobs/overnight -H "X-Job-Secret: $JO
 
 ## 7. Backend absensi riset
 
-Tugas 2A menyediakan API berikut dengan header `Authorization: Bearer <JWT>`. UI anggota tersedia pada `/kehadiran/rekap` (Tugas 2B), dan UI advisor pada `/monitor/rekap` (Tugas 2C); UI admin dilanjutkan pada Tugas 2D. Check-in/check-out dan halaman notifikasi yang sudah ada tetap dapat digunakan.
+Tugas 2A menyediakan API berikut dengan header `Authorization: Bearer <JWT>`. UI anggota tersedia pada `/kehadiran/rekap` (Tugas 2B), UI advisor pada `/monitor/rekap` (Tugas 2C), dan UI admin pada `/monitor/admin` (Tugas 2D). Check-in/check-out dan halaman notifikasi yang sudah ada tetap dapat digunakan.
 
 ### Periode dan perhitungan
 

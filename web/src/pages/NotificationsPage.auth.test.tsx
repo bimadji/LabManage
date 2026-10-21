@@ -23,7 +23,15 @@ vi.mock('../lib/supabase', () => ({
       select: () => ({
         eq: (_column: string, id: string) => ({
           single: async () => ({
-            data: { id, role: id.startsWith('advisor-') ? 'advisor' : 'anggota', full_name: id },
+            data: {
+              id,
+              role: id.startsWith('advisor-')
+                ? 'advisor'
+                : id.startsWith('admin-')
+                  ? 'admin'
+                  : 'anggota',
+              full_name: id,
+            },
           }),
         }),
       }),
@@ -146,4 +154,70 @@ it('pergantian sesi advisor ke anggota menghapus rekap dan hak kirim', async () 
   expect(screen.queryByText('Data khusus advisor')).not.toBeInTheDocument();
   expect(await screen.findByText(/Halaman ini khusus advisor/)).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Kirim peringatan/ })).not.toBeInTheDocument();
+});
+
+it('pergantian sesi admin ke anggota menghapus formulir target dan koreksi', async () => {
+  auth.session = session('admin-a');
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: unknown) => {
+      const path = new URL(String(input)).pathname;
+      const body =
+        path === '/inventory/pending-count'
+          ? { total: 0 }
+          : path === '/attendance/target'
+            ? { weeklyTargetMinutes: 600, updatedAt: '2026-10-20T00:00:00Z', updatedBy: null }
+            : path === '/attendance/statistics'
+              ? {
+                  period: {
+                    kind: 'week',
+                    start: '2026-10-18T17:00:00Z',
+                    end: '2026-10-25T17:00:00Z',
+                    days: ['2026-10-19', '2026-10-25'],
+                  },
+                  weeklyTargetMinutes: 600,
+                  targetMinutes: 600,
+                  members: [],
+                  trend: [],
+                  aggregate: {
+                    memberCount: 0,
+                    belowTargetCount: 0,
+                    totalHours: 0,
+                    sessionCount: 0,
+                    averageWeeklyHours: 0,
+                    attendanceRate: 0,
+                    overNightSessionCount: 0,
+                    overNightSessionRatio: 0,
+                  },
+                }
+              : path === '/attendance/present'
+                ? [
+                    {
+                      id: 'session-1',
+                      userId: 'member-1',
+                      fullName: 'Anggota rahasia',
+                      checkedInAt: '2026-10-20T10:00:00Z',
+                      checkedOutAt: null,
+                      durationMinutes: 20,
+                      overNightLimit: false,
+                    },
+                  ]
+                : [];
+      return new Response(JSON.stringify(body), { status: 200 });
+    }),
+  );
+  window.history.replaceState({}, '', '/monitor/admin');
+  render(<App />);
+  expect(await screen.findByLabelText('Target mingguan (menit)')).toHaveValue(600);
+  expect(
+    await screen.findByRole('button', { name: 'Simpan koreksi Anggota rahasia' }),
+  ).toBeEnabled();
+  await act(async () => {
+    auth.session = session('member-b');
+    for (const callback of auth.callbacks) callback('SIGNED_IN', auth.session);
+  });
+  expect(await screen.findByText(/Halaman ini khusus admin/)).toBeInTheDocument();
+  expect(screen.queryByLabelText('Target mingguan (menit)')).not.toBeInTheDocument();
+  expect(screen.queryByText('Anggota rahasia')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Simpan koreksi/ })).not.toBeInTheDocument();
 });
