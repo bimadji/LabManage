@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useProfile } from '../auth/useProfile';
 import { apiFetch } from '../lib/api';
 import { formatTime } from '../lib/datetime';
 import { supabaseClient } from '../lib/supabase';
@@ -8,6 +10,7 @@ const CHANNEL = 'attendance-monitor';
 
 /** Live list of who is in the lab. Admin/advisor only; the API also enforces this. */
 export function MonitorPage() {
+  const { profile } = useProfile();
   const [sessions, setSessions] = useState<PresentSession[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [live, setLive] = useState(false);
@@ -66,6 +69,14 @@ export function MonitorPage() {
           {live ? 'Langganan aktif' : 'Menyambung…'}
         </span>
       </div>
+
+      {profile?.role === 'advisor' && (
+        <p className="attendance-summary-link">
+          <Link className="button" to="/monitor/rekap">
+            Rekap anggota dan peringatan
+          </Link>
+        </p>
+      )}
 
       {status === 'loading' && <p className="muted">Memuat kehadiran…</p>}
       {status === 'error' && (

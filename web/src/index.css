@@ -149,6 +149,42 @@ h2 {
   gap: var(--space-2);
   margin-bottom: var(--space-3);
 }
+.advisor-summary-page :is(.card, section, details) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.advisor-members {
+  display: grid;
+  gap: var(--space-4);
+}
+.advisor-member h3 {
+  margin: 0;
+}
+.advisor-warning-hint {
+  margin-bottom: var(--space-4);
+}
+.advisor-warning-form,
+.advisor-warning-form label {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.advisor-warning-form {
+  margin-top: var(--space-4);
+}
+.advisor-warning-form textarea {
+  width: 100%;
+  min-width: 0;
+}
+.advisor-days summary {
+  min-height: 44px;
+  padding: var(--space-3) 0;
+  cursor: pointer;
+  font-weight: 600;
+}
+.advisor-days ul {
+  padding-left: var(--space-4);
+}
 .summary-filters {
   display: grid;
   gap: var(--space-3);
