@@ -22,7 +22,9 @@ vi.mock('../lib/supabase', () => ({
     from: () => ({
       select: () => ({
         eq: (_column: string, id: string) => ({
-          single: async () => ({ data: { id, role: 'anggota', full_name: id } }),
+          single: async () => ({
+            data: { id, role: id.startsWith('advisor-') ? 'advisor' : 'anggota', full_name: id },
+          }),
         }),
       }),
     }),
@@ -75,7 +77,10 @@ beforeEach(() => {
     }),
   );
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 it.each(['/notifikasi', '/kehadiran/rekap'])(
   'perubahan sesi langsung A ke B menghapus data lama pada %s',
@@ -91,3 +96,54 @@ it.each(['/notifikasi', '/kehadiran/rekap'])(
     expect(await screen.findByText('Pesan pribadi B')).toBeInTheDocument();
   },
 );
+
+it('pergantian sesi advisor ke anggota menghapus rekap dan hak kirim', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-21T05:00:00Z'));
+  auth.session = session('advisor-a');
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            period: {
+              kind: 'week',
+              start: '2026-10-18T17:00:00Z',
+              end: '2026-10-25T17:00:00Z',
+              days: ['2026-10-19', '2026-10-25'],
+            },
+            weeklyTargetMinutes: 600,
+            targetMinutes: 600,
+            members: [
+              {
+                userId: 'member-1',
+                fullName: 'Data khusus advisor',
+                totalHours: 0,
+                sessionCount: 0,
+                status: 'KURANG',
+                daysPresent: 0,
+                elapsedDays: 3,
+                attendanceRate: 0,
+                days: [],
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+    ),
+  );
+  window.history.replaceState({}, '', '/monitor/rekap');
+  render(<App />);
+  expect(await screen.findByText('Data khusus advisor')).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Kirim peringatan untuk Data khusus advisor' }),
+  ).toBeEnabled();
+  await act(async () => {
+    auth.session = session('member-b');
+    for (const callback of auth.callbacks) callback('SIGNED_IN', auth.session);
+  });
+  expect(screen.queryByText('Data khusus advisor')).not.toBeInTheDocument();
+  expect(await screen.findByText(/Halaman ini khusus advisor/)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Kirim peringatan/ })).not.toBeInTheDocument();
+});

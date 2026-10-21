@@ -79,6 +79,8 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 ### Advisor
 
 - Melihat dashboard monitoring (`/monitor`): siapa yang sedang di lab, jam mulai, durasi berjalan, dan tanda jika sesi melewati 21:00 WIB. Daftar diperbarui otomatis lewat Supabase Realtime.
+- Dari Monitoring, buka **Rekap anggota dan peringatan** (`/monitor/rekap`): pilih minggu/bulan dan tanggal WIB untuk melihat durasi, target, sesi, status KURANG/TERCAPAI, dan rincian harian semua anggota. **Muat ulang rekap** mengambil kondisi terbaru.
+- **Kirim peringatan** tersedia untuk anggota KURANG pada rekap minggu berjalan, dengan catatan opsional maksimal 1000 karakter. Pilih **Minggu ini** saat sedang melihat bulan atau minggu historis. Server memeriksa target terbaru dan membatasi satu peringatan per anggota per hari; kegagalan ditampilkan tanpa mengklaim pesan terkirim. Advisor tidak dapat mengubah target atau mengoreksi absensi.
 - **Laporan fasilitas** (`/laporan-fasilitas`): melihat semua laporan dan statusnya tanpa formulir pembuatan atau tombol perubahan status.
 - Melihat inventaris dan kotak masuk permintaan (`/inventaris/kotak-masuk`) tanpa tombol aksi; advisor tidak dapat mengajukan permintaan atau mengubah item.
 - Tidak dapat membuat reservasi, check-in, atau meminjam alat.
@@ -166,7 +168,7 @@ curl -X POST http://localhost:4000/internal/jobs/overnight -H "X-Job-Secret: $JO
 
 ## 7. Backend absensi riset
 
-Tugas 2A menyediakan API berikut dengan header `Authorization: Bearer <JWT>`. UI anggota tersedia pada `/kehadiran/rekap` (Tugas 2B); UI advisor/admin dilanjutkan pada Tugas 2C–2D. Check-in/check-out dan halaman notifikasi yang sudah ada tetap dapat digunakan.
+Tugas 2A menyediakan API berikut dengan header `Authorization: Bearer <JWT>`. UI anggota tersedia pada `/kehadiran/rekap` (Tugas 2B), dan UI advisor pada `/monitor/rekap` (Tugas 2C); UI admin dilanjutkan pada Tugas 2D. Check-in/check-out dan halaman notifikasi yang sudah ada tetap dapat digunakan.
 
 ### Periode dan perhitungan
 
