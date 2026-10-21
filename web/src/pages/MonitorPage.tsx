@@ -77,6 +77,13 @@ export function MonitorPage() {
           </Link>
         </p>
       )}
+      {profile?.role === 'admin' && (
+        <p className="attendance-summary-link">
+          <Link className="button" to="/monitor/admin">
+            Statistik, target, dan koreksi absensi
+          </Link>
+        </p>
+      )}
 
       {status === 'loading' && <p className="muted">Memuat kehadiran…</p>}
       {status === 'error' && (

@@ -7,6 +7,7 @@ import { apiFetch } from './lib/api';
 import { supabaseClient } from './lib/supabase';
 import { AttendancePage } from './pages/AttendancePage';
 import { AdvisorAttendancePage } from './pages/AdvisorAttendancePage';
+import { AdminAttendancePage } from './pages/AdminAttendancePage';
 import { FacilityReportsPage } from './pages/FacilityReportsPage';
 import { InventoryInboxPage } from './pages/InventoryInboxPage';
 import { InventoryItemPage } from './pages/InventoryItemPage';
@@ -88,6 +89,7 @@ function Shell() {
           <Route path="/inventaris/:id" element={<InventoryItemPage />} />
           <Route path="/monitor" element={<MonitorPage key={session.user?.id} />} />
           <Route path="/monitor/rekap" element={<AdvisorAttendancePage key={session.user?.id} />} />
+          <Route path="/monitor/admin" element={<AdminAttendancePage key={session.user?.id} />} />
           <Route path="/kehadiran" element={<AttendancePage />} />
           <Route
             path="/kehadiran/rekap"
