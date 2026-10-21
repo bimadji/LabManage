@@ -59,6 +59,7 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 - **Jadwal** (`/jadwal`): daftar reservasi dua minggu ke depan, dikelompokkan per hari, bisa difilter per ruang.
 - **Reservasi** (`/reservasi/baru`): pilih ruang atau alat, isi tim, waktu mulai, dan waktu selesai. Reservasi ditolak jika waktunya bertabrakan dengan reservasi aktif lain di ruang yang sama, atau jika berada di luar jam operasional 07:00–21:00 WIB.
 - **Kehadiran** (`/kehadiran`): tekan **Check-in** saat mulai riset, lalu **Check-out** saat selesai. Halaman menampilkan sesi sendiri yang terakhir, waktu mulai/selesai dalam WIB, dan durasi. Sesi aktif tetap terlihat setelah halaman dimuat ulang; data diperbarui setiap 30 detik dan saat kembali ke tab. Satu anggota hanya boleh punya satu sesi terbuka. Jika koneksi gagal, gunakan **Coba lagi** sebelum mengirim aksi berikutnya.
+- **Rekap dan peringatan saya** (`/kehadiran/rekap`), dibuka dari halaman Kehadiran: pilih mingguan/bulanan dan tanggal dalam periode WIB, lalu tekan **Tampilkan**. Rekap memuat total jam, target, status KURANG/TERCAPAI, jumlah sesi, tingkat kehadiran, dan rincian per hari. **Muat ulang** memperbarui rekap serta peringatan; riwayat peringatan menampilkan semua periode dengan target/durasi saat dikirim. Buka **Notifikasi** untuk menandai pesan sudah dibaca. Jika satu bagian gagal dimuat, bagian lainnya tetap tersedia dan tombol coba lagi disediakan.
 - **Laporan fasilitas** (`/laporan-fasilitas`): pilih kategori lampu, ventilasi, atau kerusakan; isi lokasi dan deskripsi 5–1000 karakter. Anggota melihat laporan miliknya sendiri beserta status tindak lanjutnya.
 - **Inventaris** (`/inventaris`): daftar komponen habis pakai dan barang satuan. Komponen diberi tanda `HABIS` (stok 0), `MENIPIS` (stok ≤ minimum), atau `AMAN`; barang diberi tanda `TERSEDIA` atau `DIPINJAM` beserta nama peminjam. Pencarian dan filter jenis/status berjalan di browser.
 - **Lapor ambil komponen**: tombol `Lapor ambil` membuka form jumlah dan catatan. Laporan berstatus `MENUNGGU` sampai admin mengonfirmasi; stok baru berkurang saat dikonfirmasi.
@@ -165,7 +166,7 @@ curl -X POST http://localhost:4000/internal/jobs/overnight -H "X-Job-Secret: $JO
 
 ## 7. Backend absensi riset
 
-Tugas 2A menyediakan API berikut dengan header `Authorization: Bearer <JWT>`. UI rekap per peran dilanjutkan pada Tugas 2B–2D. Check-in/check-out dan halaman notifikasi yang sudah ada tetap dapat digunakan.
+Tugas 2A menyediakan API berikut dengan header `Authorization: Bearer <JWT>`. UI anggota tersedia pada `/kehadiran/rekap` (Tugas 2B); UI advisor/admin dilanjutkan pada Tugas 2C–2D. Check-in/check-out dan halaman notifikasi yang sudah ada tetap dapat digunakan.
 
 ### Periode dan perhitungan
 

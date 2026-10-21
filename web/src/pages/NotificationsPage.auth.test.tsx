@@ -51,12 +51,19 @@ beforeEach(() => {
   window.history.replaceState({}, '', '/notifikasi');
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (_input: unknown, init?: RequestInit) => {
+    vi.fn(async (input: unknown, init?: RequestInit) => {
       const isA = new Headers(init?.headers).get('Authorization') === 'Bearer token-member-a';
+      if (new URL(String(input)).pathname === '/attendance/summary') {
+        return new Response(JSON.stringify({ members: [] }), { status: 200 });
+      }
       return new Response(
         JSON.stringify([
           {
             id: isA ? 'a' : 'b',
+            userId: isA ? 'member-a' : 'member-b',
+            weekStart: '2026-10-19',
+            totalMinutes: 0,
+            targetMinutes: 600,
             kind: 'laporan',
             message: isA ? 'Pesan pribadi A' : 'Pesan pribadi B',
             readAt: null,
@@ -70,13 +77,17 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-it('perubahan sesi langsung A ke B menghapus daftar lama dan memuat notifikasi akun B', async () => {
-  render(<App />);
-  expect(await screen.findByText('Pesan pribadi A')).toBeInTheDocument();
-  await act(async () => {
-    auth.session = session('member-b');
-    for (const callback of auth.callbacks) callback('SIGNED_IN', auth.session);
-  });
-  expect(screen.queryByText('Pesan pribadi A')).not.toBeInTheDocument();
-  expect(await screen.findByText('Pesan pribadi B')).toBeInTheDocument();
-});
+it.each(['/notifikasi', '/kehadiran/rekap'])(
+  'perubahan sesi langsung A ke B menghapus data lama pada %s',
+  async (path) => {
+    window.history.replaceState({}, '', path);
+    render(<App />);
+    expect(await screen.findByText('Pesan pribadi A')).toBeInTheDocument();
+    await act(async () => {
+      auth.session = session('member-b');
+      for (const callback of auth.callbacks) callback('SIGNED_IN', auth.session);
+    });
+    expect(screen.queryByText('Pesan pribadi A')).not.toBeInTheDocument();
+    expect(await screen.findByText('Pesan pribadi B')).toBeInTheDocument();
+  },
+);
