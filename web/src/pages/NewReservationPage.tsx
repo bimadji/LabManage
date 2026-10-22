@@ -13,18 +13,31 @@ export function NewReservationPage() {
   const [endsAt, setEndsAt] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [roomStatus, setRoomStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const fieldsDisabled = roomStatus !== 'ready' || rooms.length === 0 || submitting;
 
   useEffect(() => {
+    let active = true;
     apiFetch<Room[]>('/rooms')
       .then((list) => {
+        if (!active) return;
         setRooms(list);
         if (list.length > 0) setRoomId(list[0].id);
+        setRoomStatus('ready');
       })
-      .catch(() => setError('Daftar ruang gagal dimuat. Muat ulang halaman.'));
+      .catch(() => {
+        if (!active) return;
+        setRoomStatus('error');
+        setError('Daftar ruang gagal dimuat. Muat ulang halaman.');
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (fieldsDisabled) return;
     setError(null);
 
     // Local check first: no request is sent for an invalid range.
@@ -59,61 +72,107 @@ export function NewReservationPage() {
   }
 
   return (
-    <section>
+    <section className="reservation-page">
       <div className="page-head">
-        <h1>Reservasi baru</h1>
+        <div>
+          <h1>Reservasi baru</h1>
+          <p className="muted">Tentukan ruang atau alat dan waktu penggunaan untuk tim Anda.</p>
+        </div>
         <Link className="link-back" to="/jadwal">
           Kembali ke jadwal
         </Link>
       </div>
 
-      <form className="card form" onSubmit={onSubmit} noValidate>
-        <label htmlFor="ruang">Ruang atau alat</label>
-        <select id="ruang" value={roomId} onChange={(event) => setRoomId(event.target.value)}>
-          {rooms.map((room) => (
-            <option key={room.id} value={room.id}>
-              {room.name}
-            </option>
-          ))}
-        </select>
+      <form className="card reservation-form" onSubmit={onSubmit} noValidate>
+        <p className="reservation-hours">
+          Jam operasional lab <strong>07:00–21:00 WIB.</strong>
+        </p>
+        {roomStatus === 'loading' && (
+          <p className="muted reservation-message" role="status">
+            Memuat daftar ruang atau alat…
+          </p>
+        )}
+        {roomStatus === 'ready' && rooms.length === 0 && (
+          <p className="muted reservation-message" role="status">
+            Belum ada ruang atau alat yang dapat dipilih. Hubungi admin untuk informasi
+            ketersediaan.
+          </p>
+        )}
 
-        <label htmlFor="tim">Tim</label>
-        <input
-          id="tim"
-          value={team}
-          onChange={(event) => setTeam(event.target.value)}
-          maxLength={100}
-          required
-        />
+        <div className="reservation-form-sections">
+          <fieldset disabled={fieldsDisabled}>
+            <legend>Ruang dan tim</legend>
+            <div className="reservation-fields">
+              <div className="reservation-field">
+                <label htmlFor="ruang">Ruang atau alat</label>
+                <select
+                  id="ruang"
+                  value={roomId}
+                  onChange={(event) => setRoomId(event.target.value)}
+                >
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="reservation-field">
+                <label htmlFor="tim">Tim</label>
+                <input
+                  id="tim"
+                  value={team}
+                  onChange={(event) => setTeam(event.target.value)}
+                  maxLength={100}
+                  required
+                />
+              </div>
+            </div>
+          </fieldset>
 
-        <label htmlFor="mulai">Mulai</label>
-        <input
-          id="mulai"
-          type="datetime-local"
-          value={startsAt}
-          onChange={(event) => setStartsAt(event.target.value)}
-          required
-        />
-
-        <label htmlFor="selesai">Selesai</label>
-        <input
-          id="selesai"
-          type="datetime-local"
-          value={endsAt}
-          onChange={(event) => setEndsAt(event.target.value)}
-          required
-        />
+          <fieldset disabled={fieldsDisabled}>
+            <legend>Waktu penggunaan</legend>
+            <div className="reservation-fields">
+              <div className="reservation-field">
+                <label htmlFor="mulai">Mulai</label>
+                <input
+                  id="mulai"
+                  type="datetime-local"
+                  value={startsAt}
+                  onChange={(event) => setStartsAt(event.target.value)}
+                  aria-describedby="reservation-time-hint"
+                  required
+                />
+              </div>
+              <div className="reservation-field">
+                <label htmlFor="selesai">Selesai</label>
+                <input
+                  id="selesai"
+                  type="datetime-local"
+                  value={endsAt}
+                  onChange={(event) => setEndsAt(event.target.value)}
+                  aria-describedby="reservation-time-hint"
+                  required
+                />
+              </div>
+            </div>
+            <p id="reservation-time-hint" className="muted hint">
+              Tanggal dan jam isian mengikuti zona waktu perangkat Anda.
+            </p>
+          </fieldset>
+        </div>
 
         {error && (
-          <p className="error" role="alert">
+          <p className="error reservation-message" role="alert">
             {error}
           </p>
         )}
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Menyimpan…' : 'Simpan reservasi'}
-        </button>
-        <p className="muted hint">Jam operasional lab 07:00–21:00 WIB.</p>
+        <div className="reservation-submit">
+          <button type="submit" disabled={fieldsDisabled}>
+            {submitting ? 'Menyimpan…' : 'Simpan reservasi'}
+          </button>
+        </div>
       </form>
     </section>
   );
