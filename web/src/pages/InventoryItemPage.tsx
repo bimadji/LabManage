@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
 import { apiFetch, ApiRequestError } from '../lib/api';
@@ -27,6 +27,35 @@ export function InventoryItemPage() {
   const [absolute, setAbsolute] = useState('');
   const [editing, setEditing] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const pending = useRef(false);
+  const editToggle = useRef<HTMLButtonElement>(null);
+  const restoreEditFocus = useRef(false);
+
+  useEffect(() => {
+    if (!editing && !saving && restoreEditFocus.current) {
+      editToggle.current?.focus();
+      restoreEditFocus.current = false;
+    }
+  }, [editing, saving]);
+
+  function beginSave() {
+    if (pending.current) return false;
+    pending.current = true;
+    setSaving(true);
+    setNotice(null);
+    setError(null);
+    return true;
+  }
+  function finishSave() {
+    pending.current = false;
+    setSaving(false);
+  }
+  function closeEdit() {
+    restoreEditFocus.current = true;
+    setEditing(false);
+  }
 
   useEffect(() => {
     let active = true;
@@ -50,7 +79,7 @@ export function InventoryItemPage() {
   }, [id, reloadKey]);
 
   async function changeQuantity(mode: 'tambah' | 'kurang' | 'set', value: number) {
-    setError(null);
+    if (!beginSave()) return;
     try {
       const updated = await apiFetch<InventoryItem>(`/inventory/${id}/quantity`, {
         method: 'PATCH',
@@ -58,21 +87,27 @@ export function InventoryItemPage() {
       });
       setItem(updated);
       setReloadKey((key) => key + 1);
+      setNotice('Stok berhasil diperbarui.');
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Stok gagal diubah. Coba lagi.');
+    } finally {
+      finishSave();
     }
   }
 
   async function markReturned() {
-    setError(null);
+    if (!beginSave()) return;
     try {
       const updated = await apiFetch<InventoryItem>(`/inventory/${id}/return`, {
         method: 'PATCH',
       });
       setItem(updated);
       setReloadKey((key) => key + 1);
+      setNotice('Barang berhasil ditandai kembali.');
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Gagal menandai kembali. Coba lagi.');
+    } finally {
+      finishSave();
     }
   }
 
@@ -82,44 +117,70 @@ export function InventoryItemPage() {
     location: string;
     minStock: number;
   }) {
-    setError(null);
+    if (!beginSave()) return;
     try {
       const updated = await apiFetch<InventoryItem>(`/inventory/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(input),
       });
       setItem(updated);
-      setEditing(false);
+      closeEdit();
       setReloadKey((key) => key + 1);
+      setNotice('Detail item berhasil disimpan.');
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Item gagal diubah. Coba lagi.');
+    } finally {
+      finishSave();
     }
   }
 
   async function removeItem() {
-    if (!item) return;
+    if (!item || pending.current) return;
     if (!window.confirm(`Hapus ${item.name}? Riwayat item ini juga terhapus.`)) return;
 
-    setError(null);
+    if (!beginSave()) return;
     try {
       await apiFetch<{ ok: true }>(`/inventory/${id}`, { method: 'DELETE' });
       navigate('/inventaris');
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Item gagal dihapus. Coba lagi.');
+    } finally {
+      finishSave();
     }
   }
 
-  if (status === 'loading') return <p className="muted">Memuat item…</p>;
+  if (status === 'loading')
+    return (
+      <p className="muted" role="status">
+        Memuat item…
+      </p>
+    );
   if (status === 'error') {
     return (
-      <p className="error" role="alert">
-        Item gagal dimuat. Muat ulang halaman.
-      </p>
+      <section className="inventory-detail-page card">
+        <p className="error" role="alert">
+          Item gagal dimuat. Coba muat kembali.
+        </p>
+        <div className="inventory-detail-actions">
+          <button
+            type="button"
+            onClick={() => {
+              setStatus('loading');
+              setReloadKey((key) => key + 1);
+            }}
+          >
+            Coba lagi
+          </button>
+          <Link className="link-back" to="/inventaris">
+            Kembali ke inventaris
+          </Link>
+        </div>
+      </section>
     );
   }
   if (status === 'missing' || !item) {
     return (
-      <section>
+      <section className="inventory-detail-page card">
         <p className="muted">Item tidak ditemukan.</p>
         <Link className="link-back" to="/inventaris">
           Kembali ke inventaris
@@ -132,7 +193,7 @@ export function InventoryItemPage() {
   const change = Number(amount);
 
   return (
-    <section>
+    <section className="inventory-detail-page">
       <div className="page-head">
         <h1>{item.name}</h1>
         <Link className="link-back" to="/inventaris">
@@ -140,112 +201,138 @@ export function InventoryItemPage() {
         </Link>
       </div>
 
-      <div className="card">
-        <p className="muted">
-          {item.category}
-          {item.location ? ` · ${item.location}` : ''} · {item.kind}
-        </p>
-        {item.kind === 'komponen' ? (
-          <p className="reservation-time">
-            Stok {item.quantity} · minimum {item.minStock}
-          </p>
-        ) : (
-          <p className="reservation-time">Satu unit</p>
-        )}
-        <span className={TONE_CLASS[badge.tone]}>{badge.label}</span>
-        {item.borrowerName && <p className="muted">Dipinjam oleh {item.borrowerName}</p>}
-
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
-
-        {isAdmin && item.kind === 'komponen' && (
-          <div className="inline-form">
-            <label htmlFor="perubahan">Jumlah perubahan</label>
-            <input
-              id="perubahan"
-              type="number"
-              min={1}
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-            />
-            <div className="page-head">
-              <button
-                type="button"
-                onClick={() => void changeQuantity('tambah', change)}
-                disabled={!Number.isInteger(change) || change < 1}
-              >
-                + Tambah
-              </button>
-              <button
-                type="button"
-                onClick={() => void changeQuantity('kurang', change)}
-                disabled={!Number.isInteger(change) || change < 1}
-              >
-                − Kurang
-              </button>
-            </div>
-
-            <label htmlFor="angka-pasti">Isi angka pasti</label>
-            <input
-              id="angka-pasti"
-              type="number"
-              min={0}
-              value={absolute}
-              onChange={(event) => setAbsolute(event.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => void changeQuantity('set', Number(absolute))}
-              disabled={absolute === '' || !Number.isInteger(Number(absolute))}
-            >
-              Set
-            </button>
-          </div>
-        )}
-
-        {isAdmin && item.kind === 'barang' && item.status === 'dipinjam' && (
-          <button type="button" onClick={() => void markReturned()}>
-            Tandai kembali
-          </button>
-        )}
+      <div className="inventory-detail-layout">
+        <div className="card inventory-detail-info">
+          <h2>Informasi item</h2>
+          <p className="muted">Kategori: {item.category}</p>
+          <p className="muted">Lokasi: {item.location || 'Belum diisi'}</p>
+          <p className="muted">Jenis: {item.kind}</p>
+          {item.kind === 'komponen' ? (
+            <p className="reservation-time">
+              Stok {item.quantity} · minimum {item.minStock}
+            </p>
+          ) : (
+            <p className="reservation-time">Satu unit</p>
+          )}
+          <span className={TONE_CLASS[badge.tone]}>{badge.label}</span>
+          {item.borrowerName && <p className="muted">Dipinjam oleh {item.borrowerName}</p>}
+        </div>
 
         {isAdmin && (
-          <div className="page-head">
-            <button type="button" className="link-back" onClick={() => setEditing((v) => !v)}>
-              Ubah item
-            </button>
-            <button type="button" className="link-back" onClick={() => void removeItem()}>
-              Hapus item
-            </button>
-          </div>
-        )}
+          <div className="card inventory-detail-admin">
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            )}
+            {saving && <p role="status">Menyimpan perubahan…</p>}
+            {notice && <p role="status">{notice}</p>}
+            <fieldset disabled={saving}>
+              <legend>Kelola item</legend>
 
-        {isAdmin && editing && (
-          <EditItemForm item={item} onSave={saveDetails} onCancel={() => setEditing(false)} />
+              {isAdmin && item.kind === 'komponen' && (
+                <div className="inline-form">
+                  <label htmlFor="perubahan">Jumlah perubahan</label>
+                  <input
+                    id="perubahan"
+                    type="number"
+                    min={1}
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                  />
+                  <div className="page-head">
+                    <button
+                      type="button"
+                      onClick={() => void changeQuantity('tambah', change)}
+                      disabled={!Number.isInteger(change) || change < 1}
+                    >
+                      + Tambah
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void changeQuantity('kurang', change)}
+                      disabled={!Number.isInteger(change) || change < 1}
+                    >
+                      − Kurang
+                    </button>
+                  </div>
+
+                  <label htmlFor="angka-pasti">Isi angka pasti</label>
+                  <input
+                    id="angka-pasti"
+                    type="number"
+                    min={0}
+                    value={absolute}
+                    onChange={(event) => setAbsolute(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void changeQuantity('set', Number(absolute))}
+                    disabled={absolute === '' || !Number.isInteger(Number(absolute))}
+                  >
+                    Set
+                  </button>
+                </div>
+              )}
+
+              {isAdmin && item.kind === 'barang' && item.status === 'dipinjam' && (
+                <button type="button" onClick={() => void markReturned()}>
+                  Tandai kembali
+                </button>
+              )}
+
+              {isAdmin && (
+                <div className="inventory-detail-actions">
+                  <button
+                    ref={editToggle}
+                    type="button"
+                    className="link-back inventory-edit-toggle"
+                    aria-expanded={editing}
+                    aria-controls="inventory-edit-form"
+                    onClick={() => setEditing((v) => !v)}
+                  >
+                    Ubah item
+                  </button>
+                  <button
+                    type="button"
+                    className="link-back inventory-delete"
+                    onClick={() => void removeItem()}
+                  >
+                    Hapus item
+                  </button>
+                </div>
+              )}
+
+              {isAdmin && editing && (
+                <EditItemForm item={item} onSave={saveDetails} onCancel={closeEdit} />
+              )}
+            </fieldset>
+          </div>
         )}
       </div>
 
-      <h2>Riwayat</h2>
-      {history.length === 0 && <p className="muted">Belum ada riwayat.</p>}
-      <ul className="cards">
-        {history.map((entry) => {
-          const described = describeHistory(entry);
-          return (
-            <li key={entry.id} className="card">
-              <p className="reservation-room">{described.label}</p>
-              <p className="muted">
-                {formatDay(entry.createdAt)} {formatTime(entry.createdAt)} WIB ·{' '}
-                {entry.actorName ?? 'Tanpa nama'}
-              </p>
-              {described.change && <p className="reservation-time">{described.change}</p>}
-              {entry.note && <p className="muted">{entry.note}</p>}
-            </li>
-          );
-        })}
-      </ul>
+      <section className="inventory-detail-history" aria-labelledby="item-history-heading">
+        <h2 id="item-history-heading">Riwayat</h2>
+        {history.length === 0 && <p className="card muted">Belum ada riwayat.</p>}
+        <ul className="cards" aria-label="Riwayat perubahan item">
+          {history.map((entry) => {
+            const described = describeHistory(entry);
+            return (
+              <li key={entry.id} className="card">
+                <p className="reservation-room">{described.label}</p>
+                <p className="muted">
+                  <time dateTime={entry.createdAt}>
+                    {formatDay(entry.createdAt)} {formatTime(entry.createdAt)} WIB
+                  </time>{' '}
+                  · {entry.actorName ?? 'Tanpa nama'}
+                </p>
+                {described.change && <p className="reservation-time">{described.change}</p>}
+                {entry.note && <p className="muted">{entry.note}</p>}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </section>
   );
 }
@@ -278,7 +365,12 @@ function EditItemForm({ item, onSave, onCancel }: EditItemFormProps) {
   }
 
   return (
-    <form className="inline-form" onSubmit={onSubmit} noValidate>
+    <form
+      id="inventory-edit-form"
+      className="inline-form inventory-detail-edit"
+      onSubmit={onSubmit}
+      noValidate
+    >
       <label htmlFor="ubah-nama">Nama</label>
       <input id="ubah-nama" value={name} onChange={(e) => setName(e.target.value)} required />
 
