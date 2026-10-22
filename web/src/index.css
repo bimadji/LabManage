@@ -489,6 +489,118 @@ select {
   }
 }
 
+.reservation-page :is(div, p, fieldset, input, select) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reservation-page .page-head {
+  align-items: start;
+  margin-bottom: var(--space-5);
+}
+
+.reservation-page h1 {
+  margin-bottom: var(--space-2);
+}
+
+.reservation-page .link-back {
+  display: inline-flex;
+  align-items: center;
+}
+
+.reservation-form {
+  max-width: 48rem;
+}
+
+.reservation-hours {
+  margin: 0 0 var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-primary);
+}
+
+.reservation-form-sections,
+.reservation-fields,
+.reservation-field {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.reservation-form-sections {
+  gap: var(--space-5);
+}
+
+.reservation-field {
+  gap: var(--space-2);
+}
+
+.reservation-form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.reservation-form legend {
+  padding: 0 0 var(--space-4);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.reservation-field label {
+  font-weight: 600;
+}
+
+.reservation-field :is(input, select) {
+  width: 100%;
+}
+
+.reservation-form .hint {
+  margin-top: var(--space-3);
+}
+
+.reservation-message {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-border);
+  background: var(--color-background);
+}
+
+.reservation-message.error {
+  margin: var(--space-5) 0 0;
+  border-color: var(--color-destructive);
+}
+
+.reservation-submit {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.reservation-submit button {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .reservation-form {
+    padding: var(--space-5);
+  }
+
+  .reservation-form-sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reservation-submit {
+    display: flex;
+    justify-content: end;
+  }
+
+  .reservation-submit button {
+    width: auto;
+    min-width: 14rem;
+  }
+}
+
 .item-link {
   display: inline-flex;
   align-items: center;
