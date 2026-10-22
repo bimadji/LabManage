@@ -129,6 +129,73 @@ afterEach(() => {
 });
 
 describe('InventoryPage', () => {
+  it('mengumumkan pemuatan sebelum menampilkan hasil inventaris', async () => {
+    let resolve!: (value: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((done) => {
+            resolve = done;
+          }),
+      ),
+    );
+    renderPage();
+
+    expect(screen.getByRole('status')).toHaveTextContent('Memuat inventaris');
+    expect(screen.queryByText(/Tidak ada item yang cocok/)).not.toBeInTheDocument();
+    await waitFor(() => expect(resolve).toBeDefined());
+    resolve(jsonResponse(200, ITEMS));
+    expect(await screen.findByText(/Menampilkan 5 dari 5 item/)).toHaveAttribute('role', 'status');
+  });
+
+  it('membedakan katalog kosong dari hasil filter kosong', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(200, [])),
+    );
+    renderPage();
+
+    await screen.findByText('Inventaris belum tersedia.');
+    expect(screen.getByText(/Hubungi admin/)).toBeInTheDocument();
+    expect(screen.queryByText(/Tidak ada item yang cocok/)).not.toBeInTheDocument();
+  });
+
+  it('menghapus semua filter untuk memulihkan daftar tanpa mengambil ulang data', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('Resistor 220 Ohm');
+    await user.selectOptions(screen.getByLabelText('Jenis'), 'barang');
+    await user.selectOptions(screen.getByLabelText('Status'), 'tersedia');
+    await user.type(screen.getByLabelText('Cari'), 'tidak cocok');
+
+    expect(screen.getByRole('status')).toHaveTextContent('Menampilkan 0 dari 5 item');
+    expect(screen.getByText(/Tidak ada item yang cocok/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Hapus filter' }));
+
+    expect(screen.getByLabelText('Cari')).toHaveValue('');
+    expect(screen.getByLabelText('Cari')).toHaveFocus();
+    expect(screen.getByLabelText('Jenis')).toHaveValue('semua');
+    expect(screen.getByLabelText('Status')).toHaveValue('semua');
+    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    expect(screen.getByRole('status')).toHaveTextContent('Menampilkan 5 dari 5 item');
+    expect(
+      vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/inventory')),
+    ).toHaveLength(1);
+  });
+
+  it('menampilkan kegagalan pemuatan tanpa pesan katalog kosong', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(500, { error: { code: 'INTERNAL', message: 'Gagal' } })),
+    );
+    renderPage();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Inventaris gagal dimuat');
+    expect(screen.queryByText('Inventaris belum tersedia.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Menampilkan/)).not.toBeInTheDocument();
+  });
+
   it('menampilkan badge teks untuk komponen dan barang', async () => {
     renderPage();
     await screen.findByText('Baterai LiPo 3S');
@@ -177,7 +244,10 @@ describe('InventoryPage', () => {
     await user.type(within(card).getByLabelText('Catatan (opsional)'), 'untuk proyek');
     await user.click(within(card).getByRole('button', { name: 'Kirim laporan' }));
 
-    await screen.findByText('Laporan terkirim, menunggu konfirmasi admin.');
+    expect(await screen.findByText('Laporan terkirim, menunggu konfirmasi admin.')).toHaveAttribute(
+      'role',
+      'status',
+    );
 
     const call = vi
       .mocked(fetch)
@@ -201,6 +271,41 @@ describe('InventoryPage', () => {
 
     const tersedia = screen.getByText('Osiloskop Rigol DS1054Z').closest('li') as HTMLElement;
     expect(within(tersedia).getByRole('button', { name: 'Ajukan pinjam' })).toBeInTheDocument();
+  });
+
+  it('mengirim permintaan pinjam dengan payload yang tetap dan mengumumkan keberhasilan', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const card = (await screen.findByText('Osiloskop Rigol DS1054Z')).closest('li') as HTMLElement;
+    await user.click(within(card).getByRole('button', { name: 'Ajukan pinjam' }));
+    await user.type(within(card).getByLabelText('Keperluan'), '  Pengujian robot  ');
+    await user.type(within(card).getByLabelText('Perkiraan kembali (opsional)'), '2026-10-23');
+    await user.click(within(card).getByRole('button', { name: 'Kirim permintaan' }));
+
+    expect(await within(card).findByRole('status')).toHaveTextContent('Permintaan terkirim');
+    const call = vi
+      .mocked(fetch)
+      .mock.calls.find(([url]) => String(url).endsWith('/loan-requests'));
+    expect(JSON.parse(String(call?.[1]?.body))).toEqual({
+      itemId: 'item-tersedia',
+      purpose: 'Pengujian robot',
+      expectedReturnAt: '2026-10-23',
+    });
+  });
+
+  it('admin tetap memiliki tautan pengelolaan dan tombol permintaan', async () => {
+    profileState.profile = { id: 'user-admin', role: 'admin', fullName: 'Admin Demo' };
+    renderPage();
+    await screen.findByText('Resistor 220 Ohm');
+    expect(screen.getByRole('link', { name: 'Tambah item' })).toHaveAttribute(
+      'href',
+      '/inventaris/baru',
+    );
+    expect(screen.getByRole('link', { name: 'Kotak masuk' })).toHaveAttribute(
+      'href',
+      '/inventaris/kotak-masuk',
+    );
+    expect(screen.getByRole('button', { name: 'Ajukan pinjam' })).toBeInTheDocument();
   });
 
   it('menampilkan pesan error API pada role alert', async () => {

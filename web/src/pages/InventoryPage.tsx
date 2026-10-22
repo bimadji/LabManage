@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
 import { apiFetch, ApiRequestError } from '../lib/api';
@@ -21,6 +21,7 @@ export function InventoryPage() {
   const [kind, setKind] = useState<'semua' | 'komponen' | 'barang'>('semua');
   const [flag, setFlag] = useState<FlagFilter>('semua');
   const [query, setQuery] = useState('');
+  const searchInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -40,32 +41,47 @@ export function InventoryPage() {
 
   const visible = filterItems(items, { kind, flag, query });
   const canRequest = profile !== null && profile.role !== 'advisor';
+  const hasFilters = kind !== 'semua' || flag !== 'semua' || query !== '';
+
+  function clearFilters() {
+    setKind('semua');
+    setFlag('semua');
+    setQuery('');
+    searchInput.current?.focus();
+  }
 
   return (
-    <section>
+    <section className="inventory-page">
       <div className="page-head">
-        <h1>Inventaris</h1>
-        <Link className="link-back" to="/inventaris/permintaan-saya">
-          Permintaan saya
-        </Link>
+        <div>
+          <h1>Inventaris</h1>
+          <p className="muted">
+            Lihat stok komponen dan ketersediaan barang sebelum mengajukan permintaan.
+          </p>
+        </div>
+        <div className="inventory-actions">
+          <Link className="link-back" to="/inventaris/permintaan-saya">
+            Permintaan saya
+          </Link>
+          {profile?.role === 'admin' && (
+            <>
+              <Link className="link-back" to="/inventaris/kotak-masuk">
+                Kotak masuk
+              </Link>
+              <Link className="link-back" to="/inventaris/baru">
+                Tambah item
+              </Link>
+            </>
+          )}
+        </div>
       </div>
 
-      {profile?.role === 'admin' && (
-        <div className="page-head">
-          <Link className="link-back" to="/inventaris/kotak-masuk">
-            Kotak masuk
-          </Link>
-          <Link className="link-back" to="/inventaris/baru">
-            Tambah item
-          </Link>
-        </div>
-      )}
-
-      <div className="inventory-filters">
+      <div className="card inventory-filters">
         <label className="filter" htmlFor="cari-item">
           <span>Cari</span>
           <input
             id="cari-item"
+            ref={searchInput}
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -103,17 +119,42 @@ export function InventoryPage() {
         </label>
       </div>
 
-      {status === 'loading' && <p className="muted">Memuat inventaris…</p>}
+      {status === 'loading' && (
+        <p className="card muted" role="status">
+          Memuat inventaris…
+        </p>
+      )}
       {status === 'error' && (
-        <p className="error" role="alert">
+        <p className="card error" role="alert">
           Inventaris gagal dimuat. Muat ulang halaman.
         </p>
       )}
-      {status === 'ready' && visible.length === 0 && (
-        <p className="muted">Tidak ada item yang cocok dengan filter.</p>
+      {status === 'ready' && (
+        <div className="inventory-results">
+          <p className="muted" role="status">
+            Menampilkan {visible.length} dari {items.length} item.
+          </p>
+          {hasFilters && (
+            <button type="button" className="link-back inventory-clear" onClick={clearFilters}>
+              Hapus filter
+            </button>
+          )}
+        </div>
+      )}
+      {status === 'ready' && items.length === 0 && (
+        <div className="card inventory-empty">
+          <h2>Inventaris belum tersedia.</h2>
+          <p className="muted">Hubungi admin untuk menambahkan item inventaris.</p>
+        </div>
+      )}
+      {status === 'ready' && items.length > 0 && visible.length === 0 && (
+        <div className="card inventory-empty">
+          <h2>Tidak ada item yang cocok dengan filter.</h2>
+          <p className="muted">Ubah pencarian atau hapus filter untuk melihat semua item.</p>
+        </div>
       )}
 
-      <ul className="cards">
+      <ul className="cards inventory-cards" aria-label="Daftar inventaris">
         {visible.map((item) => (
           <ItemCard key={item.id} item={item} canRequest={canRequest} />
         ))}
@@ -140,26 +181,33 @@ function ItemCard({ item, canRequest }: ItemCardProps) {
   }
 
   return (
-    <li className="card">
-      <p className="reservation-room">
-        <Link className="item-link" to={`/inventaris/${item.id}`}>{item.name}</Link>
-      </p>
-      <p className="muted">
-        {item.category}
-        {item.location ? ` · ${item.location}` : ''}
-      </p>
+    <li className="card inventory-card">
+      <div className="inventory-card-status">
+        <span className="muted">{item.kind === 'komponen' ? 'Komponen' : 'Barang'}</span>
+        <span className={TONE_CLASS[badge.tone]}>{badge.label}</span>
+      </div>
+      <h2>
+        <Link className="item-link" to={`/inventaris/${item.id}`}>
+          {item.name}
+        </Link>
+      </h2>
+      <p className="muted">Kategori: {item.category}</p>
+      {item.location && <p className="muted">Lokasi: {item.location}</p>}
       {item.kind === 'komponen' && (
         <p className="reservation-time">
           Stok {item.quantity}
           {item.minStock > 0 ? ` · minimum ${item.minStock}` : ''}
         </p>
       )}
-      <span className={TONE_CLASS[badge.tone]}>{badge.label}</span>
       {item.kind === 'barang' && item.borrowerName && (
         <p className="muted">Dipinjam oleh {item.borrowerName}</p>
       )}
 
-      {message && <p className="hint">{message}</p>}
+      {message && (
+        <p className="hint" role="status">
+          {message}
+        </p>
+      )}
       {error && (
         <p className="error" role="alert">
           {error}
