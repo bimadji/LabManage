@@ -808,6 +808,91 @@ select {
   font-weight: 600;
 }
 
+.inventory-detail-page,
+.inventory-detail-page :is(.card, fieldset, form, input, h1) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.inventory-detail-page > .page-head {
+  margin-bottom: var(--space-4);
+}
+
+.inventory-detail-layout {
+  display: grid;
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.inventory-detail-info p {
+  margin: var(--space-2) 0;
+}
+
+.inventory-detail-admin fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.inventory-detail-admin legend {
+  padding: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+
+.inventory-detail-page input {
+  width: 100%;
+}
+
+.inventory-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.inventory-detail-page .link-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.inventory-detail-page button.link-back:hover {
+  background: var(--color-muted);
+  color: var(--color-primary);
+}
+
+.inventory-detail-page .inventory-delete,
+.inventory-detail-page .inventory-delete:hover {
+  color: var(--color-destructive);
+}
+
+.inventory-detail-edit {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.inventory-detail-history {
+  margin-top: var(--space-6);
+}
+
+.inventory-detail-history .cards {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  .inventory-detail-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inventory-detail-info:only-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .facility-report-intro,
 .facility-report-form {
   margin-bottom: var(--space-4);
