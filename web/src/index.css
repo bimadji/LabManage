@@ -384,6 +384,111 @@ select {
   font-weight: 600;
 }
 
+/* Jadwal: urutan per tanggal tetap terbaca pada ponsel maupun desktop. */
+.schedule-page :is(section, label, li, p, div) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.schedule-page .page-head {
+  align-items: start;
+}
+
+.schedule-page h1 {
+  margin-bottom: var(--space-2);
+}
+
+.schedule-page .schedule-filter {
+  max-width: none;
+  padding: var(--space-4);
+  margin: var(--space-5) 0;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  gap: var(--space-2);
+}
+
+.schedule-filter select {
+  width: 100%;
+  min-width: 0;
+}
+
+.schedule-day > h2 {
+  color: var(--color-primary);
+  border-left: 3px solid var(--color-primary);
+  padding-left: var(--space-3);
+}
+
+.schedule-page .cards {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.schedule-page .reservation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.schedule-reservation-detail {
+  grid-row: 2;
+  grid-column: 1 / -1;
+}
+
+.schedule-page :is(.reservation-room, .badge) {
+  margin-top: 0;
+}
+
+.schedule-page .badge {
+  justify-self: end;
+}
+
+.schedule-state {
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+}
+
+.schedule-empty-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.schedule-state .button {
+  margin-top: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .schedule-page .schedule-filter {
+    grid-template-columns: auto minmax(0, 20rem);
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .schedule-day {
+    display: grid;
+    grid-template-columns: 10rem minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  .schedule-day > h2 {
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+  }
+}
+
+@media (min-width: 1280px) {
+  .schedule-page .reservation {
+    grid-template-columns: 7rem minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .schedule-reservation-detail {
+    grid-row: auto;
+    grid-column: auto;
+  }
+}
+
 .item-link {
   display: inline-flex;
   align-items: center;

@@ -44,15 +44,18 @@ export function SchedulePage() {
   const days = groupByDay(visible);
 
   return (
-    <section>
+    <section className="schedule-page">
       <div className="page-head">
-        <h1>Jadwal</h1>
+        <div>
+          <h1>Jadwal</h1>
+          <p className="muted schedule-intro">Dua minggu ke depan. Semua jam dalam WIB.</p>
+        </div>
         <Link className="button" to="/reservasi/baru">
           Reservasi baru
         </Link>
       </div>
 
-      <label className="filter" htmlFor="filter-ruang">
+      <label className="filter schedule-filter" htmlFor="filter-ruang">
         <span>Ruang</span>
         <select
           id="filter-ruang"
@@ -68,32 +71,48 @@ export function SchedulePage() {
         </select>
       </label>
 
-      {status === 'loading' && <p className="muted">Memuat jadwal…</p>}
+      {status === 'loading' && (
+        <p className="card schedule-state muted" role="status">
+          Memuat jadwal…
+        </p>
+      )}
       {status === 'error' && (
-        <p className="error" role="alert">
+        <p className="card schedule-state error" role="alert">
           Jadwal gagal dimuat. Muat ulang halaman.
         </p>
       )}
       {status === 'ready' && days.length === 0 && (
-        <p className="muted">Belum ada reservasi dalam dua minggu ke depan.</p>
+        <div className="card schedule-state">
+          <p className="schedule-empty-title">Belum ada reservasi dalam dua minggu ke depan.</p>
+          <p className="muted">Pilih ruang lain atau buat reservasi untuk tim Anda.</p>
+          <Link className="button" to="/reservasi/baru">
+            Buat reservasi
+          </Link>
+        </div>
       )}
 
       {days.map(([day, items]) => (
-        <div key={day} className="day">
-          <h2>{formatDay(items[0].startsAt)}</h2>
-          <ul className="cards">
+        <section key={day} className="day schedule-day" aria-labelledby={`schedule-${day}`}>
+          <h2 id={`schedule-${day}`}>{formatDay(items[0].startsAt)}</h2>
+          <ul className="cards" aria-labelledby={`schedule-${day}`}>
             {items.map((reservation) => (
               <li key={reservation.id} className="card reservation">
                 <p className="reservation-time">
-                  {formatTime(reservation.startsAt)}–{formatTime(reservation.endsAt)}
+                  <time dateTime={reservation.startsAt}>{formatTime(reservation.startsAt)}</time>
+                  {'–'}
+                  <time dateTime={reservation.endsAt}>{formatTime(reservation.endsAt)}</time>
                 </p>
-                <p className="reservation-room">{roomName.get(reservation.roomId) ?? 'Ruang'}</p>
-                <p className="muted">{reservation.team}</p>
-                {reservation.status === 'dibatalkan' && <span className="badge">Dibatalkan</span>}
+                <div className="schedule-reservation-detail">
+                  <p className="reservation-room">{roomName.get(reservation.roomId) ?? 'Ruang'}</p>
+                  <p className="muted">{reservation.team}</p>
+                </div>
+                <span className={`badge ${reservation.status === 'aktif' ? 'badge-ok' : ''}`}>
+                  {reservation.status === 'aktif' ? 'Aktif' : 'Dibatalkan'}
+                </span>
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       ))}
     </section>
   );
