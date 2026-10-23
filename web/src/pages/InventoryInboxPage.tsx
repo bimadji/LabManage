@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
 import { apiFetch, ApiRequestError } from '../lib/api';
@@ -35,6 +35,9 @@ export function InventoryInboxPage() {
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const pending = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -76,19 +79,35 @@ export function InventoryInboxPage() {
   }, [isAdmin, loadState, components, loans]);
 
   async function decide(path: string, body?: object) {
+    if (pending.current) return false;
+    pending.current = true;
+    setSaving(true);
+    setNotice(null);
     setError(null);
     try {
       await apiFetch(path, {
         method: 'PATCH',
         body: body ? JSON.stringify(body) : undefined,
       });
+      setLoadState('loading');
       setReloadKey((key) => key + 1);
+      setNotice('Keputusan berhasil disimpan.');
+      return true;
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Aksi gagal. Coba lagi.');
+      return false;
+    } finally {
+      pending.current = false;
+      setSaving(false);
     }
   }
 
-  if (loading) return <p className="muted">Memuat…</p>;
+  if (loading)
+    return (
+      <p className="muted" role="status">
+        Memuat…
+      </p>
+    );
   if (profile === null) return <p className="muted">Halaman ini hanya untuk admin dan advisor.</p>;
 
   const matches = (rowStatus: RequestStatus) => status === 'semua' || rowStatus === status;
@@ -96,18 +115,26 @@ export function InventoryInboxPage() {
   const visibleLoans = loans.filter((row) => matches(row.status));
 
   return (
-    <section>
+    <section className="inventory-requests-page">
       <div className="page-head">
-        <h1>Kotak masuk inventaris</h1>
+        <div>
+          <h1>Kotak masuk inventaris</h1>
+          <p className="muted">Tinjau laporan ambil dan permintaan peminjaman anggota.</p>
+        </div>
         <Link className="link-back" to="/inventaris">
           Kembali ke inventaris
         </Link>
       </div>
 
-      <div className="inventory-filters">
+      <div className="card inventory-filters requests-filters">
         <label className="filter" htmlFor="inbox-tab">
           <span>Jenis permintaan</span>
-          <select id="inbox-tab" value={tab} onChange={(e) => setTab(e.target.value as Tab)}>
+          <select
+            id="inbox-tab"
+            disabled={saving}
+            value={tab}
+            onChange={(e) => setTab(e.target.value as Tab)}
+          >
             <option value="komponen">Laporan ambil</option>
             <option value="pinjam">Permintaan pinjam</option>
           </select>
@@ -117,6 +144,7 @@ export function InventoryInboxPage() {
           <span>Status</span>
           <select
             id="inbox-status"
+            disabled={saving}
             value={status}
             onChange={(e) => setStatus(e.target.value as StatusFilter)}
           >
@@ -130,12 +158,29 @@ export function InventoryInboxPage() {
         </label>
       </div>
 
-      {loadState === 'loading' && <p className="muted">Memuat permintaan…</p>}
-      {loadState === 'error' && (
-        <p className="error" role="alert">
-          Permintaan gagal dimuat. Muat ulang halaman.
+      {loadState === 'loading' && (
+        <p className="muted" role="status">
+          Memuat permintaan…
         </p>
       )}
+      {loadState === 'error' && (
+        <div className="card requests-message">
+          <p className="error" role="alert">
+            Permintaan gagal dimuat. Coba lagi.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setLoadState('loading');
+              setReloadKey((key) => key + 1);
+            }}
+          >
+            Coba lagi
+          </button>
+        </div>
+      )}
+      {saving && <p role="status">Menyimpan keputusan…</p>}
+      {notice && loadState === 'ready' && <p role="status">{notice}</p>}
       {error && (
         <p className="error" role="alert">
           {error}
@@ -144,11 +189,11 @@ export function InventoryInboxPage() {
 
       {tab === 'komponen' && (
         <>
-          <h2>Laporan ambil</h2>
+          <h2 className="requests-section-heading">Laporan ambil</h2>
           {loadState === 'ready' && visibleComponents.length === 0 && (
-            <p className="muted">Tidak ada laporan.</p>
+            <p className="card muted">Tidak ada laporan.</p>
           )}
-          <ul className="cards">
+          <ul className="cards requests-cards" aria-label="Laporan ambil">
             {visibleComponents.map((row) => (
               <li key={row.id} className="card">
                 <p className="reservation-room">{row.itemName ?? 'Item terhapus'}</p>
@@ -162,7 +207,11 @@ export function InventoryInboxPage() {
                 {row.adminReadAt === null && <p className="muted">Belum dibaca</p>}
                 {row.adminNote && <p className="muted">Catatan admin: {row.adminNote}</p>}
                 {isAdmin && row.status === 'menunggu' && (
-                  <div className="page-head">
+                  <fieldset
+                    className="requests-actions"
+                    aria-label={`Tindakan ${row.itemName ?? 'Item terhapus'}`}
+                    disabled={saving || loadState !== 'ready'}
+                  >
                     <button
                       type="button"
                       onClick={() => void decide(`/component-requests/${row.id}/confirm`)}
@@ -174,7 +223,7 @@ export function InventoryInboxPage() {
                         decide(`/component-requests/${row.id}/reject`, { note: note || undefined })
                       }
                     />
-                  </div>
+                  </fieldset>
                 )}
               </li>
             ))}
@@ -184,11 +233,11 @@ export function InventoryInboxPage() {
 
       {tab === 'pinjam' && (
         <>
-          <h2>Permintaan pinjam</h2>
+          <h2 className="requests-section-heading">Permintaan pinjam</h2>
           {loadState === 'ready' && visibleLoans.length === 0 && (
-            <p className="muted">Tidak ada permintaan.</p>
+            <p className="card muted">Tidak ada permintaan.</p>
           )}
-          <ul className="cards">
+          <ul className="cards requests-cards" aria-label="Permintaan pinjam">
             {visibleLoans.map((row) => (
               <li key={row.id} className="card">
                 <p className="reservation-room">{row.itemName ?? 'Item terhapus'}</p>
@@ -203,7 +252,11 @@ export function InventoryInboxPage() {
                 {row.adminReadAt === null && <p className="muted">Belum dibaca</p>}
                 {row.adminNote && <p className="muted">Catatan admin: {row.adminNote}</p>}
                 {isAdmin && row.status === 'menunggu' && (
-                  <div className="page-head">
+                  <fieldset
+                    className="requests-actions"
+                    aria-label={`Tindakan ${row.itemName ?? 'Item terhapus'}`}
+                    disabled={saving || loadState !== 'ready'}
+                  >
                     <button
                       type="button"
                       onClick={() => void decide(`/loan-requests/${row.id}/approve`)}
@@ -215,7 +268,7 @@ export function InventoryInboxPage() {
                         decide(`/loan-requests/${row.id}/reject`, { note: note || undefined })
                       }
                     />
-                  </div>
+                  </fieldset>
                 )}
               </li>
             ))}
@@ -227,18 +280,20 @@ export function InventoryInboxPage() {
 }
 
 interface RejectFormProps {
-  onSubmit: (note: string) => Promise<void>;
+  onSubmit: (note: string) => Promise<boolean>;
 }
 
 function RejectForm({ onSubmit }: RejectFormProps) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
+  const noteId = useId();
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    void onSubmit(note.trim());
-    setOpen(false);
-    setNote('');
+    if (await onSubmit(note.trim())) {
+      setOpen(false);
+      setNote('');
+    }
   }
 
   if (!open) {
@@ -250,10 +305,10 @@ function RejectForm({ onSubmit }: RejectFormProps) {
   }
 
   return (
-    <form className="inline-form" onSubmit={submit} noValidate>
-      <label htmlFor="alasan-tolak">Alasan (opsional)</label>
+    <form className="inline-form requests-reject" onSubmit={submit} noValidate>
+      <label htmlFor={noteId}>Alasan (opsional)</label>
       <input
-        id="alasan-tolak"
+        id={noteId}
         value={note}
         onChange={(event) => setNote(event.target.value)}
         maxLength={500}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import { REQUEST_STATUS_LABEL, type BadgeTone } from '../lib/inventory';
@@ -25,6 +25,9 @@ export function MyRequestsPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const pending = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -47,40 +50,70 @@ export function MyRequestsPage() {
   }, [reloadKey]);
 
   async function cancel(request: LoanRequest) {
+    if (pending.current) return;
+    pending.current = true;
+    setSaving(true);
+    setNotice(null);
     setError(null);
     try {
       await apiFetch<LoanRequest>(`/loan-requests/${request.id}/cancel`, { method: 'PATCH' });
       setStatus('loading');
       setReloadKey((key) => key + 1);
+      setNotice('Permintaan berhasil dibatalkan.');
     } catch (err) {
       setError(err instanceof ApiRequestError ? err.message : 'Pembatalan gagal. Coba lagi.');
+    } finally {
+      pending.current = false;
+      setSaving(false);
     }
   }
 
   return (
-    <section>
+    <section className="inventory-requests-page">
       <div className="page-head">
-        <h1>Permintaan saya</h1>
+        <div>
+          <h1>Permintaan saya</h1>
+          <p className="muted">Pantau laporan ambil dan status peminjaman Anda.</p>
+        </div>
         <Link className="link-back" to="/inventaris">
           Kembali ke inventaris
         </Link>
       </div>
 
-      {status === 'loading' && <p className="muted">Memuat permintaan…</p>}
-      {status === 'error' && (
-        <p className="error" role="alert">
-          Permintaan gagal dimuat. Muat ulang halaman.
+      {status === 'loading' && (
+        <p className="muted" role="status">
+          Memuat permintaan…
         </p>
+      )}
+      {status === 'error' && (
+        <div className="card requests-message">
+          <p className="error" role="alert">
+            Permintaan gagal dimuat. Coba lagi.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus('loading');
+              setReloadKey((key) => key + 1);
+            }}
+          >
+            Coba lagi
+          </button>
+        </div>
       )}
       {error && (
         <p className="error" role="alert">
           {error}
         </p>
       )}
+      {saving && <p role="status">Membatalkan permintaan…</p>}
+      {notice && status === 'ready' && <p role="status">{notice}</p>}
 
-      <h2>Laporan ambil</h2>
-      {status === 'ready' && components.length === 0 && <p className="muted">Belum ada laporan.</p>}
-      <ul className="cards">
+      <h2 className="requests-section-heading">Laporan ambil</h2>
+      {status === 'ready' && components.length === 0 && (
+        <p className="card muted">Belum ada laporan.</p>
+      )}
+      <ul className="cards requests-cards" aria-label="Laporan ambil">
         {components.map((request) => (
           <li key={request.id} className="card">
             <p className="reservation-room">{request.itemName ?? 'Item terhapus'}</p>
@@ -94,9 +127,11 @@ export function MyRequestsPage() {
         ))}
       </ul>
 
-      <h2>Permintaan pinjam</h2>
-      {status === 'ready' && loans.length === 0 && <p className="muted">Belum ada permintaan.</p>}
-      <ul className="cards">
+      <h2 className="requests-section-heading">Permintaan pinjam</h2>
+      {status === 'ready' && loans.length === 0 && (
+        <p className="card muted">Belum ada permintaan.</p>
+      )}
+      <ul className="cards requests-cards" aria-label="Permintaan pinjam">
         {loans.map((request) => (
           <li key={request.id} className="card">
             <p className="reservation-room">{request.itemName ?? 'Item terhapus'}</p>
@@ -109,9 +144,16 @@ export function MyRequestsPage() {
             </span>
             {request.adminNote && <p className="muted">Catatan admin: {request.adminNote}</p>}
             {request.status === 'menunggu' && (
-              <button type="button" className="link-back" onClick={() => void cancel(request)}>
-                Batalkan
-              </button>
+              <div className="requests-actions">
+                <button
+                  type="button"
+                  className="link-back"
+                  disabled={saving || status !== 'ready'}
+                  onClick={() => void cancel(request)}
+                >
+                  Batalkan
+                </button>
+              </div>
             )}
           </li>
         ))}
