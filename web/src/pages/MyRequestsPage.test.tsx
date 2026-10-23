@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -126,6 +126,77 @@ afterEach(() => {
 });
 
 describe('MyRequestsPage', () => {
+  it('mengumumkan loading, menyediakan retry baca, dan memberi nama daftar', async () => {
+    let finish!: (value: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((resolve) => {
+            finish = resolve;
+          }),
+      ),
+    );
+    renderPage();
+    expect(screen.getByRole('status')).toHaveTextContent('Memuat permintaan');
+    await waitFor(() => expect(finish).toBeTypeOf('function'));
+    await act(async () => finish(jsonResponse(500, { error: { message: 'gagal' } })));
+    await screen.findByRole('alert');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        jsonResponse(
+          200,
+          String(url).endsWith('/component-requests') ? COMPONENT_REQUESTS : LOAN_REQUESTS,
+        ),
+      ),
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Coba lagi' }));
+    await screen.findByText('Resistor 220 Ohm');
+    expect(screen.getByRole('list', { name: 'Laporan ambil' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Permintaan pinjam' })).toBeInTheDocument();
+  });
+
+  it('mencegah cancel ganda, memulihkan error, lalu mengumumkan hasil akhir', async () => {
+    let finish!: (value: Response) => void;
+    let rows = LOAN_REQUESTS;
+    const writes: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string, init?: RequestInit) => {
+        if (init?.method === 'PATCH') {
+          writes.push(String(url));
+          return new Promise<Response>((resolve) => {
+            finish = resolve;
+          });
+        }
+        return Promise.resolve(
+          jsonResponse(
+            200,
+            String(url).endsWith('/component-requests') ? COMPONENT_REQUESTS : rows,
+          ),
+        );
+      }),
+    );
+    renderPage();
+    const user = userEvent.setup();
+    await user.dblClick(await screen.findByRole('button', { name: 'Batalkan' }));
+    expect(writes).toHaveLength(1);
+    expect(screen.getByRole('status')).toHaveTextContent('Membatalkan');
+    expect(screen.getByRole('button', { name: 'Batalkan' })).toBeDisabled();
+    await act(async () => finish(jsonResponse(500, { error: { message: 'Pembatalan gagal' } })));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Pembatalan gagal');
+    await user.click(screen.getByRole('button', { name: 'Batalkan' }));
+    rows = LOAN_REQUESTS.map((row) =>
+      row.id === 'loan-1' ? { ...row, status: 'dibatalkan' } : row,
+    );
+    await act(async () => finish(jsonResponse(200, rows[0])));
+    expect(await screen.findByText('DIBATALKAN')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Permintaan berhasil dibatalkan');
+    expect(screen.queryByRole('button', { name: 'Batalkan' })).not.toBeInTheDocument();
+    expect(writes).toHaveLength(2);
+  });
+
   it('menampilkan status dan catatan admin sebagai teks', async () => {
     renderPage();
     await screen.findByText('Resistor 220 Ohm');
