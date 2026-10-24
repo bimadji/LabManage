@@ -53,7 +53,14 @@ function PendingBadge() {
 function Shell() {
   const { session, loading } = useSession();
 
-  if (loading) return <main className="app">Memuat…</main>;
+  if (loading)
+    return (
+      <main className="app">
+        <p className="muted" role="status">
+          Memuat…
+        </p>
+      </main>
+    );
   if (!session) return <SignIn />;
 
   return (
