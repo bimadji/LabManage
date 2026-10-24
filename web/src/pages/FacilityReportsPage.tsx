@@ -145,39 +145,46 @@ function ReportCard({
   }
 
   return (
-    <li className="card facility-report-card">
-      <h2>
-        {CATEGORY_LABELS[report.category]} · {report.location}
-      </h2>
-      <span className={`badge ${report.status === 'selesai' ? 'badge-ok' : 'badge-warn'}`}>
-        {STATUS_LABELS[report.status]}
-      </span>
-      <p className="facility-report-description">{report.description}</p>
-      <p className="muted hint">
-        Dilaporkan{' '}
-        <time dateTime={report.createdAt}>
-          {new Date(report.createdAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB
-        </time>
-      </p>
-      {error && (
-        <p className="error" role="alert">
-          {error}
+    <li>
+      <article
+        className="card facility-report-card"
+        aria-labelledby={`facility-report-${report.id}`}
+      >
+        <header className="facility-report-heading">
+          <h2 id={`facility-report-${report.id}`}>
+            {CATEGORY_LABELS[report.category]} · {report.location}
+          </h2>
+          <span className={`badge ${report.status === 'selesai' ? 'badge-ok' : 'badge-warn'}`}>
+            {STATUS_LABELS[report.status]}
+          </span>
+        </header>
+        <p className="facility-report-description">{report.description}</p>
+        <p className="muted hint">
+          Dilaporkan{' '}
+          <time dateTime={report.createdAt}>
+            {new Date(report.createdAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB
+          </time>
         </p>
-      )}
-      {isAdmin && next && (
-        <button
-          className="facility-report-action"
-          type="button"
-          onClick={updateStatus}
-          disabled={updating}
-        >
-          {updating
-            ? 'Memperbarui…'
-            : next === 'ditindaklanjuti'
-              ? 'Tindak lanjuti'
-              : 'Tandai selesai'}
-        </button>
-      )}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+        {isAdmin && next && (
+          <button
+            className="facility-report-action"
+            type="button"
+            onClick={updateStatus}
+            disabled={updating}
+          >
+            {updating
+              ? 'Memperbarui…'
+              : next === 'ditindaklanjuti'
+                ? 'Tindak lanjuti'
+                : 'Tandai selesai'}
+          </button>
+        )}
+      </article>
     </li>
   );
 }

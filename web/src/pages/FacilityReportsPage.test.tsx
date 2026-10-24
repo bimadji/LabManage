@@ -77,6 +77,7 @@ describe('Laporan fasilitas dari navigasi aplikasi', () => {
     expect(await screen.findByText('Lampu meja solder berkedip')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Kirim laporan' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tindak lanjuti' })).not.toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Lampu · Meja solder' })).toHaveTextContent('Baru');
   });
 
   it('anggota mengirim kategori, lokasi, deskripsi yang sudah dirapikan dan melihat laporan baru', async () => {
