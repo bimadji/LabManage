@@ -111,27 +111,37 @@ function NotificationsContent() {
           ) : (
             <ul className="cards" aria-label="Daftar notifikasi">
               {notifications.map((item) => (
-                <li className="card notification-card" key={item.id}>
-                  <h2>{KIND_LABELS[item.kind] ?? 'Notifikasi'}</h2>
-                  <span className={item.readAt ? 'badge' : 'badge badge-warn'}>
-                    {item.readAt ? 'Sudah dibaca' : 'Belum dibaca'}
-                  </span>
-                  <p className="notification-message">{item.message}</p>
-                  <p className="muted">
-                    <time dateTime={item.createdAt}>
-                      {formatDay(item.createdAt)}, {formatTime(item.createdAt)} WIB
-                    </time>
-                  </p>
-                  {!item.readAt && (
-                    <button
-                      className="notification-read"
-                      type="button"
-                      onClick={() => void markRead(item.id)}
-                      disabled={savingId !== null}
-                    >
-                      {savingId === item.id ? 'Menyimpan…' : 'Tandai sudah dibaca'}
-                    </button>
-                  )}
+                <li key={item.id}>
+                  <article
+                    className="card notification-card"
+                    data-read={item.readAt ? 'true' : 'false'}
+                    aria-labelledby={`notification-${item.id}`}
+                  >
+                    <header className="notification-heading">
+                      <h2 id={`notification-${item.id}`}>
+                        {KIND_LABELS[item.kind] ?? 'Notifikasi'}
+                      </h2>
+                      <span className={item.readAt ? 'badge' : 'badge badge-warn'}>
+                        {item.readAt ? 'Sudah dibaca' : 'Belum dibaca'}
+                      </span>
+                    </header>
+                    <p className="notification-message">{item.message}</p>
+                    <p className="muted">
+                      <time dateTime={item.createdAt}>
+                        {formatDay(item.createdAt)}, {formatTime(item.createdAt)} WIB
+                      </time>
+                    </p>
+                    {!item.readAt && (
+                      <button
+                        className="notification-read"
+                        type="button"
+                        onClick={() => void markRead(item.id)}
+                        disabled={savingId !== null}
+                      >
+                        {savingId === item.id ? 'Menyimpan…' : 'Tandai sudah dibaca'}
+                      </button>
+                    )}
+                  </article>
                 </li>
               ))}
             </ul>

@@ -1273,10 +1273,46 @@ select {
   width: 100%;
 }
 
+.facility-report-card,
+.notification-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+.facility-report-heading,
+.notification-heading {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
+.facility-report-heading h2,
+.notification-heading h2 {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.facility-report-heading .badge,
+.notification-heading .badge {
+  flex: 0 0 auto;
+  max-width: 100%;
+  margin: 0;
+}
+
 .facility-report-form :is(input, select, textarea),
 .facility-report-card {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.facility-report-card > p,
+.notification-card > p {
+  margin: 0;
 }
 
 .facility-report-description {
@@ -1371,8 +1407,12 @@ select {
   overflow-wrap: anywhere;
 }
 
+.notification-card[data-read='false'] {
+  border-inline-start: 4px solid var(--color-primary);
+  padding-inline-start: calc(var(--space-4) - 3px);
+}
+
 .notification-card .notification-message {
-  margin: var(--space-3) 0;
   white-space: pre-wrap;
 }
 

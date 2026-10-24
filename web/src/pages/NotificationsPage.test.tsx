@@ -76,6 +76,12 @@ describe('Notifikasi pribadi dari navigasi aplikasi', () => {
     expect(cards[0]).toHaveTextContent(/20 Oktober 2026/);
     expect(cards[0]).toHaveTextContent('Belum dibaca');
     expect(cards[1]).toHaveTextContent('Sudah dibaca');
+    expect(within(cards[0]).getByRole('article', { name: 'Lembur' })).toHaveTextContent(
+      unread.message,
+    );
+    expect(within(cards[1]).getByRole('article', { name: 'Laporan fasilitas' })).toHaveTextContent(
+      read.message,
+    );
     expect(within(cards[1]).queryByRole('button')).not.toBeInTheDocument();
   });
 
