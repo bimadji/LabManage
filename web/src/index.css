@@ -263,6 +263,109 @@ h2 {
 .summary-warnings > .muted {
   margin-bottom: var(--space-4);
 }
+
+.personal-attendance-page,
+.personal-attendance-page :is(.card, p, dl, dd, dt),
+.personal-summary-page,
+.personal-summary-page :is(.card, section, li, p, form, label, dd) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.personal-attendance-page > .muted {
+  margin-bottom: var(--space-5);
+}
+
+.attendance-session {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.attendance-session-heading,
+.summary-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.attendance-session-heading h2,
+.summary-status h3 {
+  margin: 0;
+}
+
+.attendance-session-details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.attendance-session-details dt,
+.summary-status h3 {
+  color: var(--color-muted-foreground);
+  font-weight: 600;
+}
+
+.attendance-session-details dd {
+  margin: var(--space-1) 0 0;
+}
+
+.attendance-session-details .reservation-time {
+  font-size: 1.25rem;
+}
+
+.attendance-session-actions {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.attendance-session-actions button {
+  min-width: 9rem;
+}
+
+.personal-summary-page > h1 {
+  margin-bottom: var(--space-4);
+}
+
+.summary-total {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.summary-section {
+  margin-top: var(--space-6);
+}
+
+.summary-filters {
+  max-width: none;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-card);
+}
+
+.summary-filters button {
+  min-height: 44px;
+}
+
+.summary-days .card {
+  min-height: 6rem;
+}
+
+.summary-warnings .page-head {
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .summary-filters {
+    padding: var(--space-5);
+  }
+
+  .summary-days {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (min-width: 768px) {
   .summary-filters {
     grid-template-columns: 1fr 1fr auto;
