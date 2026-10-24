@@ -113,13 +113,29 @@ export function AdminOpenSessions({
       {data.length === 0 ? (
         <p>Tidak ada sesi terbuka untuk dikoreksi.</p>
       ) : (
-        <div className="admin-attendance-list">
+        <div className="admin-attendance-list admin-open-session-list">
           {data.map((session) => (
-            <article className="card" key={session.id} aria-label={`Sesi ${session.fullName}`}>
-              <h3>{session.fullName}</h3>
-              <p>Mulai: {instantWib(session.checkedInAt)}</p>
-              <p>Durasi saat dimuat: {hours(session.durationMinutes / 60)}</p>
-              {session.overNightLimit && <span className="badge badge-warn">Lewat 21:00 WIB</span>}
+            <article
+              className="card admin-open-session"
+              key={session.id}
+              aria-label={`Sesi ${session.fullName}`}
+            >
+              <div className="admin-member-heading">
+                <h3>{session.fullName}</h3>
+                {session.overNightLimit && (
+                  <span className="badge badge-warn">Lewat 21:00 WIB</span>
+                )}
+              </div>
+              <dl className="admin-session-details">
+                <div>
+                  <dt>Mulai</dt>
+                  <dd>{instantWib(session.checkedInAt)}</dd>
+                </div>
+                <div>
+                  <dt>Durasi saat dimuat</dt>
+                  <dd>{hours(session.durationMinutes / 60)}</dd>
+                </div>
+              </dl>
               <CorrectionForm session={session} actions={actions} />
             </article>
           ))}
@@ -155,9 +171,9 @@ export function AdminCorrectionHistory({
   if (!data) return <p role="status">Memuat riwayat koreksi…</p>;
   if (!data.length) return <p>Belum ada riwayat koreksi.</p>;
   return (
-    <ol className="admin-attendance-list">
+    <ol className="admin-attendance-list admin-correction-list">
       {data.map((entry) => (
-        <li className="card" key={entry.id}>
+        <li className="card admin-correction-entry" key={entry.id}>
           <p>
             Anggota:{' '}
             {members.find((member) => member.userId === entry.userId)?.fullName ?? entry.userId}

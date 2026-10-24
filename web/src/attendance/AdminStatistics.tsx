@@ -91,28 +91,30 @@ function StatisticsData({
         anggota. Tingkat kehadiran memakai hari kalender berlalu, termasuk hari ini. Rasio malam
         menghitung sesi yang melewati 21:00 WIB.
       </p>
-      <section className="card" aria-label="Ringkasan statistik">
+      <section className="card admin-statistics-overview" aria-label="Ringkasan statistik">
         <h3>Ringkasan statistik</h3>
         <Aggregate data={data.aggregate} />
       </section>
-      <section aria-label="Statistik per anggota">
+      <section className="admin-statistics-members" aria-label="Statistik per anggota">
         <h3>Statistik per anggota</h3>
         {data.members.length === 0 ? (
           <p>Belum ada anggota untuk ditampilkan.</p>
         ) : (
-          <div className="admin-attendance-list">
+          <div className="admin-attendance-list admin-member-grid">
             {data.members.map((member) => (
               <article
-                className="card"
+                className="card admin-member-card"
                 key={member.userId}
                 aria-label={`Statistik ${member.fullName}`}
               >
-                <h4>{member.fullName}</h4>
-                <span
-                  className={member.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}
-                >
-                  {member.status}
-                </span>
+                <div className="admin-member-heading">
+                  <h4>{member.fullName}</h4>
+                  <span
+                    className={member.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}
+                  >
+                    {member.status}
+                  </span>
+                </div>
                 <dl className="summary-metrics">
                   <Metrics data={member} />
                   <div>
@@ -127,13 +129,13 @@ function StatisticsData({
           </div>
         )}
       </section>
-      <section aria-label="Tren mingguan">
+      <section className="admin-statistics-trend" aria-label="Tren mingguan">
         <h3>Tren mingguan</h3>
         <p className="muted">
           Tren berakhir pada minggu yang memuat tanggal pilihan. Data mengikuti anggota dan target
           yang berlaku saat rekap dimuat.
         </p>
-        <ol className="admin-attendance-list">
+        <ol className="admin-attendance-list admin-trend-grid">
           {data.trend.map((week) => (
             <li className="card" key={week.period.start}>
               <h4>{periodLabel(week.period)}</h4>
@@ -162,10 +164,11 @@ export function AdminStatistics({
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);
   return (
-    <section aria-label="Statistik riset">
+    <section className="admin-statistics-panel" aria-label="Statistik riset">
       <h2>Statistik riset</h2>
       <form
-        className="summary-filters admin-statistics-filters"
+        className="card summary-filters admin-statistics-filters"
+        aria-label="Filter statistik absensi"
         onSubmit={(event) => {
           event.preventDefault();
           if (

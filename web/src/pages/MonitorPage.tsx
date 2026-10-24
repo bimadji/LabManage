@@ -62,7 +62,7 @@ export function MonitorPage() {
   }, []);
 
   return (
-    <section>
+    <section className="monitor-page">
       <div className="page-head">
         <h1>Monitoring lab</h1>
         <span className={live ? 'badge badge-live' : 'badge'}>
@@ -70,38 +70,50 @@ export function MonitorPage() {
         </span>
       </div>
 
-      {profile?.role === 'advisor' && (
-        <p className="attendance-summary-link">
+      <div className="monitor-actions">
+        {profile?.role === 'advisor' && (
           <Link className="button" to="/monitor/rekap">
             Rekap anggota dan peringatan
           </Link>
-        </p>
-      )}
-      {profile?.role === 'admin' && (
-        <p className="attendance-summary-link">
+        )}
+        {profile?.role === 'admin' && (
           <Link className="button" to="/monitor/admin">
             Statistik, target, dan koreksi absensi
           </Link>
+        )}
+      </div>
+
+      {status === 'loading' && (
+        <p className="card monitor-state" role="status">
+          Memuat kehadiran…
         </p>
       )}
-
-      {status === 'loading' && <p className="muted">Memuat kehadiran…</p>}
       {status === 'error' && (
-        <p className="error" role="alert">
+        <p className="card error monitor-state" role="alert">
           Kehadiran gagal dimuat, atau akun Anda bukan admin/advisor.
         </p>
       )}
       {status === 'ready' && sessions.length === 0 && (
-        <p className="muted">Tidak ada anggota di lab saat ini.</p>
+        <p className="card muted monitor-state">Tidak ada anggota di lab saat ini.</p>
       )}
 
-      <ul className="cards">
+      <ul className="cards monitor-members" aria-label="Anggota yang sedang di lab">
         {sessions.map((session) => (
-          <li key={session.id} className="card">
-            <p className="reservation-room">{session.fullName || 'Memuat nama…'}</p>
-            <p className="muted">Mulai {formatTime(session.checkedInAt)} WIB</p>
-            <p className="reservation-time">{formatDuration(session.durationMinutes)}</p>
-            {session.overNightLimit && <span className="badge badge-warn">Lewat 21:00 WIB</span>}
+          <li key={session.id} className="card monitor-member">
+            <div className="monitor-member-heading">
+              <h2>{session.fullName || 'Memuat nama…'}</h2>
+              {session.overNightLimit && <span className="badge badge-warn">Lewat 21:00 WIB</span>}
+            </div>
+            <dl className="monitor-member-details">
+              <div>
+                <dt>Mulai</dt>
+                <dd>{formatTime(session.checkedInAt)} WIB</dd>
+              </div>
+              <div>
+                <dt>Durasi</dt>
+                <dd className="reservation-time">{formatDuration(session.durationMinutes)}</dd>
+              </div>
+            </dl>
           </li>
         ))}
       </ul>

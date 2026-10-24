@@ -94,6 +94,7 @@ describe('Rekap advisor', () => {
       'href',
       '/monitor',
     );
+    expect(screen.getByRole('form', { name: 'Filter rekap anggota' })).toBeInTheDocument();
     const url = new URL(String(vi.mocked(fetch).mock.calls[0][0]));
     expect(url.searchParams.get('userId')).toBeNull();
     expect(url.searchParams.get('period')).toBe('week');
