@@ -194,10 +194,12 @@ function SummaryPanel({
             key={member.userId}
             aria-label={`Rekap ${member.fullName}`}
           >
-            <h3>{member.fullName}</h3>
-            <span className={member.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}>
-              {member.status}
-            </span>
+            <div className="advisor-member-heading">
+              <h3>{member.fullName}</h3>
+              <span className={member.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}>
+                {member.status}
+              </span>
+            </div>
             <dl className="summary-metrics">
               <div>
                 <dt>Total riset</dt>
@@ -277,7 +279,8 @@ function AdvisorContent() {
         terbaru. Status memakai durasi penuh sebelum pembulatan tampilan.
       </p>
       <form
-        className="summary-filters"
+        className="card summary-filters"
+        aria-label="Filter rekap anggota"
         onSubmit={(event) => {
           event.preventDefault();
           setSelected({ period, date });

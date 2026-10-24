@@ -156,6 +156,7 @@ describe('Absensi admin', () => {
       'href',
       '/monitor',
     );
+    expect(screen.getByRole('form', { name: 'Filter statistik absensi' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Kirim peringatan/ })).not.toBeInTheDocument();
   });
 

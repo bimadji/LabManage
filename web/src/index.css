@@ -767,6 +767,180 @@ select {
   }
 }
 
+.monitor-page :is(ul, li, p, dl, dd, dt),
+.advisor-summary-page :is(section, article, form, label, p, dl, dd, dt),
+.admin-attendance-page :is(section, article, form, label, li, p, dl, dd, dt) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.monitor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.monitor-actions .button {
+  min-height: 44px;
+}
+
+.monitor-state {
+  margin: var(--space-4) 0;
+}
+
+.monitor-member,
+.advisor-member,
+.admin-open-session {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+}
+
+.monitor-member-heading,
+.advisor-member-heading,
+.admin-member-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.monitor-member-heading h2,
+.advisor-member-heading h3,
+.admin-member-heading :is(h3, h4) {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.monitor-member-heading .badge,
+.advisor-member-heading .badge,
+.admin-member-heading .badge {
+  margin-top: 0;
+}
+
+.monitor-member-details,
+.admin-session-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.monitor-member-details dt,
+.admin-session-details dt {
+  color: var(--color-muted-foreground);
+}
+
+.monitor-member-details dd,
+.admin-session-details dd {
+  margin: var(--space-1) 0 0;
+}
+
+.monitor-member-details .reservation-time {
+  font-size: 1.25rem;
+}
+
+.advisor-summary-page .summary-filters,
+.admin-statistics-filters {
+  max-width: none;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-card);
+}
+
+.advisor-summary-page > h1,
+.admin-attendance-page > h1 {
+  margin-bottom: var(--space-4);
+}
+
+.advisor-summary-page > .summary-actions,
+.admin-attendance-actions {
+  margin-bottom: var(--space-4);
+}
+
+.advisor-members {
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: var(--space-4);
+}
+
+.advisor-warning-form {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.admin-panel,
+.admin-statistics-overview {
+  margin-top: var(--space-5);
+}
+
+.admin-panel > h2,
+.admin-statistics-panel > h2,
+.admin-statistics-overview > h3,
+.admin-statistics-members > h3,
+.admin-statistics-trend > h3 {
+  margin-top: 0;
+}
+
+.admin-statistics-panel,
+.admin-statistics-members,
+.admin-statistics-trend {
+  min-width: 0;
+  margin-top: var(--space-5);
+}
+
+.admin-statistics-filters button {
+  min-height: 44px;
+}
+
+.admin-member-grid,
+.admin-open-session-list,
+.admin-trend-grid,
+.admin-correction-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-correction-entry {
+  min-width: 0;
+}
+
+.admin-correction-entry > p:first-child {
+  margin-top: 0;
+}
+
+.admin-open-session .admin-attendance-form {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+@media (min-width: 768px) {
+  .advisor-summary-page .summary-filters,
+  .admin-statistics-filters {
+    padding: var(--space-5);
+  }
+
+  .advisor-members,
+  .admin-member-grid,
+  .admin-open-session-list,
+  .admin-correction-list,
+  .admin-trend-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .advisor-members,
+  .admin-member-grid,
+  .admin-open-session-list,
+  .admin-trend-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .badge-live {
   background: #dcfce7;
   color: #166534;

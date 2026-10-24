@@ -39,7 +39,7 @@ function AdminContent({ actor }: { actor: { id: string; fullName: string } }) {
   };
   return (
     <>
-      <div className="summary-actions">
+      <div className="summary-actions admin-attendance-actions">
         <Link className="button" to="/monitor">
           Monitoring langsung
         </Link>
@@ -64,12 +64,12 @@ function AdminContent({ actor }: { actor: { id: string; fullName: string } }) {
       </p>
       {busy && <p role="status">Menyimpan perubahan…</p>}
       {message && <p role="status">{message}</p>}
-      <section className="card" aria-label="Target mingguan">
+      <section className="card admin-panel" aria-label="Target mingguan">
         <h2>Target mingguan</h2>
         <AdminTarget key={revisions.target} actions={actions} retry={() => reload('target')} />
       </section>
       <AdminStatistics revision={revisions.statistics} onMembers={setMembers} />
-      <section aria-label="Koreksi sesi terbuka">
+      <section className="card admin-panel" aria-label="Koreksi sesi terbuka">
         <h2>Koreksi sesi terbuka</h2>
         <AdminOpenSessions
           key={revisions.sessions}
@@ -77,7 +77,7 @@ function AdminContent({ actor }: { actor: { id: string; fullName: string } }) {
           retry={() => reload('sessions')}
         />
       </section>
-      <section aria-label="Riwayat koreksi">
+      <section className="card admin-panel" aria-label="Riwayat koreksi">
         <h2>Riwayat koreksi</h2>
         <AdminCorrectionHistory
           key={revisions.history}

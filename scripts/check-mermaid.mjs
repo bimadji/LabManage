@@ -37,6 +37,12 @@ async function renderWithMmdc(file) {
 }
 
 async function parseWithMermaid(code) {
+  if (!globalThis.window) {
+    const { JSDOM } = await import('jsdom');
+    const dom = new JSDOM('');
+    globalThis.window = dom.window;
+    globalThis.document = dom.window.document;
+  }
   const { default: mermaid } = await import('mermaid');
   mermaid.initialize({ startOnLoad: false });
   await mermaid.parse(code);
