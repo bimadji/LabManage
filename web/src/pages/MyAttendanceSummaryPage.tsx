@@ -99,10 +99,13 @@ function SummaryPanel({
       <p className="summary-period">
         {calendarDay(data.period.days[0])} — {calendarDay(data.period.days.at(-1)!)} (WIB)
       </p>
-      <div className="card summary-total">
-        <span className={own.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}>
-          {own.status}
-        </span>
+      <div className="card summary-total" aria-labelledby="summary-status-heading">
+        <div className="summary-status">
+          <h3 id="summary-status-heading">Status target</h3>
+          <span className={own.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}>
+            {own.status}
+          </span>
+        </div>
         <dl className="summary-metrics">
           <div>
             <dt>Total riset</dt>
@@ -217,7 +220,7 @@ function PersonalContent({ userId }: { userId: string }) {
         target, atau peringatan terbaru.
       </p>
       <form
-        className="summary-filters"
+        className="card summary-filters"
         onSubmit={(event) => {
           event.preventDefault();
           setSelected({ period, date });
@@ -242,7 +245,7 @@ function PersonalContent({ userId }: { userId: string }) {
         </label>
         <button type="submit">Tampilkan</button>
       </form>
-      <section aria-labelledby="personal-summary-heading">
+      <section className="summary-section" aria-labelledby="personal-summary-heading">
         <h2 id="personal-summary-heading">Rekap riset</h2>
         <SummaryPanel
           key={`${selected.period}:${selected.date}:${summaryAttempt}`}
@@ -251,7 +254,10 @@ function PersonalContent({ userId }: { userId: string }) {
           retry={reloadSummary}
         />
       </section>
-      <section className="summary-warnings" aria-labelledby="personal-warnings-heading">
+      <section
+        className="summary-section summary-warnings"
+        aria-labelledby="personal-warnings-heading"
+      >
         <div className="page-head">
           <h2 id="personal-warnings-heading">Peringatan saya</h2>
           <Link className="button" to="/notifikasi">

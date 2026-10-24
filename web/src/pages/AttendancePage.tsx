@@ -79,7 +79,7 @@ function SessionContent() {
     minutes >= 60 ? `${Math.floor(minutes / 60)} jam ${minutes % 60} menit` : `${minutes} menit`;
 
   return (
-    <section className="attendance-page">
+    <section className="attendance-page personal-attendance-page">
       <h1>Kehadiran saya</h1>
       <p className="muted">Check-in saat mulai riset di lab dan check-out saat selesai.</p>
       {status === 'loading' && <p role="status">Memuat sesi kehadiran…</p>}
@@ -99,36 +99,52 @@ function SessionContent() {
         </button>
       )}
       {status === 'ready' && (
-        <div className="card">
-          <h2>{isOpen ? 'Sesi berjalan' : 'Sesi terakhir'}</h2>
-          {session ? (
-            <>
+        <div className="card attendance-session" aria-labelledby="attendance-session-heading">
+          <div className="attendance-session-heading">
+            <h2 id="attendance-session-heading">{isOpen ? 'Sesi berjalan' : 'Sesi terakhir'}</h2>
+            {session && (
               <span className={isOpen ? 'badge badge-live' : 'badge'}>
                 {isOpen ? 'Sedang di lab' : 'Selesai'}
               </span>
-              <p>
-                Mulai: {formatDay(session.checkedInAt)}, {formatTime(session.checkedInAt)} WIB
-              </p>
-              {session.checkedOutAt && (
-                <p>
-                  Selesai: {formatDay(session.checkedOutAt)}, {formatTime(session.checkedOutAt)} WIB
-                </p>
-              )}
-              <p className="muted">{isOpen ? 'Durasi berjalan' : 'Durasi akhir'}</p>
-              <p className="reservation-time">{duration}</p>
+            )}
+          </div>
+          {session ? (
+            <>
+              <dl className="attendance-session-details">
+                <div>
+                  <dt>Mulai</dt>
+                  <dd>
+                    {formatDay(session.checkedInAt)}, {formatTime(session.checkedInAt)} WIB
+                  </dd>
+                </div>
+                {session.checkedOutAt && (
+                  <div>
+                    <dt>Selesai</dt>
+                    <dd>
+                      {formatDay(session.checkedOutAt)}, {formatTime(session.checkedOutAt)} WIB
+                    </dd>
+                  </div>
+                )}
+                <div>
+                  <dt>{isOpen ? 'Durasi berjalan' : 'Durasi akhir'}</dt>
+                  <dd className="reservation-time">{duration}</dd>
+                </div>
+              </dl>
             </>
           ) : (
             <p className="muted">
               Belum ada sesi kehadiran. Mulai dengan check-in saat berada di lab.
             </p>
           )}
-          <button
-            type="button"
-            disabled={refreshing || action !== null}
-            onClick={() => void submit(isOpen ? 'check-out' : 'check-in')}
-          >
-            {action ? 'Memproses…' : isOpen ? 'Check-out' : 'Check-in'}
-          </button>
+          <div className="attendance-session-actions">
+            <button
+              type="button"
+              disabled={refreshing || action !== null}
+              onClick={() => void submit(isOpen ? 'check-out' : 'check-in')}
+            >
+              {action ? 'Memproses…' : isOpen ? 'Check-out' : 'Check-in'}
+            </button>
+          </div>
           <p className="muted">
             Sesi dan durasi diperbarui setiap 30 detik serta saat kembali ke tab ini.
           </p>

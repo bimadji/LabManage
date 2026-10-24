@@ -63,6 +63,7 @@ describe('Kehadiran dari navigasi aplikasi', () => {
   it('anggota tanpa sesi mendapat tombol check-in dari navigasi', async () => {
     renderPage();
     expect(await screen.findByRole('button', { name: 'Check-in' })).toBeEnabled();
+    expect(screen.getByRole('heading', { level: 1, name: 'Kehadiran saya' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Kehadiran' })).toHaveAttribute('href', '/kehadiran');
     expect(screen.getByText(/belum ada sesi/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Check-out' })).not.toBeInTheDocument();
@@ -86,6 +87,7 @@ describe('Kehadiran dari navigasi aplikasi', () => {
     await user.click(await screen.findByRole('button', { name: 'Check-in' }));
     expect(await screen.findByRole('button', { name: 'Check-out' })).toBeEnabled();
     expect(screen.getByText('1 jam 30 menit')).toBeInTheDocument();
+    expect(screen.getByText('Durasi berjalan')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/check-in berhasil/i);
     await user.click(screen.getByRole('button', { name: 'Check-out' }));
     expect(await screen.findByRole('button', { name: 'Check-in' })).toBeEnabled();

@@ -122,6 +122,8 @@ describe('Rekap dan peringatan pribadi', () => {
   it('menampilkan ringkasan mingguan, status target, rincian harian dan peringatan WIB', async () => {
     renderPage();
     expect(await screen.findByText('KURANG')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Status target' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Periode').closest('form')).toHaveClass('summary-filters');
     expect(screen.getByText('2,5 jam')).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Kehadiran per hari' }).children).toHaveLength(2);
     expect(await screen.findByText(warning.message)).toBeInTheDocument();
