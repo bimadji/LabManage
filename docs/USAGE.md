@@ -16,11 +16,11 @@ npx supabase status -o env # ambil URL dan kunci lokal
 
 Isi tiga file env (semua diabaikan git):
 
-| File | Variabel |
-| --- | --- |
-| `api/.env` | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT`, `WEB_ORIGIN`, `JOB_SECRET` |
-| `api/.env.test` | sama seperti `api/.env`; `SUPABASE_URL` wajib `127.0.0.1` atau `localhost` |
-| `web/.env` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL` |
+| File            | Variabel                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------- |
+| `api/.env`      | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT`, `WEB_ORIGIN`, `JOB_SECRET` |
+| `api/.env.test` | sama seperti `api/.env`; `SUPABASE_URL` wajib `127.0.0.1` atau `localhost`                           |
+| `web/.env`      | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_URL`                                        |
 
 Menyiapkan database dan data demo:
 
@@ -31,10 +31,10 @@ cd api && npm run db:seed-users
 
 `db:seed-users` membuat tiga akun demo dan aktivitasnya. Aman dijalankan berulang.
 
-| Akun | Kata sandi | Peran |
-| --- | --- | --- |
+| Akun                     | Kata sandi   | Peran   |
+| ------------------------ | ------------ | ------- |
 | `anggota@labmanage.test` | `anggota123` | anggota |
-| `admin@labmanage.test` | `admin123` | admin |
+| `admin@labmanage.test`   | `admin123`   | admin   |
 | `advisor@labmanage.test` | `advisor123` | advisor |
 
 ## 2. Menjalankan aplikasi
@@ -44,7 +44,7 @@ npm run dev --prefix api   # http://localhost:4000
 npm run dev --prefix web   # http://localhost:5173
 ```
 
-Masuk di web memakai salah satu akun demo di atas.
+Masuk di web memakai salah satu akun demo di atas. Pada layar sempit, buka **Menu** untuk menampilkan navigasi; menu menutup setelah tujuan dipilih. Mulai lebar 768 px, navigasi tampil sebagai rail di sisi kiri. **Lewati ke konten utama** tersedia sebagai target Tab pertama untuk pengguna keyboard. Subtautan di bawah **Inventaris**, **Monitoring**, dan **Kehadiran** membuka halaman turunan yang tersedia bagi peran aktif.
 
 ## 3. Memakai aplikasi per peran
 
@@ -75,7 +75,7 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 - **Kehadiran** (`/kehadiran`): check-in/check-out dan melihat sesi pribadi dengan alur yang sama seperti anggota.
 - Melihat semua reservasi, membatalkan reservasi siapa pun.
 - **Inventaris**: membuat item (`/inventaris/baru`), mengubah jumlah komponen, menandai barang kembali, mengubah detail, dan menghapus item dari halaman detail `/inventaris/:id`.
-- **Kotak masuk inventaris** (`/inventaris/kotak-masuk`): mengonfirmasi atau menolak laporan ambil komponen, serta menyetujui atau menolak permintaan pinjam barang. Badge di samping tautan `Inventaris` menunjukkan jumlah permintaan yang masih menunggu.
+- **Kotak masuk inventaris** (`/inventaris/kotak-masuk`): mengonfirmasi atau menolak laporan ambil komponen, serta menyetujui atau menolak permintaan pinjam barang. Badge di samping subtautan **Kotak masuk** menunjukkan jumlah permintaan yang masih menunggu.
 - Setiap perubahan jumlah, konfirmasi, persetujuan, dan pengembalian tercatat di riwayat item beserta aktor dan waktunya.
 - **Laporan fasilitas** (`/laporan-fasilitas`): melihat semua laporan, membuat laporan, serta mengubah status dengan tombol **Tindak lanjuti**, lalu **Tandai selesai**. Alurnya `baru → ditindaklanjuti → selesai`; transisi lain ditolak. Pelapor mendapat notifikasi saat status berubah.
 - Melihat dashboard monitoring (`/monitor`).
@@ -91,50 +91,50 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 
 ## 4. Endpoint yang sering dipakai
 
-| Method | Path | Peran |
-| --- | --- | --- |
-| GET | `/health` | publik |
-| GET | `/rooms` | semua peran |
-| GET | `/reservations?from=&to=` | semua peran |
-| POST | `/reservations` | anggota, admin |
-| PATCH | `/reservations/:id/cancel` | pemilik, admin |
-| POST | `/attendance/check-in` | anggota, admin |
-| POST | `/attendance/check-out` | anggota, admin |
-| GET | `/attendance/present` | admin, advisor |
-| GET | `/attendance/me` | anggota, admin (sesi sendiri yang terakhir beserta `durationMinutes`; `null` jika belum ada) |
-| GET | `/attendance/target` | semua peran |
-| PUT | `/attendance/target` | admin |
-| GET | `/attendance/summary?period=&date=&userId=` | anggota (sendiri), admin/advisor (anggota pilihan atau semua) |
-| GET | `/attendance/statistics?period=&date=&weeks=` | admin |
-| GET | `/attendance/warnings?userId=` | anggota (sendiri), admin/advisor (semua) |
-| POST | `/attendance/warnings` | advisor |
-| PATCH | `/attendance/:id/correct-check-out` | admin |
-| GET | `/attendance/corrections?userId=` | anggota (sendiri), admin/advisor (semua) |
-| GET | `/inventory?kind=&flag=&q=` | semua peran |
-| POST | `/inventory` | admin |
-| PATCH | `/inventory/:id` | admin |
-| DELETE | `/inventory/:id` | admin |
-| PATCH | `/inventory/:id/quantity` | admin |
-| PATCH | `/inventory/:id/return` | admin |
-| GET | `/inventory/:id/history` | semua peran |
-| POST | `/component-requests` | anggota, admin |
-| GET | `/component-requests?status=` | anggota (milik sendiri), admin, advisor (semua) |
-| PATCH | `/component-requests/:id/confirm` | admin |
-| PATCH | `/component-requests/:id/reject` | admin |
-| PATCH | `/component-requests/:id/read` | admin |
-| POST | `/loan-requests` | anggota, admin |
-| GET | `/loan-requests?status=` | anggota (milik sendiri), admin, advisor (semua) |
-| PATCH | `/loan-requests/:id/approve` | admin |
-| PATCH | `/loan-requests/:id/reject` | admin |
-| PATCH | `/loan-requests/:id/cancel` | pemilik |
-| PATCH | `/loan-requests/:id/read` | admin |
-| GET | `/inventory/pending-count` | admin |
-| POST | `/facility-reports` | anggota, admin |
-| GET | `/facility-reports` | anggota (milik sendiri), admin, advisor (semua) |
-| PATCH | `/facility-reports/:id/status` | admin |
-| GET | `/notifications` | semua peran (milik sendiri) |
-| PATCH | `/notifications/:id/read` | pemilik |
-| POST | `/internal/jobs/overnight` | header `X-Job-Secret` |
+| Method | Path                                          | Peran                                                                                        |
+| ------ | --------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| GET    | `/health`                                     | publik                                                                                       |
+| GET    | `/rooms`                                      | semua peran                                                                                  |
+| GET    | `/reservations?from=&to=`                     | semua peran                                                                                  |
+| POST   | `/reservations`                               | anggota, admin                                                                               |
+| PATCH  | `/reservations/:id/cancel`                    | pemilik, admin                                                                               |
+| POST   | `/attendance/check-in`                        | anggota, admin                                                                               |
+| POST   | `/attendance/check-out`                       | anggota, admin                                                                               |
+| GET    | `/attendance/present`                         | admin, advisor                                                                               |
+| GET    | `/attendance/me`                              | anggota, admin (sesi sendiri yang terakhir beserta `durationMinutes`; `null` jika belum ada) |
+| GET    | `/attendance/target`                          | semua peran                                                                                  |
+| PUT    | `/attendance/target`                          | admin                                                                                        |
+| GET    | `/attendance/summary?period=&date=&userId=`   | anggota (sendiri), admin/advisor (anggota pilihan atau semua)                                |
+| GET    | `/attendance/statistics?period=&date=&weeks=` | admin                                                                                        |
+| GET    | `/attendance/warnings?userId=`                | anggota (sendiri), admin/advisor (semua)                                                     |
+| POST   | `/attendance/warnings`                        | advisor                                                                                      |
+| PATCH  | `/attendance/:id/correct-check-out`           | admin                                                                                        |
+| GET    | `/attendance/corrections?userId=`             | anggota (sendiri), admin/advisor (semua)                                                     |
+| GET    | `/inventory?kind=&flag=&q=`                   | semua peran                                                                                  |
+| POST   | `/inventory`                                  | admin                                                                                        |
+| PATCH  | `/inventory/:id`                              | admin                                                                                        |
+| DELETE | `/inventory/:id`                              | admin                                                                                        |
+| PATCH  | `/inventory/:id/quantity`                     | admin                                                                                        |
+| PATCH  | `/inventory/:id/return`                       | admin                                                                                        |
+| GET    | `/inventory/:id/history`                      | semua peran                                                                                  |
+| POST   | `/component-requests`                         | anggota, admin                                                                               |
+| GET    | `/component-requests?status=`                 | anggota (milik sendiri), admin, advisor (semua)                                              |
+| PATCH  | `/component-requests/:id/confirm`             | admin                                                                                        |
+| PATCH  | `/component-requests/:id/reject`              | admin                                                                                        |
+| PATCH  | `/component-requests/:id/read`                | admin                                                                                        |
+| POST   | `/loan-requests`                              | anggota, admin                                                                               |
+| GET    | `/loan-requests?status=`                      | anggota (milik sendiri), admin, advisor (semua)                                              |
+| PATCH  | `/loan-requests/:id/approve`                  | admin                                                                                        |
+| PATCH  | `/loan-requests/:id/reject`                   | admin                                                                                        |
+| PATCH  | `/loan-requests/:id/cancel`                   | pemilik                                                                                      |
+| PATCH  | `/loan-requests/:id/read`                     | admin                                                                                        |
+| GET    | `/inventory/pending-count`                    | admin                                                                                        |
+| POST   | `/facility-reports`                           | anggota, admin                                                                               |
+| GET    | `/facility-reports`                           | anggota (milik sendiri), admin, advisor (semua)                                              |
+| PATCH  | `/facility-reports/:id/status`                | admin                                                                                        |
+| GET    | `/notifications`                              | semua peran (milik sendiri)                                                                  |
+| PATCH  | `/notifications/:id/read`                     | pemilik                                                                                      |
+| POST   | `/internal/jobs/overnight`                    | header `X-Job-Secret`                                                                        |
 
 Format error selalu `{"error":{"code":"...","message":"..."}}`. Error validasi menambahkan `issues` berisi daftar field.
 
@@ -155,7 +155,7 @@ npm run setup:mermaid-browser
 Responsivitas diperiksa pada lebar 375px, 768px, dan 1280px. Pada setiap lebar, jalankan di konsol browser:
 
 ```js
-document.documentElement.scrollWidth <= window.innerWidth
+document.documentElement.scrollWidth <= window.innerWidth;
 ```
 
 Nilai harus `true`.

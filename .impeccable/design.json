@@ -1,0 +1,59 @@
+{
+  "name": "Agenda regu yang terukur",
+  "status": "implemented",
+  "mode": "operate-code-led",
+  "source": "web/src/index.css",
+  "thesis": "Satu agenda kerja menghubungkan waktu, entitas, dan status tanpa dashboard dekoratif atau navigasi yang menunda pekerjaan.",
+  "tokens": {
+    "background": "#f4f6f3",
+    "foreground": "#172d35",
+    "primary": "#164e5a",
+    "accent": "#b94d25",
+    "card": "#ffffff",
+    "muted": "#e7ede8",
+    "mutedForeground": "#475569",
+    "border": "#c5cfca",
+    "destructive": "#b91c1c",
+    "success": "#25634b",
+    "railInk": "#f8faf7",
+    "radius": "6px",
+    "space": [4, 8, 12, 16, 24, 32]
+  },
+  "typography": {
+    "family": "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+    "base": "16px",
+    "pageTitle": "clamp(26px, responsive, 32px)",
+    "sectionTitle": "18px",
+    "numeric": "tabular-nums"
+  },
+  "layout": {
+    "mobile": "Header ringkas; navigasi disclosure tertutup di luar layout dan urutan fokus.",
+    "rail": "220px sticky mulai 768px",
+    "workspace": "minmax(0, 1fr); padding bertambah pada 1280px",
+    "signature": "Ledger tanggal 144px dan daftar waktu–entitas–status pada desktop"
+  },
+  "interaction": {
+    "minimumTarget": "44x44px",
+    "textContrast": ">=4.5:1 untuk teks normal",
+    "keyboard": "Skip link, fokus terlihat, aria-current, disclosure berlabel",
+    "reducedMotion": "prefers-reduced-motion: reduce menghilangkan animasi/transisi",
+    "overflow": "scrollWidth <= innerWidth pada 375, 768, dan 1280px",
+    "status": "Teks eksplisit; tidak mengandalkan warna"
+  },
+  "evidence": {
+    "audit": "docs/ui-review/AUDIT-2026-10.md",
+    "before": "docs/ui-review/ui-overhaul-2026-10/before/",
+    "after": "docs/ui-review/ui-overhaul-2026-10/after/",
+    "captures": {
+      "baselinePairs": 90,
+      "itemDetail": 3,
+      "accessGuards": 18
+    },
+    "limits": "Tidak ada klaim inspeksi piksel; computed CSS/DOM dan test adalah bukti terukur."
+  },
+  "constraints": [
+    "Fase 1 tidak mengubah endpoint, payload, validasi, RLS, guard, atau izin.",
+    "Tidak ada dependency UI, fitur bisnis, filter bisnis, bulk action, atau pagination baru.",
+    "Perubahan hak role dan cakupan data ditangani pada Fase 2 terpisah."
+  ]
+}
