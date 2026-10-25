@@ -80,7 +80,7 @@ export function SchedulePage() {
         </p>
       )}
       {status === 'error' && (
-        <div className="card schedule-state schedule-error">
+        <div className="card card-alert schedule-state schedule-error">
           <p className="error" role="alert">
             Jadwal gagal dimuat. Periksa koneksi lalu coba lagi.
           </p>
@@ -96,7 +96,7 @@ export function SchedulePage() {
         </div>
       )}
       {status === 'ready' && days.length === 0 && (
-        <div className="card schedule-state">
+        <div className="card card-empty schedule-state">
           <p className="schedule-empty-title">Belum ada reservasi dalam dua minggu ke depan.</p>
           <p className="muted">Pilih ruang lain atau buat reservasi untuk tim Anda.</p>
           <Link className="button" to="/reservasi/baru">

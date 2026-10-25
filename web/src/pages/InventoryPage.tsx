@@ -61,16 +61,16 @@ export function InventoryPage() {
           </p>
         </div>
         <div className="inventory-actions">
-          <Link className="link-back" to="/inventaris/permintaan-saya">
+          <Link className="link" to="/inventaris/permintaan-saya">
             Permintaan saya
           </Link>
           {(profile?.role === 'admin' || profile?.role === 'advisor') && (
-            <Link className="link-back" to="/inventaris/kotak-masuk">
+            <Link className="link" to="/inventaris/kotak-masuk">
               Kotak masuk
             </Link>
           )}
           {profile?.role === 'admin' && (
-            <Link className="link-back" to="/inventaris/baru">
+            <Link className="button" to="/inventaris/baru">
               Tambah item
             </Link>
           )}
@@ -126,7 +126,7 @@ export function InventoryPage() {
         </p>
       )}
       {status === 'error' && (
-        <div className="card inventory-load-error">
+        <div className="card card-alert inventory-load-error">
           <p className="error" role="alert">
             Inventaris gagal dimuat. Periksa koneksi lalu coba lagi.
           </p>
@@ -147,20 +147,20 @@ export function InventoryPage() {
             Menampilkan {visible.length} dari {items.length} item.
           </p>
           {hasFilters && (
-            <button type="button" className="link-back inventory-clear" onClick={clearFilters}>
+            <button type="button" className="btn-ghost inventory-clear" onClick={clearFilters}>
               Hapus filter
             </button>
           )}
         </div>
       )}
       {status === 'ready' && items.length === 0 && (
-        <div className="card inventory-empty">
+        <div className="card card-empty inventory-empty">
           <h2>Inventaris belum tersedia.</h2>
           <p className="muted">Hubungi admin untuk menambahkan item inventaris.</p>
         </div>
       )}
       {status === 'ready' && items.length > 0 && visible.length === 0 && (
-        <div className="card inventory-empty">
+        <div className="card card-empty inventory-empty">
           <h2>Tidak ada item yang cocok dengan filter.</h2>
           <p className="muted">Ubah pencarian atau hapus filter untuk melihat semua item.</p>
         </div>
@@ -198,7 +198,7 @@ export function ItemCard({ item, canRequest }: ItemCardProps) {
   }
 
   return (
-    <li className="card inventory-card">
+    <li className="card card-interactive inventory-card">
       <div className="inventory-card-status">
         <span className="muted">{item.kind === 'komponen' ? 'Komponen' : 'Barang'}</span>
         <span className={TONE_CLASS[badge.tone]}>{badge.label}</span>

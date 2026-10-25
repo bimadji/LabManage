@@ -211,7 +211,7 @@ function ReportsContent({ role }: { role: Role }) {
 
   if (loadError)
     return (
-      <div className="card">
+      <div className="card card-alert">
         <p className="error" role="alert">
           {loadError}
         </p>
@@ -253,7 +253,7 @@ function ReportsContent({ role }: { role: Role }) {
       )}
       <h2>{role === 'anggota' ? 'Laporan saya' : 'Semua laporan'}</h2>
       {reports.length === 0 ? (
-        <p className="card muted">
+        <p className="card card-empty muted">
           {role === 'advisor'
             ? 'Belum ada laporan fasilitas untuk dipantau.'
             : 'Belum ada laporan. Gunakan formulir di atas untuk melaporkan kondisi fasilitas.'}

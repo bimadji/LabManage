@@ -20,14 +20,18 @@ Satu agenda kerja menghubungkan waktu, entitas, dan status. Antarmuka mengutamak
 | `--color-primary`, `--color-rail`     | `#164e5a` | Rail biru-petro dan aksi utama                      |
 | `--color-secondary`, `--color-accent` | `#b94d25` | Aksi kerja dan fokus yang menonjol, digunakan hemat |
 | `--color-card`                        | `#ffffff` | Panel form, ledger, dan isi berulang                |
+| `--color-link`                        | `#0f4552` | Tautan konten pada latar terang                     |
+| `--color-link-hover`                  | `#0a323b` | Tautan konten saat hover                            |
 | `--color-muted`                       | `#e7ede8` | Bidang pembeda sekunder                             |
+| `--color-surface-summary`             | `#f1f5f2` | Kartu ringkasan dan notifikasi belum dibaca         |
+| `--color-surface-alert`               | `#fdf3f2` | Kartu kegagalan dan konteks yang perlu dipulihkan   |
 | `--color-muted-foreground`            | `#475569` | Metadata pada latar terang                          |
 | `--color-border`                      | `#c5cfca` | Garis aturan dan batas kontrol                      |
 | `--color-destructive`                 | `#b91c1c` | Error dan tindakan destruktif                       |
 | `--color-success`                     | `#25634b` | Status positif, selalu disertai teks                |
 | `--color-rail-ink`                    | `#f8faf7` | Teks terang pada rail                               |
 
-Radius 6 px; tidak ada bayangan dekoratif, gradien, ilustrasi, atau ikon sebagai pengganti label. Garis 1 px dan ruang kosong membedakan kelompok. Skala spasi 4/8/12/16/24/32 px memakai `--space-1` sampai `--space-6`.
+Radius kontrol 6 px; kartu memakai `--radius-card` 10 px dan `--shadow-card` yang tipis untuk memisahkan isi berulang dari kertas halaman. Tidak ada gradien, ilustrasi, atau ikon sebagai pengganti label. Garis 1 px dan ruang kosong tetap menjadi pembeda utama kelompok. Skala spasi 4/8/12/16/24/32 px memakai `--space-1` sampai `--space-6`.
 
 Tipografi memakai system sans (`system-ui`, Segoe UI, Roboto), dasar 16 px, line-height 1,5. Judul halaman responsif 26–32 px; judul bagian 18 px. Jam, durasi, jumlah, dan metrik memakai angka tabular agar kolom mudah dibandingkan. Keterangan tetap berupa teks, bukan warna atau bentuk saja.
 
@@ -54,6 +58,12 @@ Pola yang sama diterapkan sesuai tugas:
 - **Rekap dan admin:** filter periode berada dalam panel; metrik dan rincian harian mengikuti, tanpa mengganti tabel/daftar bermakna menjadi kartu kosmetik.
 - **Permintaan dan notifikasi:** entitas, pemohon, status, waktu, catatan, dan aksi mempunyai urutan stabil. Status selalu tertulis.
 - **Form:** label terlihat, bantuan dekat dengan kontrol, validasi native dan pesan server dipertahankan, serta aksi submit tidak bergeser ke pola baru.
+
+## Kartu dan tautan
+
+Semua panel memakai `.card` dengan batas 1 px, radius 10 px, dan bayangan tipis yang sama. Varian memiliki fungsi, bukan dekorasi acak: `.card-summary` untuk ringkasan, `.card-alert` untuk error yang dapat dipulihkan, `.card-empty` dengan batas putus-putus untuk keadaan kosong, dan `.card-interactive` untuk kartu inventaris. Kartu interaktif terangkat 2 px saat hover; transisinya hanya memakai `transform` dan otomatis hilang pada reduced motion. Notifikasi belum dibaca memakai surface ringkasan serta badge teks, bukan warna saja.
+
+Tautan konten memakai warna tema dan garis bawah melalui aturan global `a` serta kelas `.link`; tidak ada biru/ungu bawaan browser. `.link-back` khusus navigasi kembali memakai ghost button dan chevron CSS. `.btn-ghost` untuk aksi sekunder dan `.btn-ghost-danger` untuk aksi destruktif sekunder. Aksi utama tetap `.button`. Rail, merek, skip link, dan tombol mempertahankan gaya komponennya sendiri.
 
 ## Interaksi dan aksesibilitas
 

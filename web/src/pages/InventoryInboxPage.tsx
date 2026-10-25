@@ -157,7 +157,7 @@ export function InventoryInboxPage() {
         </p>
       )}
       {loadState === 'error' && (
-        <div className="card requests-message">
+        <div className="card card-alert requests-message">
           <p className="error" role="alert">
             Permintaan gagal dimuat. Coba lagi.
           </p>
@@ -184,7 +184,7 @@ export function InventoryInboxPage() {
         <>
           <h2 className="requests-section-heading">Laporan ambil</h2>
           {loadState === 'ready' && visibleComponents.length === 0 && (
-            <p className="card muted">Tidak ada laporan.</p>
+            <p className="card card-empty muted">Tidak ada laporan.</p>
           )}
           <ul className="cards requests-cards" aria-label="Laporan ambil">
             {visibleComponents.map((row) => (
@@ -228,7 +228,7 @@ export function InventoryInboxPage() {
         <>
           <h2 className="requests-section-heading">Permintaan pinjam</h2>
           {loadState === 'ready' && visibleLoans.length === 0 && (
-            <p className="card muted">Tidak ada permintaan.</p>
+            <p className="card card-empty muted">Tidak ada permintaan.</p>
           )}
           <ul className="cards requests-cards" aria-label="Permintaan pinjam">
             {visibleLoans.map((row) => (
@@ -291,7 +291,7 @@ function RejectForm({ onSubmit }: RejectFormProps) {
 
   if (!open) {
     return (
-      <button type="button" className="link-back" onClick={() => setOpen(true)}>
+      <button type="button" className="btn-ghost btn-ghost-danger" onClick={() => setOpen(true)}>
         Tolak
       </button>
     );

@@ -91,7 +91,7 @@ export function MyRequestsPage() {
         </p>
       )}
       {status === 'error' && (
-        <div className="card requests-message">
+        <div className="card card-alert requests-message">
           <p className="error" role="alert">
             Permintaan gagal dimuat. Coba lagi.
           </p>
@@ -116,7 +116,7 @@ export function MyRequestsPage() {
 
       <h2 className="requests-section-heading">Laporan ambil</h2>
       {status === 'ready' && components.length === 0 && (
-        <p className="card muted">Belum ada laporan.</p>
+        <p className="card card-empty muted">Belum ada laporan.</p>
       )}
       <ul className="cards requests-cards" aria-label="Laporan ambil">
         {components.map((request) => (
@@ -134,7 +134,7 @@ export function MyRequestsPage() {
 
       <h2 className="requests-section-heading">Permintaan pinjam</h2>
       {status === 'ready' && loans.length === 0 && (
-        <p className="card muted">Belum ada permintaan.</p>
+        <p className="card card-empty muted">Belum ada permintaan.</p>
       )}
       <ul className="cards requests-cards" aria-label="Permintaan pinjam">
         {loans.map((request) => (
@@ -152,7 +152,7 @@ export function MyRequestsPage() {
               <div className="requests-actions">
                 <button
                   type="button"
-                  className="link-back"
+                  className="btn-ghost"
                   disabled={saving || status !== 'ready'}
                   onClick={() => void cancel(request)}
                 >
