@@ -361,11 +361,17 @@ describe('InventoryPage', () => {
     const user = userEvent.setup();
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent('Inventaris gagal dimuat');
+    await user.type(screen.getByLabelText('Cari'), 'osilo');
     await user.selectOptions(screen.getByLabelText('Jenis'), 'barang');
+    await user.selectOptions(screen.getByLabelText('Status'), 'tersedia');
     await user.click(screen.getByRole('button', { name: 'Coba lagi' }));
     expect(await screen.findByText('Osiloskop Rigol DS1054Z')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(1);
     expect(screen.queryByText('Resistor 220 Ohm')).not.toBeInTheDocument();
+    expect(screen.queryByText('Laptop Lenovo ThinkPad E14')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Cari')).toHaveValue('osilo');
     expect(screen.getByLabelText('Jenis')).toHaveValue('barang');
+    expect(screen.getByLabelText('Status')).toHaveValue('tersedia');
     expect(
       vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/inventory')),
     ).toHaveLength(2);
