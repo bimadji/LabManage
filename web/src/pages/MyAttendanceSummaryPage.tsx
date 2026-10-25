@@ -285,7 +285,14 @@ export function MyAttendanceSummaryPage() {
           Profil gagal dimuat. Muat ulang halaman.
         </p>
       ) : profile.role !== 'anggota' ? (
-        <p>Halaman ini khusus anggota. Gunakan halaman monitoring untuk memantau kehadiran lab.</p>
+        <div className="card">
+          <p>
+            Halaman ini khusus anggota. Gunakan halaman monitoring untuk memantau kehadiran lab.
+          </p>
+          <Link className="button" to="/monitor">
+            Buka monitoring lab
+          </Link>
+        </div>
       ) : (
         <PersonalContent key={profile.id} userId={profile.id} />
       )}

@@ -177,6 +177,10 @@ describe('Rekap advisor', () => {
     profileState.profile = { id: 'other', role, fullName: 'Bukan advisor' };
     renderPage();
     expect(screen.getByText(/Halaman ini khusus advisor/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Buka monitoring lab' })).toHaveAttribute(
+      'href',
+      '/monitor',
+    );
     await act(async () => {});
     expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/attendance/'))).toBe(
       false,

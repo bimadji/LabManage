@@ -179,6 +179,9 @@ describe('InventoryNewPage', () => {
     profileState.profile = { id: 'user-1', role: 'anggota', fullName: 'Anggota Demo' };
     renderPage();
 
+    expect(
+      screen.getByRole('heading', { name: 'Item inventaris baru', level: 1 }),
+    ).toBeInTheDocument();
     expect(screen.getByText('Halaman ini hanya untuk admin.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Simpan item' })).not.toBeInTheDocument();
   });

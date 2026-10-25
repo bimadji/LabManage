@@ -108,7 +108,20 @@ export function InventoryInboxPage() {
         Memuat…
       </p>
     );
-  if (profile === null) return <p className="muted">Halaman ini hanya untuk admin dan advisor.</p>;
+  if (profile === null)
+    return (
+      <section className="inventory-requests-page">
+        <div className="page-head">
+          <div>
+            <h1>Kotak masuk inventaris</h1>
+            <p className="muted">Halaman ini hanya untuk admin dan advisor.</p>
+          </div>
+          <Link className="link-back" to="/inventaris">
+            Kembali ke inventaris
+          </Link>
+        </div>
+      </section>
+    );
 
   const matches = (rowStatus: RequestStatus) => status === 'semua' || rowStatus === status;
   const visibleComponents = components.filter((row) => matches(row.status));

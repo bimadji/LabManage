@@ -327,7 +327,12 @@ export function AdvisorAttendancePage() {
           Profil gagal dimuat. Muat ulang halaman.
         </p>
       ) : profile.role !== 'advisor' ? (
-        <p>Halaman ini khusus advisor. Gunakan halaman yang sesuai dengan peran Anda.</p>
+        <div className="card">
+          <p>Halaman ini khusus advisor. Gunakan halaman yang sesuai dengan peran Anda.</p>
+          <Link className="button" to="/monitor">
+            Buka monitoring lab
+          </Link>
+        </div>
       ) : (
         <AdvisorContent key={profile.id} />
       )}

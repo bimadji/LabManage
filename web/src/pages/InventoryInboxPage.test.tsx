@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InventoryInboxPage } from './InventoryInboxPage';
 import type { ComponentRequest, LoanRequest } from '../types';
+import type { ProfileState } from '../auth/useProfile';
 
 vi.mock('../lib/supabase', () => ({
   supabaseClient: () => ({
@@ -11,7 +12,7 @@ vi.mock('../lib/supabase', () => ({
   }),
 }));
 
-const profileState = {
+const profileState: ProfileState = {
   profile: { id: 'admin-1', role: 'admin', fullName: 'Admin Demo' },
   loading: false,
 };
@@ -115,6 +116,21 @@ afterEach(() => {
 });
 
 describe('InventoryInboxPage', () => {
+  it('profil tidak tersedia mendapat konteks halaman dan jalur kembali tanpa kontrol keputusan', () => {
+    profileState.profile = null;
+    renderPage();
+
+    expect(
+      screen.getByRole('heading', { name: 'Kotak masuk inventaris', level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Halaman ini hanya untuk admin dan advisor.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Kembali ke inventaris' })).toHaveAttribute(
+      'href',
+      '/inventaris',
+    );
+    expect(screen.queryByRole('button', { name: 'Konfirmasi' })).not.toBeInTheDocument();
+  });
+
   it('mengumumkan loading dan memulihkan error baca melalui retry', async () => {
     let finish!: (value: Response) => void;
     vi.stubGlobal(

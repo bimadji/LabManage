@@ -103,7 +103,12 @@ export function AdminAttendancePage() {
           Profil gagal dimuat. Muat ulang halaman.
         </p>
       ) : profile.role !== 'admin' ? (
-        <p>Halaman ini khusus admin. Gunakan halaman yang sesuai dengan peran Anda.</p>
+        <div className="card">
+          <p>Halaman ini khusus admin. Gunakan halaman yang sesuai dengan peran Anda.</p>
+          <Link className="button" to="/monitor">
+            Buka monitoring lab
+          </Link>
+        </div>
       ) : (
         <AdminContent key={profile.id} actor={profile} />
       )}

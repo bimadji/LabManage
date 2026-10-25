@@ -206,6 +206,10 @@ describe('Absensi admin', () => {
       profileState.profile!.role = role;
       renderPage();
       expect(await screen.findByText(/Halaman ini khusus admin/)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Buka monitoring lab' })).toHaveAttribute(
+        'href',
+        '/monitor',
+      );
       expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     },
   );

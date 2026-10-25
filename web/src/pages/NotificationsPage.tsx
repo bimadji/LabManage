@@ -7,6 +7,7 @@ import type { UserNotification } from '../types';
 const KIND_LABELS: Record<string, string> = {
   reservasi: 'Reservasi',
   lembur: 'Lembur',
+  kehadiran: 'Kehadiran',
   laporan: 'Laporan fasilitas',
   inventaris: 'Inventaris',
 };
