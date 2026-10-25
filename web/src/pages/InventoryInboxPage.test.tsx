@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -156,7 +156,7 @@ describe('InventoryInboxPage', () => {
     expect(screen.getByRole('list', { name: 'Laporan ambil' })).toBeInTheDocument();
   });
 
-  it('mengunci keputusan dan filter selama simpan lalu menampilkan hasil', async () => {
+  it('mengunci keputusan selama simpan lalu menghapus permintaan dari daftar menunggu', async () => {
     let finish!: (value: Response) => void;
     let row = { ...COMPONENTS[0], adminReadAt: '2026-10-23T00:00:00Z' };
     const writes: string[] = [];
@@ -179,12 +179,8 @@ describe('InventoryInboxPage', () => {
     expect(writes).toHaveLength(1);
     expect(screen.getByRole('status')).toHaveTextContent('Menyimpan');
     expect(screen.getByRole('button', { name: 'Tolak' })).toBeDisabled();
-    expect(screen.getByLabelText('Jenis permintaan')).toBeDisabled();
     row = { ...row, status: 'dikonfirmasi' };
     await act(async () => finish(jsonResponse(200, row)));
-    expect(
-      await within(screen.getByRole('list', { name: 'Laporan ambil' })).findByText('DIKONFIRMASI'),
-    ).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Keputusan berhasil disimpan');
     expect(screen.queryByRole('button', { name: 'Konfirmasi' })).not.toBeInTheDocument();
   });

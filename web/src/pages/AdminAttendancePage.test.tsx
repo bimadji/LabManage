@@ -205,23 +205,21 @@ describe('Absensi admin', () => {
     async (role) => {
       profileState.profile!.role = role;
       renderPage();
-      expect(await screen.findByText(/Halaman ini khusus admin/)).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Buka monitoring lab' })).toHaveAttribute(
-        'href',
-        '/monitor',
-      );
+      expect(
+        await screen.findByRole('heading', { name: 'Halaman tidak tersedia' }),
+      ).toBeInTheDocument();
       expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     },
   );
 
-  it('menunggu profil dan tidak memuat data ketika profil gagal', () => {
+  it('tidak memuat data saat profil belum siap', () => {
     profileState.profile = null;
     profileState.loading = true;
     const view = renderPage();
-    expect(screen.getByText('Memuat profil…')).toBeInTheDocument();
+    expect(screen.getByText('Memuat…')).toBeInTheDocument();
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     profileState.loading = false;
     view.rerender(<App />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Profil gagal dimuat');
     expect(vi.mocked(fetch)).not.toHaveBeenCalled();
   });
 

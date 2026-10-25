@@ -542,7 +542,7 @@ Kondisi yang paling mungkin merusak pengalaman pengguna, beserta tahap yang memu
 
 - File: `supabase/migrations/<ts>_inventory_notifications.sql`, `api/src/notifications/create.ts` (`notifyAdmins`), `api/src/inventory/requests.ts`, `api/tests/inventory-requests.test.ts`, `api/scripts/create-demo-users.ts`.
 - Antarmuka: `notifyAdmins(config, { kind, message })`; endpoint `component-requests` dan `loan-requests` (ajukan, daftar, konfirmasi/tolak/setujui/batal/tandai dibaca), `GET /inventory/pending-count`.
-- Test: `user_id` selalu dari token; persetujuan ganda hanya satu sukses; permintaan lain untuk item yang sama otomatis ditolak dengan catatan `barang sudah dipinjam`; konfirmasi kedua 409 `INVALID_STATE`.
+- Test: `user_id` selalu dari token; persetujuan ganda hanya satu sukses; permintaan lain untuk item yang sama otomatis ditolak dengan catatan `barang sudah dipinjam`; konfirmasi kedua 409 `INVALID_STATE`; admin ditolak 403 saat mengajukan; advisor boleh mengajukan `component-requests` dan `loan-requests` (Fase 2, migrasi `20261025081300_inventory_request_roles`, RLS insert juga membatasi role `anggota`/`advisor`).
 
 #### Tahap 1.15: UI inventaris
 

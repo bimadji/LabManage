@@ -6,7 +6,6 @@ import { REQUEST_STATUS_LABEL, type BadgeTone } from '../lib/inventory';
 import type { ComponentRequest, LoanRequest, RequestStatus } from '../types';
 
 type Tab = 'komponen' | 'pinjam';
-type StatusFilter = 'semua' | RequestStatus;
 
 const STATUS_TONE: Record<RequestStatus, BadgeTone> = {
   menunggu: 'warn',
@@ -29,7 +28,6 @@ export function InventoryInboxPage() {
   const isAdmin = profile?.role === 'admin';
 
   const [tab, setTab] = useState<Tab>('komponen');
-  const [status, setStatus] = useState<StatusFilter>('semua');
   const [components, setComponents] = useState<ComponentRequest[]>([]);
   const [loans, setLoans] = useState<LoanRequest[]>([]);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -123,9 +121,8 @@ export function InventoryInboxPage() {
       </section>
     );
 
-  const matches = (rowStatus: RequestStatus) => status === 'semua' || rowStatus === status;
-  const visibleComponents = components.filter((row) => matches(row.status));
-  const visibleLoans = loans.filter((row) => matches(row.status));
+  const visibleComponents = components.filter((row) => row.status === 'menunggu');
+  const visibleLoans = loans.filter((row) => row.status === 'menunggu');
 
   return (
     <section className="inventory-requests-page">
@@ -150,23 +147,6 @@ export function InventoryInboxPage() {
           >
             <option value="komponen">Laporan ambil</option>
             <option value="pinjam">Permintaan pinjam</option>
-          </select>
-        </label>
-
-        <label className="filter" htmlFor="inbox-status">
-          <span>Status</span>
-          <select
-            id="inbox-status"
-            disabled={saving}
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-          >
-            <option value="semua">Semua</option>
-            <option value="menunggu">MENUNGGU</option>
-            <option value="dikonfirmasi">DIKONFIRMASI</option>
-            <option value="disetujui">DISETUJUI</option>
-            <option value="ditolak">DITOLAK</option>
-            <option value="dibatalkan">DIBATALKAN</option>
           </select>
         </label>
       </div>

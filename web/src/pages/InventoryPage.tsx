@@ -41,7 +41,7 @@ export function InventoryPage() {
   }, [reloadKey]);
 
   const visible = filterItems(items, { kind, flag, query });
-  const canRequest = profile !== null && profile.role !== 'advisor';
+  const canRequest = profile !== null && profile.role !== 'admin';
   const hasFilters = kind !== 'semua' || flag !== 'semua' || query !== '';
 
   function clearFilters() {

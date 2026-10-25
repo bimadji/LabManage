@@ -116,13 +116,33 @@ describe('App', () => {
       '/reservasi/baru',
     );
     expect(screen.getByRole('link', { name: 'Inventaris' })).toHaveAttribute('href', '/inventaris');
-    expect(screen.getByRole('link', { name: 'Monitoring' })).toHaveAttribute('href', '/monitor');
+    expect(screen.queryByRole('link', { name: 'Monitoring' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Kehadiran' })).toHaveAttribute('href', '/kehadiran');
     expect(screen.getByRole('link', { name: 'Laporan' })).toHaveAttribute(
       'href',
       '/laporan-fasilitas',
     );
     expect(screen.getByRole('link', { name: 'Notifikasi' })).toHaveAttribute('href', '/notifikasi');
+  });
+
+  it('menolak anggota yang membuka route Monitoring secara langsung', async () => {
+    profileState.profile = { id: 'member-1', role: 'anggota', fullName: 'Anggota' };
+    enterApp('/monitor');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Halaman tidak tersedia' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Kelola kehadiran' })).not.toBeInTheDocument();
+  });
+
+  it('menampilkan Monitoring untuk admin dan advisor', async () => {
+    profileState.profile = { id: 'admin-1', role: 'admin', fullName: 'Admin' };
+    sessionState.session = { user: { id: 'admin-1' } };
+    window.history.replaceState({}, '', '/jadwal');
+    render(<App />);
+    expect(await screen.findByRole('link', { name: 'Monitoring' })).toHaveAttribute(
+      'href',
+      '/monitor',
+    );
   });
 
   it('menyediakan skip link dan satu landmark utama pada halaman kerja', async () => {

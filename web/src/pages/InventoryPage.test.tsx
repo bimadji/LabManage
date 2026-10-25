@@ -293,7 +293,7 @@ describe('InventoryPage', () => {
     });
   });
 
-  it('admin tetap memiliki tautan pengelolaan dan tombol permintaan', async () => {
+  it('admin tidak dapat mengajukan permintaan tetapi tetap memiliki tautan pengelolaan', async () => {
     profileState.profile = { id: 'user-admin', role: 'admin', fullName: 'Admin Demo' };
     renderPage();
     await screen.findByText('Resistor 220 Ohm');
@@ -305,7 +305,8 @@ describe('InventoryPage', () => {
       'href',
       '/inventaris/kotak-masuk',
     );
-    expect(screen.getByRole('button', { name: 'Ajukan pinjam' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lapor ambil' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ajukan pinjam' })).not.toBeInTheDocument();
   });
 
   it('menampilkan pesan error API pada role alert', async () => {
@@ -331,7 +332,7 @@ describe('InventoryPage', () => {
     expect(alert).toHaveTextContent('Stok tidak mencukupi');
   });
 
-  it('advisor menemukan Kotak masuk read-only tanpa akses Tambah item', async () => {
+  it('advisor dapat mengajukan permintaan dan melihat Kotak masuk tanpa akses Tambah item', async () => {
     profileState.profile = { id: 'user-3', role: 'advisor', fullName: 'Advisor Demo' };
     renderPage();
     await screen.findByText('Resistor 220 Ohm');
@@ -340,8 +341,8 @@ describe('InventoryPage', () => {
       '/inventaris/kotak-masuk',
     );
     expect(screen.queryByRole('link', { name: 'Tambah item' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Lapor ambil' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Ajukan pinjam' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Lapor ambil' }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Ajukan pinjam' })).toBeInTheDocument();
   });
 
   it('memuat ulang inventaris setelah gagal tanpa mengubah filter', async () => {

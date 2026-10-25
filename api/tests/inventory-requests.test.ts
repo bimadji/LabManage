@@ -131,14 +131,34 @@ describe('POST /component-requests', () => {
     expect(tooMany.body.error.code).toBe('INSUFFICIENT_STOCK');
   });
 
-  it('menolak advisor dan tanpa token', async () => {
+  it('menolak admin dan tanpa token', async () => {
     const item = await createItem('komponen', 3);
     expect(
-      (await call('post', '/component-requests', advisor, { itemId: item.id, qty: 1 })).status,
+      (await call('post', '/component-requests', admin, { itemId: item.id, qty: 1 })).status,
     ).toBe(403);
     expect(
       (await call('post', '/component-requests', null, { itemId: item.id, qty: 1 })).status,
     ).toBe(401);
+  });
+
+  it('advisor mengajukan ambil dengan user_id dari token', async () => {
+    const item = await createItem('komponen', 3);
+    const response = await call('post', '/component-requests', advisor, {
+      itemId: item.id,
+      qty: 1,
+    });
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ userId: advisor.id, status: 'menunggu' });
+  });
+
+  it('admin tidak dapat menyisipkan permintaan lewat klien Supabase', async () => {
+    const item = await createItem('komponen', 3);
+    const { error } = await admin.client.from('component_requests').insert({
+      item_id: item.id,
+      user_id: admin.id,
+      qty: 1,
+    });
+    expect(error?.code).toBe('42501');
   });
 
   it('anggota tidak dapat menyisipkan permintaan atas nama orang lain lewat klien Supabase', async () => {
@@ -344,13 +364,23 @@ describe('POST /loan-requests', () => {
     expect(tooShort.body.error.code).toBe('VALIDATION_ERROR');
   });
 
-  it('menolak advisor', async () => {
+  it('menolak admin', async () => {
+    const item = await createItem('barang');
+    const response = await call('post', '/loan-requests', admin, {
+      itemId: item.id,
+      purpose: 'melihat alat',
+    });
+    expect(response.status).toBe(403);
+  });
+
+  it('advisor mengajukan pinjam dengan user_id dari token', async () => {
     const item = await createItem('barang');
     const response = await call('post', '/loan-requests', advisor, {
       itemId: item.id,
       purpose: 'melihat alat',
     });
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ userId: advisor.id, status: 'menunggu' });
   });
 });
 

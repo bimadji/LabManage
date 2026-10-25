@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useProfile } from '../auth/useProfile';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import { REQUEST_STATUS_LABEL, type BadgeTone } from '../lib/inventory';
 import type { ComponentRequest, LoanRequest, RequestStatus } from '../types';
@@ -20,6 +21,7 @@ const TONE_CLASS: Record<BadgeTone, string> = {
 };
 
 export function MyRequestsPage() {
+  const { profile } = useProfile();
   const [components, setComponents] = useState<ComponentRequest[]>([]);
   const [loans, setLoans] = useState<LoanRequest[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -37,8 +39,11 @@ export function MyRequestsPage() {
     ])
       .then(([componentList, loanList]) => {
         if (!active) return;
-        setComponents(componentList);
-        setLoans(loanList);
+        // Admin melihat riwayat semua; anggota dan advisor hanya milik sendiri.
+        // RLS mengizinkan advisor membaca semua baris untuk Kotak masuk, jadi filter di klien.
+        const own = (userId: string) => profile?.role === 'admin' || userId === profile?.id;
+        setComponents(componentList.filter((row) => own(row.userId)));
+        setLoans(loanList.filter((row) => own(row.userId)));
         setStatus('ready');
       })
       .catch(() => {
@@ -47,7 +52,7 @@ export function MyRequestsPage() {
     return () => {
       active = false;
     };
-  }, [reloadKey]);
+  }, [reloadKey, profile]);
 
   async function cancel(request: LoanRequest) {
     if (pending.current) return;

@@ -86,7 +86,7 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 - Dari Monitoring, buka **Rekap anggota dan peringatan** (`/monitor/rekap`): pilih minggu/bulan dan tanggal WIB untuk melihat durasi, target, sesi, status KURANG/TERCAPAI, dan rincian harian semua anggota. **Muat ulang rekap** mengambil kondisi terbaru.
 - **Kirim peringatan** tersedia untuk anggota KURANG pada rekap minggu berjalan, dengan catatan opsional maksimal 1000 karakter. Pilih **Minggu ini** saat sedang melihat bulan atau minggu historis. Server memeriksa target terbaru dan membatasi satu peringatan per anggota per hari; kegagalan ditampilkan tanpa mengklaim pesan terkirim. Advisor tidak dapat mengubah target atau mengoreksi absensi.
 - **Laporan fasilitas** (`/laporan-fasilitas`): melihat semua laporan dan statusnya tanpa formulir pembuatan atau tombol perubahan status.
-- Melihat inventaris dan kotak masuk permintaan (`/inventaris/kotak-masuk`) tanpa tombol aksi; advisor tidak dapat mengajukan permintaan atau mengubah item.
+- Melihat inventaris dan kotak masuk permintaan (`/inventaris/kotak-masuk`) tanpa tombol keputusan; kotak masuk hanya menampilkan permintaan `menunggu`. Advisor dapat mengajukan lapor ambil dan permintaan pinjam inventaris, tetapi tidak dapat mengubah item atau memutuskan permintaan.
 - Tidak dapat membuat reservasi, check-in, atau meminjam alat.
 
 ## 4. Endpoint yang sering dipakai
@@ -117,12 +117,12 @@ Gunakan **Muat ulang** untuk mengambil pesan dan status terbaru, atau **Coba lag
 | PATCH  | `/inventory/:id/quantity`                     | admin                                                                                        |
 | PATCH  | `/inventory/:id/return`                       | admin                                                                                        |
 | GET    | `/inventory/:id/history`                      | semua peran                                                                                  |
-| POST   | `/component-requests`                         | anggota, admin                                                                               |
+| POST   | `/component-requests`                         | anggota, advisor                                                                             |
 | GET    | `/component-requests?status=`                 | anggota (milik sendiri), admin, advisor (semua)                                              |
 | PATCH  | `/component-requests/:id/confirm`             | admin                                                                                        |
 | PATCH  | `/component-requests/:id/reject`              | admin                                                                                        |
 | PATCH  | `/component-requests/:id/read`                | admin                                                                                        |
-| POST   | `/loan-requests`                              | anggota, admin                                                                               |
+| POST   | `/loan-requests`                              | anggota, advisor                                                                             |
 | GET    | `/loan-requests?status=`                      | anggota (milik sendiri), admin, advisor (semua)                                              |
 | PATCH  | `/loan-requests/:id/approve`                  | admin                                                                                        |
 | PATCH  | `/loan-requests/:id/reject`                   | admin                                                                                        |

@@ -173,7 +173,7 @@ export function requestsRouter(config: Config): Router {
 
   router.post(
     '/component-requests',
-    requireRole('anggota', 'admin'),
+    requireRole('anggota', 'advisor'),
     validate(createComponentSchema),
     async (req, res) => {
       const { itemId, qty, note } = req.body as z.infer<typeof createComponentSchema>;
@@ -341,7 +341,7 @@ export function requestsRouter(config: Config): Router {
 
   router.post(
     '/loan-requests',
-    requireRole('anggota', 'admin'),
+    requireRole('anggota', 'advisor'),
     validate(createLoanSchema),
     async (req, res) => {
       const { itemId, purpose, expectedReturnAt } = req.body as z.infer<typeof createLoanSchema>;

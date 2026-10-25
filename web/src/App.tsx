@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   BrowserRouter,
   Link,
@@ -9,7 +9,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { SignIn } from './auth/SignIn';
-import { useProfile } from './auth/useProfile';
+import { useProfile, type Profile } from './auth/useProfile';
 import { useSession } from './auth/useSession';
 import { apiFetch } from './lib/api';
 import { supabaseClient } from './lib/supabase';
@@ -94,6 +94,7 @@ function Sidebar({
     },
     {
       to: '/monitor',
+      roles: ['admin', 'advisor'],
       label: 'Monitoring',
       children: [
         { to: '/monitor/admin', label: 'Kelola kehadiran', roles: ['admin'] },
@@ -109,6 +110,9 @@ function Sidebar({
     { to: '/notifikasi', label: 'Notifikasi', children: [] },
   ];
   const roleLabel = role === 'admin' ? 'Admin' : role === 'advisor' ? 'Advisor' : 'Anggota';
+  const visibleNavigation = navigation.filter(
+    (item) => item.roles === undefined || (role !== undefined && item.roles.includes(role)),
+  );
 
   return (
     <header className="sidebar">
@@ -139,7 +143,7 @@ function Sidebar({
         aria-label="Navigasi utama"
       >
         <ul>
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const children = item.children.filter((child) => role && child.roles.includes(role));
             return (
               <li className="nav-item" key={item.to}>
@@ -187,6 +191,31 @@ function Sidebar({
   );
 }
 
+type Role = Profile['role'];
+
+/** Guard route: halaman tidak dirender untuk peran yang tidak berhak, termasuk saat dibuka lewat URL langsung. */
+function RoleRoute({ roles, children }: { roles: Role[]; children: ReactNode }) {
+  const { profile, loading } = useProfile();
+  if (loading)
+    return (
+      <p className="muted" role="status">
+        Memuat…
+      </p>
+    );
+  if (!profile || !roles.includes(profile.role)) {
+    return (
+      <section className="page-state">
+        <h1>Halaman tidak tersedia</h1>
+        <p className="muted">Halaman ini tidak tersedia untuk peran Anda.</p>
+        <Link className="button" to="/jadwal">
+          Buka Jadwal
+        </Link>
+      </section>
+    );
+  }
+  return children;
+}
+
 function Shell() {
   const { session, loading } = useSession();
   const location = useLocation();
@@ -228,12 +257,30 @@ function Shell() {
             <Route path="/inventaris/baru" element={<InventoryNewPage />} />
             <Route path="/inventaris/kotak-masuk" element={<InventoryInboxPage />} />
             <Route path="/inventaris/:id" element={<InventoryItemPage />} />
-            <Route path="/monitor" element={<MonitorPage key={session.user?.id} />} />
+            <Route
+              path="/monitor"
+              element={
+                <RoleRoute roles={['admin', 'advisor']}>
+                  <MonitorPage key={session.user?.id} />
+                </RoleRoute>
+              }
+            />
             <Route
               path="/monitor/rekap"
-              element={<AdvisorAttendancePage key={session.user?.id} />}
+              element={
+                <RoleRoute roles={['advisor']}>
+                  <AdvisorAttendancePage key={session.user?.id} />
+                </RoleRoute>
+              }
             />
-            <Route path="/monitor/admin" element={<AdminAttendancePage key={session.user?.id} />} />
+            <Route
+              path="/monitor/admin"
+              element={
+                <RoleRoute roles={['admin']}>
+                  <AdminAttendancePage key={session.user?.id} />
+                </RoleRoute>
+              }
+            />
             <Route path="/kehadiran" element={<AttendancePage />} />
             <Route
               path="/kehadiran/rekap"
