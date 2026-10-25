@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Link,
+  NavLink,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from 'react-router-dom';
 import { SignIn } from './auth/SignIn';
 import { useProfile } from './auth/useProfile';
 import { useSession } from './auth/useSession';
@@ -44,18 +52,135 @@ function PendingBadge() {
 
   if (!isAdmin || total === 0) return null;
   return (
-    <span className="badge" aria-label={`${total} permintaan menunggu`}>
-      {total}
+    <span className="badge nav-badge">
+      {total} <span className="sr-only">permintaan pending</span>
     </span>
+  );
+}
+
+function Sidebar() {
+  const { profile } = useProfile();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const role = profile?.role;
+  const navigation = [
+    { to: '/jadwal', label: 'Jadwal', children: [] },
+    { to: '/reservasi/baru', label: 'Reservasi', children: [] },
+    {
+      to: '/inventaris',
+      label: 'Inventaris',
+      children: [
+        {
+          to: '/inventaris/permintaan-saya',
+          label: 'Permintaan saya',
+          roles: ['anggota', 'admin', 'advisor'],
+        },
+        {
+          to: '/inventaris/kotak-masuk',
+          label: 'Kotak masuk',
+          roles: ['admin', 'advisor'],
+          badge: true,
+        },
+        { to: '/inventaris/baru', label: 'Tambah item', roles: ['admin'] },
+      ],
+    },
+    {
+      to: '/monitor',
+      label: 'Monitoring',
+      children: [
+        { to: '/monitor/admin', label: 'Kelola kehadiran', roles: ['admin'] },
+        { to: '/monitor/rekap', label: 'Rekap per anggota', roles: ['advisor'] },
+      ],
+    },
+    {
+      to: '/kehadiran',
+      label: 'Kehadiran',
+      children: [{ to: '/kehadiran/rekap', label: 'Rekap saya', roles: ['anggota'] }],
+    },
+    { to: '/laporan-fasilitas', label: 'Laporan', children: [] },
+    { to: '/notifikasi', label: 'Notifikasi', children: [] },
+  ];
+  const roleLabel = role === 'admin' ? 'Admin' : role === 'advisor' ? 'Advisor' : 'Anggota';
+
+  return (
+    <header className="sidebar">
+      <div className="sidebar-heading">
+        <Link className="brand" to="/jadwal" aria-label="LabManage, buka Jadwal">
+          <span className="brand-name">LabManage</span>
+          <span className="brand-description">Ruang kerja laboratorium</span>
+        </Link>
+        <button
+          className="nav-toggle"
+          type="button"
+          aria-label={menuOpen ? 'Tutup navigasi' : 'Buka navigasi'}
+          aria-expanded={menuOpen}
+          aria-controls="main-navigation"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? 'Tutup' : 'Menu'}
+        </button>
+      </div>
+      <nav
+        id="main-navigation"
+        className={`main-navigation${menuOpen ? ' is-open' : ''}`}
+        aria-label="Navigasi utama"
+      >
+        <ul>
+          {navigation.map((item) => {
+            const children = item.children.filter((child) => role && child.roles.includes(role));
+            return (
+              <li className="nav-item" key={item.to}>
+                <NavLink to={item.to} className="nav-link">
+                  {item.label}
+                </NavLink>
+                {children.length > 0 && (
+                  <div className="nav-sublinks">
+                    {children.map((child) => (
+                      <Link
+                        key={child.to}
+                        to={child.to}
+                        className={`nav-sublink${location.pathname === child.to ? ' active' : ''}`}
+                        aria-current={location.pathname === child.to ? 'location' : undefined}
+                      >
+                        {child.label}
+                        {'badge' in child && child.badge && (
+                          <>
+                            {' '}
+                            <PendingBadge />
+                          </>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      <div className="account-panel">
+        <span className="account-name">{profile?.fullName ?? 'Memuat akun…'}</span>
+        <span className="account-role">{role ? roleLabel : 'Peran belum tersedia'}</span>
+        <button
+          type="button"
+          className="logout-button"
+          onClick={() => supabaseClient().auth.signOut()}
+        >
+          Keluar
+        </button>
+      </div>
+    </header>
   );
 }
 
 function Shell() {
   const { session, loading } = useSession();
+  const location = useLocation();
 
   if (loading)
     return (
-      <main className="app">
+      <main className="app-loading">
         <p className="muted" role="status">
           Memuat…
         </p>
@@ -64,49 +189,50 @@ function Shell() {
   if (!session) return <SignIn />;
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <span className="brand">LabManage</span>
-        <nav aria-label="Navigasi utama">
-          <NavLink to="/jadwal">Jadwal</NavLink>
-          <NavLink to="/reservasi/baru">Reservasi</NavLink>
-          <NavLink to="/inventaris">
-            Inventaris
-            <PendingBadge />
-          </NavLink>
-          <NavLink to="/monitor">Monitoring</NavLink>
-          <NavLink to="/kehadiran">Kehadiran</NavLink>
-          <NavLink to="/laporan-fasilitas">Laporan</NavLink>
-          <NavLink to="/notifikasi">Notifikasi</NavLink>
-        </nav>
-        <button type="button" className="link-back" onClick={() => supabaseClient().auth.signOut()}>
-          Keluar
-        </button>
-      </header>
-
-      <main>
-        <Routes>
-          <Route path="/" element={<Navigate to="/jadwal" replace />} />
-          <Route path="/jadwal" element={<SchedulePage />} />
-          <Route path="/reservasi/baru" element={<NewReservationPage />} />
-          <Route path="/inventaris" element={<InventoryPage />} />
-          <Route path="/inventaris/permintaan-saya" element={<MyRequestsPage />} />
-          <Route path="/inventaris/baru" element={<InventoryNewPage />} />
-          <Route path="/inventaris/kotak-masuk" element={<InventoryInboxPage />} />
-          <Route path="/inventaris/:id" element={<InventoryItemPage />} />
-          <Route path="/monitor" element={<MonitorPage key={session.user?.id} />} />
-          <Route path="/monitor/rekap" element={<AdvisorAttendancePage key={session.user?.id} />} />
-          <Route path="/monitor/admin" element={<AdminAttendancePage key={session.user?.id} />} />
-          <Route path="/kehadiran" element={<AttendancePage />} />
-          <Route
-            path="/kehadiran/rekap"
-            element={<MyAttendanceSummaryPage key={session.user?.id} />}
-          />
-          <Route path="/laporan-fasilitas" element={<FacilityReportsPage />} />
-          <Route path="/notifikasi" element={<NotificationsPage key={session.user?.id} />} />
-          <Route path="*" element={<p className="muted">Halaman tidak ditemukan.</p>} />
-        </Routes>
-      </main>
+    <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Lewati ke konten utama
+      </a>
+      <Sidebar key={location.pathname} />
+      <div className="workspace">
+        <main id="main-content" tabIndex={-1}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/jadwal" replace />} />
+            <Route path="/jadwal" element={<SchedulePage />} />
+            <Route path="/reservasi/baru" element={<NewReservationPage />} />
+            <Route path="/inventaris" element={<InventoryPage />} />
+            <Route path="/inventaris/permintaan-saya" element={<MyRequestsPage />} />
+            <Route path="/inventaris/baru" element={<InventoryNewPage />} />
+            <Route path="/inventaris/kotak-masuk" element={<InventoryInboxPage />} />
+            <Route path="/inventaris/:id" element={<InventoryItemPage />} />
+            <Route path="/monitor" element={<MonitorPage key={session.user?.id} />} />
+            <Route
+              path="/monitor/rekap"
+              element={<AdvisorAttendancePage key={session.user?.id} />}
+            />
+            <Route path="/monitor/admin" element={<AdminAttendancePage key={session.user?.id} />} />
+            <Route path="/kehadiran" element={<AttendancePage />} />
+            <Route
+              path="/kehadiran/rekap"
+              element={<MyAttendanceSummaryPage key={session.user?.id} />}
+            />
+            <Route path="/laporan-fasilitas" element={<FacilityReportsPage />} />
+            <Route path="/notifikasi" element={<NotificationsPage key={session.user?.id} />} />
+            <Route
+              path="*"
+              element={
+                <section className="page-state">
+                  <h1>Halaman tidak ditemukan</h1>
+                  <p className="muted">Periksa alamat atau kembali ke jadwal.</p>
+                  <Link className="button" to="/jadwal">
+                    Buka Jadwal
+                  </Link>
+                </section>
+              }
+            />
+          </Routes>
+        </main>
+      </div>
     </div>
   );
 }

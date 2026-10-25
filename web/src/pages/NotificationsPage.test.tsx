@@ -68,7 +68,9 @@ describe('Notifikasi pribadi dari navigasi aplikasi', () => {
     renderPage();
     expect(await screen.findByText(unread.message)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Notifikasi' })).toHaveAttribute('href', '/notifikasi');
-    const cards = screen.getAllByRole('listitem');
+    const cards = within(screen.getByRole('list', { name: 'Daftar notifikasi' })).getAllByRole(
+      'listitem',
+    );
     expect(cards).toHaveLength(2);
     expect(cards[0]).toHaveTextContent(unread.message);
     expect(cards[0]).toHaveTextContent('Lembur');
