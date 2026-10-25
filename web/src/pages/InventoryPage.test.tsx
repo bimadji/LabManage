@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { InventoryPage } from './InventoryPage';
+import { InventoryPage, ItemCard } from './InventoryPage';
 import type { InventoryItem } from '../types';
 
 vi.mock('../lib/supabase', () => ({
@@ -331,14 +331,73 @@ describe('InventoryPage', () => {
     expect(alert).toHaveTextContent('Stok tidak mencukupi');
   });
 
-  it('advisor tidak melihat tombol permintaan', async () => {
+  it('advisor menemukan Kotak masuk read-only tanpa akses Tambah item', async () => {
     profileState.profile = { id: 'user-3', role: 'advisor', fullName: 'Advisor Demo' };
     renderPage();
     await screen.findByText('Resistor 220 Ohm');
-
-    await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Lapor ambil' })).not.toBeInTheDocument();
-    });
+    expect(screen.getByRole('link', { name: 'Kotak masuk' })).toHaveAttribute(
+      'href',
+      '/inventaris/kotak-masuk',
+    );
+    expect(screen.queryByRole('link', { name: 'Tambah item' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lapor ambil' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ajukan pinjam' })).not.toBeInTheDocument();
+  });
+
+  it('memuat ulang inventaris setelah gagal tanpa mengubah filter', async () => {
+    let catalogAttempt = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (String(url).endsWith('/inventory')) {
+          catalogAttempt += 1;
+          return catalogAttempt === 1
+            ? jsonResponse(503, { error: { code: 'UNAVAILABLE', message: 'Coba lagi' } })
+            : jsonResponse(200, ITEMS);
+        }
+        return jsonResponse(201, { id: 'req-1' });
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Inventaris gagal dimuat');
+    await user.selectOptions(screen.getByLabelText('Jenis'), 'barang');
+    await user.click(screen.getByRole('button', { name: 'Coba lagi' }));
+    expect(await screen.findByText('Osiloskop Rigol DS1054Z')).toBeInTheDocument();
+    expect(screen.queryByText('Resistor 220 Ohm')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Jenis')).toHaveValue('barang');
+    expect(
+      vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/inventory')),
+    ).toHaveLength(2);
+  });
+});
+
+describe('ItemCard', () => {
+  it('menghubungkan setiap trigger dengan region bernama dan id yang stabil', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <ul>
+          <ItemCard item={ITEMS[2]} canRequest />
+          <ItemCard item={ITEMS[4]} canRequest />
+        </ul>
+      </MemoryRouter>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Lapor ambil' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(trigger).toHaveAttribute('aria-controls', expect.stringMatching(/^ambil-/));
+    const regionId = trigger.getAttribute('aria-controls') as string;
+    expect(document.getElementById(regionId)).toHaveAttribute('role', 'region');
+    expect(document.getElementById(regionId)).toHaveAttribute('aria-labelledby', trigger.id);
+    const borrow = screen.getByRole('button', { name: 'Ajukan pinjam' });
+    expect(borrow.getAttribute('aria-controls')).not.toBe(regionId);
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      within(document.getElementById(regionId) as HTMLElement).getByLabelText('Jumlah'),
+    ).toBeVisible();
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(document.getElementById(regionId)).toHaveAttribute('hidden');
   });
 });
