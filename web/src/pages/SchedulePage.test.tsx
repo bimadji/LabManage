@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiFetch } from '../lib/api';
@@ -95,5 +96,28 @@ describe('SchedulePage', () => {
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent('Jadwal gagal dimuat');
     expect(screen.queryByText(/Belum ada reservasi/)).not.toBeInTheDocument();
+  });
+
+  it('memuat ulang ruang dan reservasi serta mempertahankan filter setelah gagal', async () => {
+    const user = userEvent.setup();
+    let reservationAttempts = 0;
+    vi.mocked(apiFetch).mockImplementation(async (path) => {
+      if (path === '/rooms') return rooms;
+      if (path.startsWith('/reservations?')) {
+        reservationAttempts += 1;
+        if (reservationAttempts === 1) throw new Error('Offline');
+        return reservations;
+      }
+      throw new Error(`Endpoint tidak diharapkan: ${path}`);
+    });
+    renderPage();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Jadwal gagal dimuat');
+    await user.selectOptions(screen.getByLabelText('Ruang'), 'b');
+    await user.click(screen.getByRole('button', { name: 'Coba lagi' }));
+    expect(await screen.findByText('Tim Robot B')).toBeInTheDocument();
+    expect(screen.queryByText('Tim Robot A')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Ruang')).toHaveValue('b');
+    expect(vi.mocked(apiFetch)).toHaveBeenCalledTimes(4);
+    expect(vi.mocked(apiFetch)).toHaveBeenCalledWith('/rooms');
   });
 });

@@ -9,6 +9,7 @@ export function SchedulePage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [roomFilter, setRoomFilter] = useState('semua');
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -16,14 +17,16 @@ export function SchedulePage() {
     const to = new Date(from.getTime() + 14 * 24 * 60 * 60 * 1000);
 
     Promise.all([
-      apiFetch<Room[]>('/rooms'),
+      apiFetch<Room[]>('/rooms').then((roomList) => {
+        if (active) setRooms(roomList);
+        return roomList;
+      }),
       apiFetch<Reservation[]>(
         `/reservations?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`,
       ),
     ])
-      .then(([roomList, reservationList]) => {
+      .then(([, reservationList]) => {
         if (!active) return;
-        setRooms(roomList);
         setReservations(reservationList);
         setStatus('ready');
       })
@@ -34,7 +37,7 @@ export function SchedulePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   const roomName = useMemo(() => new Map(rooms.map((room) => [room.id, room.name])), [rooms]);
 
@@ -77,9 +80,20 @@ export function SchedulePage() {
         </p>
       )}
       {status === 'error' && (
-        <p className="card schedule-state error" role="alert">
-          Jadwal gagal dimuat. Muat ulang halaman.
-        </p>
+        <div className="card schedule-state schedule-error">
+          <p className="error" role="alert">
+            Jadwal gagal dimuat. Periksa koneksi lalu coba lagi.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus('loading');
+              setReloadKey((key) => key + 1);
+            }}
+          >
+            Coba lagi
+          </button>
+        </div>
       )}
       {status === 'ready' && days.length === 0 && (
         <div className="card schedule-state">
@@ -91,29 +105,39 @@ export function SchedulePage() {
         </div>
       )}
 
-      {days.map(([day, items]) => (
-        <section key={day} className="day schedule-day" aria-labelledby={`schedule-${day}`}>
-          <h2 id={`schedule-${day}`}>{formatDay(items[0].startsAt)}</h2>
-          <ul className="cards" aria-labelledby={`schedule-${day}`}>
-            {items.map((reservation) => (
-              <li key={reservation.id} className="card reservation">
-                <p className="reservation-time">
-                  <time dateTime={reservation.startsAt}>{formatTime(reservation.startsAt)}</time>
-                  {'–'}
-                  <time dateTime={reservation.endsAt}>{formatTime(reservation.endsAt)}</time>
-                </p>
-                <div className="schedule-reservation-detail">
-                  <p className="reservation-room">{roomName.get(reservation.roomId) ?? 'Ruang'}</p>
-                  <p className="muted">{reservation.team}</p>
-                </div>
-                <span className={`badge ${reservation.status === 'aktif' ? 'badge-ok' : ''}`}>
-                  {reservation.status === 'aktif' ? 'Aktif' : 'Dibatalkan'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {status === 'ready' &&
+        days.map(([day, items]) => {
+          const [weekday, date] = formatDay(items[0].startsAt).split(', ');
+          return (
+            <section key={day} className="day schedule-day" aria-labelledby={`schedule-${day}`}>
+              <h2 id={`schedule-${day}`}>
+                <span className="schedule-weekday">{weekday},</span> <span>{date}</span>
+              </h2>
+              <ul className="cards" aria-labelledby={`schedule-${day}`}>
+                {items.map((reservation) => (
+                  <li key={reservation.id} className="card reservation">
+                    <p className="reservation-time">
+                      <time dateTime={reservation.startsAt}>
+                        {formatTime(reservation.startsAt)}
+                      </time>
+                      {'–'}
+                      <time dateTime={reservation.endsAt}>{formatTime(reservation.endsAt)}</time>
+                    </p>
+                    <div className="schedule-reservation-detail">
+                      <p className="reservation-room">
+                        {roomName.get(reservation.roomId) ?? 'Ruang'}
+                      </p>
+                      <p className="muted">{reservation.team}</p>
+                    </div>
+                    <span className={`badge ${reservation.status === 'aktif' ? 'badge-ok' : ''}`}>
+                      {reservation.status === 'aktif' ? 'Aktif' : 'Dibatalkan'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
     </section>
   );
 }
