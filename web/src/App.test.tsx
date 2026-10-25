@@ -190,6 +190,38 @@ describe('App', () => {
     ).toHaveLength(7);
   });
 
+  it('menutup menu ketika brand dipilih pada route Jadwal yang sama', async () => {
+    const user = userEvent.setup();
+    enterApp('/jadwal');
+    const brand = await screen.findByRole('link', { name: 'LabManage, buka Jadwal' });
+    const toggle = screen.getByRole('button', { name: 'Buka navigasi' });
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    brand.focus();
+    await user.click(brand);
+
+    expect(window.location.pathname).toBe('/jadwal');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(document.activeElement).toBe(brand);
+  });
+
+  it('mempertahankan fokus navigasi dan identitas akun setelah perpindahan route', async () => {
+    profileState.profile = { id: 'member-1', role: 'anggota', fullName: 'Anggota Demo' };
+    const user = userEvent.setup();
+    enterApp('/jadwal');
+    const navigation = await screen.findByRole('navigation', { name: 'Navigasi utama' });
+    const inventoryLink = within(navigation).getByRole('link', { name: 'Inventaris' });
+    inventoryLink.focus();
+
+    await user.click(inventoryLink);
+
+    expect(window.location.pathname).toBe('/inventaris');
+    expect(document.activeElement).toBe(inventoryLink);
+    expect(screen.getByText('Anggota Demo')).toBeInTheDocument();
+    expect(within(navigation).getByRole('link', { name: 'Permintaan saya' })).toBeInTheDocument();
+  });
+
   it('memberikan aria-current pada tujuan yang sesuai dengan route aktif', async () => {
     profileState.profile = { id: 'admin-1', role: 'admin', fullName: 'Admin Robotik' };
     enterApp('/inventaris/kotak-masuk');

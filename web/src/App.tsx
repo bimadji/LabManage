@@ -58,10 +58,17 @@ function PendingBadge() {
   );
 }
 
-function Sidebar() {
+function Sidebar({
+  menuOpen,
+  onMenuOpenChange,
+  onNavigate,
+}: {
+  menuOpen: boolean;
+  onMenuOpenChange: (open: boolean) => void;
+  onNavigate: () => void;
+}) {
   const { profile } = useProfile();
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const role = profile?.role;
   const navigation = [
@@ -106,7 +113,12 @@ function Sidebar() {
   return (
     <header className="sidebar">
       <div className="sidebar-heading">
-        <Link className="brand" to="/jadwal" aria-label="LabManage, buka Jadwal">
+        <Link
+          className="brand"
+          to="/jadwal"
+          aria-label="LabManage, buka Jadwal"
+          onClick={onNavigate}
+        >
           <span className="brand-name">LabManage</span>
           <span className="brand-description">Ruang kerja laboratorium</span>
         </Link>
@@ -116,7 +128,7 @@ function Sidebar() {
           aria-label={menuOpen ? 'Tutup navigasi' : 'Buka navigasi'}
           aria-expanded={menuOpen}
           aria-controls="main-navigation"
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={() => onMenuOpenChange(!menuOpen)}
         >
           {menuOpen ? 'Tutup' : 'Menu'}
         </button>
@@ -131,7 +143,7 @@ function Sidebar() {
             const children = item.children.filter((child) => role && child.roles.includes(role));
             return (
               <li className="nav-item" key={item.to}>
-                <NavLink to={item.to} className="nav-link">
+                <NavLink to={item.to} className="nav-link" onClick={onNavigate}>
                   {item.label}
                 </NavLink>
                 {children.length > 0 && (
@@ -141,6 +153,7 @@ function Sidebar() {
                         key={child.to}
                         to={child.to}
                         className={`nav-sublink${location.pathname === child.to ? ' active' : ''}`}
+                        onClick={onNavigate}
                         aria-current={location.pathname === child.to ? 'location' : undefined}
                       >
                         {child.label}
@@ -177,6 +190,9 @@ function Sidebar() {
 function Shell() {
   const { session, loading } = useSession();
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPath, setMenuPath] = useState(location.pathname);
+  const navigationOpen = menuOpen && menuPath === location.pathname;
 
   if (loading)
     return (
@@ -193,7 +209,14 @@ function Shell() {
       <a className="skip-link" href="#main-content">
         Lewati ke konten utama
       </a>
-      <Sidebar key={location.pathname} />
+      <Sidebar
+        menuOpen={navigationOpen}
+        onMenuOpenChange={(open) => {
+          setMenuPath(location.pathname);
+          setMenuOpen(open);
+        }}
+        onNavigate={() => setMenuOpen(false)}
+      />
       <div className="workspace">
         <main id="main-content" tabIndex={-1}>
           <Routes>
