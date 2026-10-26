@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { elapsedMinutes, liveDurationLabel, liveMetrics } from '../monitor/liveDuration';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
 import { apiFetch } from '../lib/api';
@@ -14,6 +15,9 @@ export function MonitorPage() {
   const [sessions, setSessions] = useState<PresentSession[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [live, setLive] = useState(false);
+  const [now, setNow] = useState(Date.now);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const metrics = liveMetrics(sessions);
   const knownNames = useRef(new Map<string, string>());
 
   useEffect(() => {
@@ -51,6 +55,11 @@ export function MonitorPage() {
       })
       .subscribe((state) => {
         setLive(state === 'SUBSCRIBED');
+        setConnectionError(
+          state === 'CHANNEL_ERROR' || state === 'TIMED_OUT'
+            ? 'Koneksi pembaruan langsung terganggu. Coba muat ulang halaman.'
+            : null,
+        );
         // Realtime can miss changes while disconnected; resync when it comes back.
         if (state === 'SUBSCRIBED') void load();
       });
@@ -59,6 +68,11 @@ export function MonitorPage() {
       active = false;
       void supabase.removeChannel(channel);
     };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   return (
@@ -83,10 +97,18 @@ export function MonitorPage() {
         )}
       </div>
 
-      {status === 'loading' && (
-        <p className="card monitor-state" role="status">
-          Memuat kehadiran…
+      {connectionError && (
+        <p className="card card-alert error" role="alert">
+          {connectionError}
         </p>
+      )}
+
+      {status === 'loading' && (
+        <div className="skeleton-stack" role="status" aria-label="Memuat kehadiran langsung">
+          <span className="skeleton skeleton-heading" />
+          <span className="skeleton skeleton-metric" />
+          <span className="skeleton skeleton-row" />
+        </div>
       )}
       {status === 'error' && (
         <p className="card card-alert error monitor-state" role="alert">
@@ -96,6 +118,17 @@ export function MonitorPage() {
       {status === 'ready' && sessions.length === 0 && (
         <p className="card card-empty muted monitor-state">Tidak ada anggota di lab saat ini.</p>
       )}
+
+      <dl className="cards live-metrics" aria-label="Kondisi laboratorium saat ini">
+        <div className="card">
+          <dt>Anggota di lab</dt>
+          <dd>{metrics.present}</dd>
+        </div>
+        <div className="card">
+          <dt>Lewat 21:00 WIB</dt>
+          <dd>{metrics.late}</dd>
+        </div>
+      </dl>
 
       <ul className="cards monitor-members" aria-label="Anggota yang sedang di lab">
         {sessions.map((session) => (
@@ -111,7 +144,9 @@ export function MonitorPage() {
               </div>
               <div>
                 <dt>Durasi</dt>
-                <dd className="reservation-time">{formatDuration(session.durationMinutes)}</dd>
+                <dd className="reservation-time">
+                  {liveDurationLabel(elapsedMinutes(session, now))}
+                </dd>
               </div>
             </dl>
           </li>
@@ -119,10 +154,4 @@ export function MonitorPage() {
       </ul>
     </section>
   );
-}
-
-function formatDuration(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return hours > 0 ? `${hours} jam ${rest} menit` : `${rest} menit`;
 }

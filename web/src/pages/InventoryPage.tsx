@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
+import { InventoryNavigation } from '../inventory/InventoryNavigation';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import { filterItems, itemBadge, type BadgeTone } from '../lib/inventory';
 import type { ComponentRequest, InventoryItem, ItemStatus, LoanRequest, StockFlag } from '../types';
@@ -53,6 +54,7 @@ export function InventoryPage() {
 
   return (
     <section className="inventory-page">
+      <InventoryNavigation />
       <div className="page-head">
         <div>
           <h1>Inventaris</h1>
@@ -61,14 +63,6 @@ export function InventoryPage() {
           </p>
         </div>
         <div className="inventory-actions">
-          <Link className="link" to="/inventaris/permintaan-saya">
-            Permintaan saya
-          </Link>
-          {(profile?.role === 'admin' || profile?.role === 'advisor') && (
-            <Link className="link" to="/inventaris/kotak-masuk">
-              Kotak masuk
-            </Link>
-          )}
           {profile?.role === 'admin' && (
             <Link className="button" to="/inventaris/baru">
               Tambah item

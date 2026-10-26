@@ -110,7 +110,7 @@ function jsonResponse(status: number, body: unknown) {
 
 function renderPage() {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={['/inventaris/permintaan-saya']}>
       <MyRequestsPage />
     </MemoryRouter>,
   );
@@ -131,9 +131,31 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  profileState.profile = { id: 'user-1', role: 'anggota', fullName: 'Anggota Demo' };
 });
 
 describe('MyRequestsPage', () => {
+  it('menamai seluruh permintaan admin sebagai riwayat tanpa mengubah kepemilikan data', async () => {
+    profileState.profile = { id: 'admin-1', role: 'admin', fullName: 'Admin' };
+    renderPage();
+
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(
+      'Riwayat permintaan',
+    );
+    expect(await screen.findByText('Osiloskop Rigol DS1054Z')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Katalog' })).toHaveAttribute('href', '/inventaris');
+  });
+
+  it('menampilkan navigasi anggota tanpa inbox pada halaman permintaannya', async () => {
+    renderPage();
+
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Permintaan saya');
+    expect(screen.getByRole('link', { name: 'Permintaan saya' })).toHaveAttribute(
+      'aria-current',
+      'location',
+    );
+    expect(screen.queryByRole('link', { name: /Kotak masuk/ })).not.toBeInTheDocument();
+  });
   it('mengumumkan loading, menyediakan retry baca, dan memberi nama daftar', async () => {
     let finish!: (value: Response) => void;
     vi.stubGlobal(

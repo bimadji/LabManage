@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
+import { InventoryNavigation } from '../inventory/InventoryNavigation';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import type { InventoryItem, ItemKind } from '../types';
 
@@ -31,9 +32,7 @@ export function InventoryNewPage() {
             <h1>Item inventaris baru</h1>
             <p className="muted">Halaman ini hanya untuk admin.</p>
           </div>
-          <Link className="link-back" to="/inventaris">
-            Kembali ke inventaris
-          </Link>
+          <InventoryNavigation />
         </div>
       </section>
     );
@@ -73,10 +72,8 @@ export function InventoryNewPage() {
           <h1>Item inventaris baru</h1>
           <p className="muted">Tambahkan komponen habis pakai atau barang satuan ke katalog lab.</p>
         </div>
-        <Link className="link-back" to="/inventaris">
-          Kembali ke inventaris
-        </Link>
       </div>
+      <InventoryNavigation />
 
       <form className="card inventory-new-form" onSubmit={onSubmit} noValidate>
         <div className="inventory-new-sections">

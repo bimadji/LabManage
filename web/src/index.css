@@ -283,6 +283,55 @@ h2 {
 .workspace main {
   max-width: 70rem;
   margin: 0 auto;
+  animation: page-enter 180ms ease-out both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skeleton-stack {
+  display: grid;
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+}
+
+.skeleton {
+  display: block;
+  min-height: 1rem;
+  border-radius: var(--radius);
+  background: var(--color-muted);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-heading {
+  width: min(16rem, 70%);
+  min-height: 2rem;
+}
+
+.skeleton-metric {
+  min-height: 6rem;
+}
+
+.skeleton-row {
+  min-height: 4rem;
+}
+
+.skeleton-chart {
+  min-height: 12rem;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.55;
+  }
 }
 
 .app-loading {
@@ -636,6 +685,11 @@ button:hover:not(:disabled),
 
 .button:hover {
   color: #fff;
+}
+
+button:active:not(:disabled),
+.button:active {
+  transform: translateY(1px);
 }
 
 .page-head > .button,
@@ -1166,8 +1220,12 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
     transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -1363,6 +1421,76 @@ select {
 .badge-bad {
   background: #fee2e2;
   color: #991b1b;
+}
+
+/* Navigasi sekunder inventaris: semua target tetap mudah disentuh dan dapat diikuti sebagai URL. */
+.inventory-subnav {
+  margin: 0 0 var(--space-5);
+}
+
+.inventory-subnav-list {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  margin: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-summary);
+}
+
+.inventory-subnav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
+}
+
+.inventory-subnav-link svg {
+  flex: 0 0 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.inventory-subnav-link:hover {
+  color: var(--color-primary);
+  background: #fff;
+}
+
+.inventory-subnav-link[aria-current] {
+  color: var(--color-primary);
+  background: #fff;
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
+.inventory-subnav-link .nav-badge {
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .inventory-subnav-list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .inventory-subnav-link {
+    min-height: 46px;
+  }
 }
 
 /* Satu kolom di ponsel agar tidak ada scroll horizontal; tiga kolom di layar lebar. */
@@ -1839,4 +1967,127 @@ textarea {
   .inventory-page .inventory-filters .filter:first-child {
     grid-column: auto;
   }
+}
+
+/* Grafik attendance: SVG internal, bukan gambar, dan selalu punya tabel alternatif. */
+.attendance-chart {
+  margin-top: var(--space-5);
+  color: var(--color-foreground);
+}
+
+.attendance-chart h3 {
+  margin-top: 0;
+}
+
+.attendance-chart__summary,
+.attendance-chart__empty {
+  color: var(--color-muted-foreground);
+}
+
+.attendance-chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-3);
+  color: var(--color-primary);
+}
+
+.attendance-chart__bar {
+  fill: var(--color-primary);
+}
+
+.attendance-chart__line {
+  stroke: var(--color-primary);
+}
+
+.attendance-chart__point circle {
+  fill: var(--color-card);
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+.attendance-chart__tick,
+.attendance-chart__value,
+.attendance-chart__axis-title {
+  fill: var(--color-muted-foreground);
+  font-size: 11px;
+}
+
+.attendance-chart__value {
+  fill: var(--color-foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.attendance-chart__axis-title {
+  fill: var(--color-foreground);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.attendance-chart__data {
+  margin-top: var(--space-4);
+}
+
+.attendance-chart__data summary {
+  cursor: pointer;
+  color: var(--color-link);
+  font-weight: 600;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.attendance-chart__table-wrap {
+  overflow-x: auto;
+}
+
+.attendance-chart table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.attendance-chart caption {
+  text-align: left;
+  color: var(--color-muted-foreground);
+  padding-bottom: var(--space-2);
+}
+
+.attendance-chart th,
+.attendance-chart td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.attendance-target {
+  margin: var(--space-3) 0;
+}
+
+.attendance-target__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.attendance-target__percent {
+  font-weight: 650;
+}
+
+.attendance-target__bar {
+  height: 0.5rem;
+  margin-top: var(--space-2);
+  border-radius: 999px;
+  background: var(--color-muted);
+  overflow: hidden;
+}
+
+.attendance-target__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  transition: width 180ms ease-out;
 }

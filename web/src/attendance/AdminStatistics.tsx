@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
 import {
+  ChartSkeleton,
+  DailyAttendanceChart,
+  TargetProgress,
+  WeeklyTrendChart,
+} from './AttendanceCharts';
+import { dailyAttendance, weeklyTrend } from './chartData';
+import {
   hours,
   percent,
   periodLabel,
@@ -78,7 +85,7 @@ function StatisticsData({
         <button onClick={retry}>Coba lagi statistik</button>
       </>
     );
-  if (!data) return <p role="status">Memuat statistik…</p>;
+  if (!data) return <ChartSkeleton label="Memuat statistik…" />;
   return (
     <>
       <p className="summary-period">{periodLabel(data.period)}</p>
@@ -98,6 +105,10 @@ function StatisticsData({
         <h3>Ringkasan statistik</h3>
         <Aggregate data={data.aggregate} />
       </section>
+      <DailyAttendanceChart
+        days={dailyAttendance(data.period, data.members)}
+        periodLabel={periodLabel(data.period)}
+      />
       <section className="admin-statistics-members" aria-label="Statistik per anggota">
         <h3>Statistik per anggota</h3>
         {data.members.length === 0 ? (
@@ -112,12 +123,13 @@ function StatisticsData({
               >
                 <div className="admin-member-heading">
                   <h4>{member.fullName}</h4>
-                  <span
-                    className={member.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}
-                  >
-                    {member.status}
-                  </span>
                 </div>
+                <TargetProgress
+                  name={member.fullName}
+                  actualMinutes={member.totalMinutes}
+                  targetMinutes={member.targetMinutes}
+                  status={member.status}
+                />
                 <dl className="summary-metrics">
                   <Metrics data={member} />
                   <div>
@@ -132,21 +144,7 @@ function StatisticsData({
           </div>
         )}
       </section>
-      <section className="admin-statistics-trend" aria-label="Tren mingguan">
-        <h3>Tren mingguan</h3>
-        <p className="muted">
-          Tren berakhir pada minggu yang memuat tanggal pilihan. Data mengikuti anggota dan target
-          yang berlaku saat rekap dimuat.
-        </p>
-        <ol className="admin-attendance-list admin-trend-grid">
-          {data.trend.map((week) => (
-            <li className="card" key={week.period.start}>
-              <h4>{periodLabel(week.period)}</h4>
-              <Aggregate data={week} />
-            </li>
-          ))}
-        </ol>
-      </section>
+      <WeeklyTrendChart weeks={weeklyTrend(data.trend)} />
     </>
   );
 }

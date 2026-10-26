@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
+import { InventoryNavigation } from '../inventory/InventoryNavigation';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import { REQUEST_STATUS_LABEL, type BadgeTone } from '../lib/inventory';
 import type { ComponentRequest, LoanRequest, RequestStatus } from '../types';
@@ -102,13 +103,17 @@ export function InventoryInboxPage() {
 
   if (loading)
     return (
-      <p className="muted" role="status">
-        Memuat…
-      </p>
+      <section className="inventory-requests-page">
+        <InventoryNavigation />
+        <p className="muted" role="status">
+          Memuat…
+        </p>
+      </section>
     );
   if (profile === null)
     return (
       <section className="inventory-requests-page">
+        <InventoryNavigation />
         <div className="page-head">
           <div>
             <h1>Kotak masuk inventaris</h1>
@@ -126,14 +131,12 @@ export function InventoryInboxPage() {
 
   return (
     <section className="inventory-requests-page">
+      <InventoryNavigation />
       <div className="page-head">
         <div>
           <h1>Kotak masuk inventaris</h1>
           <p className="muted">Tinjau laporan ambil dan permintaan peminjaman anggota.</p>
         </div>
-        <Link className="link-back" to="/inventaris">
-          Kembali ke inventaris
-        </Link>
       </div>
 
       <div className="card inventory-filters requests-filters">

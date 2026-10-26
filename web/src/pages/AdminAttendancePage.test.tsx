@@ -49,6 +49,9 @@ const stats = {
       sessionCount: 2,
       status: 'KURANG',
       averageWeeklyHours: 2.5,
+      totalMinutes: 150,
+      targetMinutes: 600,
+      days: [{ date: '2026-10-19', minutes: 150, sessionCount: 2 }],
       attendanceRate: 1 / 3,
       daysPresent: 1,
       elapsedDays: 3,
@@ -149,6 +152,13 @@ describe('Absensi admin', () => {
     expect(member.getByText('KURANG')).toBeInTheDocument();
     expect(member.getByText('33,33%')).toBeInTheDocument();
     expect(member.getByText('50% (1 dari 2 sesi)')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Aktivitas harian' })).toBeInTheDocument();
+    expect(member.getByRole('progressbar', { name: 'Target riset Bima' })).toHaveAttribute(
+      'aria-valuenow',
+      '25',
+    );
+    expect(screen.getByText('Lihat data aktivitas harian')).toBeInTheDocument();
+    expect(screen.getByText('Lihat data tren mingguan')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Tren mingguan' })).toHaveTextContent('12,5 jam');
     expect(screen.getByLabelText('Target mingguan (menit)')).toHaveValue(600);
     expect(screen.getByText('Koreksi yang sudah tercatat')).toBeInTheDocument();
@@ -178,7 +188,7 @@ describe('Absensi admin', () => {
     fireEvent.change(screen.getByLabelText('Jumlah minggu tren'), { target: { value: '4' } });
     expect(requests('/attendance/statistics')).toHaveLength(1);
     await userEvent.setup().click(screen.getByRole('button', { name: 'Tampilkan statistik' }));
-    await screen.findByText(/31 Oktober 2026/);
+    await screen.findByText(/31 Oktober 2026/, { selector: '.summary-period' });
     const url = new URL(String(requests('/attendance/statistics').at(-1)![0]));
     expect(url.searchParams.get('period')).toBe('month');
     expect(url.searchParams.get('weeks')).toBe('4');
@@ -272,6 +282,10 @@ describe('Absensi admin', () => {
     renderPage();
     await ready();
     expect(screen.getByText('Memuat statistik…')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Memuat statistik…' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
     fireEvent.change(screen.getByLabelText('Periode'), { target: { value: 'month' } });
     await userEvent.setup().click(screen.getByRole('button', { name: 'Tampilkan statistik' }));
     await screen.findByRole('article', { name: 'Statistik Data bulan' });

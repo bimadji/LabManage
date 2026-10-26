@@ -130,10 +130,7 @@ describe('InventoryNewPage', () => {
     profileState.profile = { id: 'advisor-1', role: 'advisor', fullName: 'Advisor' };
     renderPage();
     expect(screen.queryByRole('button', { name: 'Simpan item' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Kembali ke inventaris' })).toHaveAttribute(
-      'href',
-      '/inventaris',
-    );
+    expect(screen.getByRole('link', { name: 'Katalog' })).toHaveAttribute('href', '/inventaris');
   });
 
   it('mengirim komponen dengan jumlah dan min stok', async () => {

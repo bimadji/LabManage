@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
+import { InventoryNavigation } from '../inventory/InventoryNavigation';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import { formatDay, formatTime } from '../lib/datetime';
 import { describeHistory, itemBadge, type BadgeTone } from '../lib/inventory';
@@ -151,40 +152,46 @@ export function InventoryItemPage() {
 
   if (status === 'loading')
     return (
-      <p className="muted" role="status">
-        Memuat item…
-      </p>
+      <section className="inventory-detail-page">
+        <InventoryNavigation />
+        <p className="muted" role="status">
+          Memuat item…
+        </p>
+      </section>
     );
   if (status === 'error') {
     return (
-      <section className="inventory-detail-page card card-alert">
-        <p className="error" role="alert">
-          Item gagal dimuat. Coba muat kembali.
-        </p>
-        <div className="inventory-detail-actions">
-          <button
-            type="button"
-            onClick={() => {
-              setStatus('loading');
-              setReloadKey((key) => key + 1);
-            }}
-          >
-            Coba lagi
-          </button>
-          <Link className="link-back" to="/inventaris">
-            Kembali ke inventaris
-          </Link>
+      <section className="inventory-detail-page">
+        <InventoryNavigation />
+        <div className="card card-alert">
+          <p className="error" role="alert">
+            Item gagal dimuat. Coba muat kembali.
+          </p>
+          <div className="inventory-detail-actions">
+            <button
+              type="button"
+              onClick={() => {
+                setStatus('loading');
+                setReloadKey((key) => key + 1);
+              }}
+            >
+              Coba lagi
+            </button>
+            <Link className="link-back" to="/inventaris">
+              Kembali ke inventaris
+            </Link>
+          </div>
         </div>
       </section>
     );
   }
   if (status === 'missing' || !item) {
     return (
-      <section className="inventory-detail-page card card-empty">
-        <p className="muted">Item tidak ditemukan.</p>
-        <Link className="link-back" to="/inventaris">
-          Kembali ke inventaris
-        </Link>
+      <section className="inventory-detail-page">
+        <InventoryNavigation />
+        <div className="card card-empty">
+          <p className="muted">Item tidak ditemukan.</p>
+        </div>
       </section>
     );
   }
@@ -194,11 +201,9 @@ export function InventoryItemPage() {
 
   return (
     <section className="inventory-detail-page">
+      <InventoryNavigation />
       <div className="page-head">
         <h1>{item.name}</h1>
-        <Link className="link-back" to="/inventaris">
-          Kembali ke inventaris
-        </Link>
       </div>
 
       <div className="inventory-detail-layout">

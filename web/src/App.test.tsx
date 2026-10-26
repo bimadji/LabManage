@@ -245,10 +245,11 @@ describe('App', () => {
   it('memberikan aria-current pada tujuan yang sesuai dengan route aktif', async () => {
     profileState.profile = { id: 'admin-1', role: 'admin', fullName: 'Admin Robotik' };
     enterApp('/inventaris/kotak-masuk');
-    expect(await screen.findByRole('link', { name: /Kotak masuk/ })).toHaveAttribute(
-      'aria-current',
-      'location',
-    );
+    expect(
+      await within(screen.getByRole('navigation', { name: 'Navigasi utama' })).findByRole('link', {
+        name: /Kotak masuk/,
+      }),
+    ).toHaveAttribute('aria-current', 'location');
     expect(screen.getByRole('link', { name: 'Inventaris' })).toHaveAttribute(
       'aria-current',
       'page',
