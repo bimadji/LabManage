@@ -177,7 +177,9 @@ describe('InventoryPage', () => {
     expect(screen.getByLabelText('Cari')).toHaveFocus();
     expect(screen.getByLabelText('Jenis')).toHaveValue('semua');
     expect(screen.getByLabelText('Status')).toHaveValue('semua');
-    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    expect(
+      within(screen.getByRole('list', { name: 'Daftar inventaris' })).getAllByRole('listitem'),
+    ).toHaveLength(5);
     expect(screen.getByRole('status')).toHaveTextContent('Menampilkan 5 dari 5 item');
     expect(
       vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/inventory')),
@@ -201,7 +203,7 @@ describe('InventoryPage', () => {
     await screen.findByText('Baterai LiPo 3S');
 
     // Badge hidup di dalam kartu; label filter juga memakai teks yang sama.
-    const list = screen.getByRole('list');
+    const list = screen.getByRole('list', { name: 'Daftar inventaris' });
     expect(within(list).getByText('HABIS')).toBeInTheDocument();
     expect(within(list).getByText('MENIPIS')).toBeInTheDocument();
     expect(within(list).getByText('AMAN')).toBeInTheDocument();
@@ -228,7 +230,9 @@ describe('InventoryPage', () => {
 
     await user.type(screen.getByLabelText('Cari'), 'osilo');
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(
+      within(screen.getByRole('list', { name: 'Daftar inventaris' })).getAllByRole('listitem'),
+    ).toHaveLength(1);
     expect(screen.getByText('Osiloskop Rigol DS1054Z')).toBeInTheDocument();
   });
 
@@ -367,7 +371,9 @@ describe('InventoryPage', () => {
     await user.selectOptions(screen.getByLabelText('Status'), 'tersedia');
     await user.click(screen.getByRole('button', { name: 'Coba lagi' }));
     expect(await screen.findByText('Osiloskop Rigol DS1054Z')).toBeInTheDocument();
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
+    expect(
+      within(screen.getByRole('list', { name: 'Daftar inventaris' })).getAllByRole('listitem'),
+    ).toHaveLength(1);
     expect(screen.queryByText('Resistor 220 Ohm')).not.toBeInTheDocument();
     expect(screen.queryByText('Laptop Lenovo ThinkPad E14')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Cari')).toHaveValue('osilo');

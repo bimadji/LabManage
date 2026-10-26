@@ -24,6 +24,8 @@ vi.mock('../lib/supabase', () => ({
 const member = {
   userId: 'member-1',
   fullName: 'Bima',
+  totalMinutes: 150,
+  targetMinutes: 600,
   totalHours: 2.5,
   sessionCount: 2,
   status: 'KURANG',
@@ -43,7 +45,14 @@ const summary = {
   targetMinutes: 600,
   members: [
     member,
-    { ...member, userId: 'member-2', fullName: 'Rani', totalHours: 10, status: 'TERCAPAI' },
+    {
+      ...member,
+      userId: 'member-2',
+      fullName: 'Rani',
+      totalHours: 10,
+      totalMinutes: 600,
+      status: 'TERCAPAI',
+    },
   ],
 };
 const json = (body: unknown, status = 200) =>
@@ -87,6 +96,12 @@ describe('Rekap advisor', () => {
     expect(bima.getByText('KURANG')).toBeInTheDocument();
     expect(bima.getByText('66,67%')).toBeInTheDocument();
     expect(bima.getByText('2,5 jam', { selector: 'dd' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Aktivitas harian' })).toBeInTheDocument();
+    expect(bima.getByRole('progressbar', { name: 'Target riset Bima' })).toHaveAttribute(
+      'aria-valuenow',
+      '25',
+    );
+    expect(screen.getByText('Lihat data aktivitas harian')).toBeInTheDocument();
     expect(bima.getByText('Rincian harian')).toBeInTheDocument();
     expect(rani.getByText('TERCAPAI')).toBeInTheDocument();
     expect(rani.queryByRole('button', { name: /Kirim peringatan/ })).not.toBeInTheDocument();
@@ -160,6 +175,10 @@ describe('Rekap advisor', () => {
     );
     renderPage();
     expect(screen.getByText('Memuat rekap…')).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Memuat rekap…' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
     expect(await screen.findByRole('alert')).toHaveTextContent('Rekap belum tersedia');
     fail = false;
     await userEvent.setup().click(screen.getByRole('button', { name: 'Coba lagi rekap' }));

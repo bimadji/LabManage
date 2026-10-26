@@ -18,6 +18,9 @@ export interface ResearchMetrics {
 }
 export interface MemberStatistics extends ResearchMetrics {
   userId: string;
+  totalMinutes: number;
+  targetMinutes: number;
+  days: { date: string; minutes: number; sessionCount: number }[];
   fullName: string;
   status: 'KURANG' | 'TERCAPAI';
   daysPresent: number;

@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
+import {
+  ChartSkeleton,
+  DailyAttendanceChart,
+  TargetProgress,
+} from '../attendance/AttendanceCharts';
+import { dailyAttendance } from '../attendance/chartData';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import { formatDay } from '../lib/datetime';
 
@@ -14,6 +20,11 @@ interface MemberSummary {
   elapsedDays: number;
   attendanceRate: number;
   days: { date: string; minutes: number; sessionCount: number }[];
+  totalMinutes: number;
+  targetMinutes: number;
+  averageWeeklyHours: number;
+  overNightSessionCount: number;
+  overNightSessionRatio: number;
 }
 interface SummaryResponse {
   period: { kind: 'week' | 'month'; start: string; end: string; days: string[] };
@@ -164,7 +175,7 @@ function SummaryPanel({
         </button>
       </div>
     );
-  if (!data) return <p role="status">Memuat rekap…</p>;
+  if (!data) return <ChartSkeleton label="Memuat rekap…" />;
   if (data.members.length === 0)
     return (
       <p className="card card-empty">
@@ -181,6 +192,10 @@ function SummaryPanel({
         Target mingguan: {hours(data.weeklyTargetMinutes)}.{' '}
         {data.period.kind === 'month' && 'Target bulanan mengikuti jumlah hari kalender.'}
       </p>
+      <DailyAttendanceChart
+        days={dailyAttendance(data.period, data.members)}
+        periodLabel={`${calendarDay(data.period.days[0])} — ${calendarDay(data.period.days.at(-1)!)} (WIB)`}
+      />
       <p className="muted advisor-warning-hint">
         Peringatan hanya untuk minggu berjalan, maksimal satu per anggota per hari.{' '}
         {canWarn
@@ -196,10 +211,13 @@ function SummaryPanel({
           >
             <div className="advisor-member-heading">
               <h3>{member.fullName}</h3>
-              <span className={member.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}>
-                {member.status}
-              </span>
             </div>
+            <TargetProgress
+              name={member.fullName}
+              actualMinutes={member.totalMinutes}
+              targetMinutes={member.targetMinutes}
+              status={member.status}
+            />
             <dl className="summary-metrics">
               <div>
                 <dt>Total riset</dt>

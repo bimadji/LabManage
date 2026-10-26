@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   BrowserRouter,
   Link,
@@ -11,7 +11,7 @@ import {
 import { SignIn } from './auth/SignIn';
 import { useProfile, type Profile } from './auth/useProfile';
 import { useSession } from './auth/useSession';
-import { apiFetch } from './lib/api';
+import { PendingBadge, PendingRequestsProvider } from './inventory/InventoryNavigation';
 import { supabaseClient } from './lib/supabase';
 import { AttendancePage } from './pages/AttendancePage';
 import { AdvisorAttendancePage } from './pages/AdvisorAttendancePage';
@@ -27,36 +27,6 @@ import { MyAttendanceSummaryPage } from './pages/MyAttendanceSummaryPage';
 import { NewReservationPage } from './pages/NewReservationPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { SchedulePage } from './pages/SchedulePage';
-
-/** Admin badge: how many inventory requests still wait for a decision. */
-function PendingBadge() {
-  const { profile } = useProfile();
-  const location = useLocation();
-  const [total, setTotal] = useState(0);
-  const isAdmin = profile?.role === 'admin';
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    let active = true;
-    apiFetch<{ total: number }>('/inventory/pending-count')
-      .then((count) => {
-        if (active) setTotal(count.total);
-      })
-      .catch(() => {
-        if (active) setTotal(0);
-      });
-    return () => {
-      active = false;
-    };
-  }, [isAdmin, location.pathname]);
-
-  if (!isAdmin || total === 0) return null;
-  return (
-    <span className="badge nav-badge">
-      {total} <span className="sr-only">permintaan pending</span>
-    </span>
-  );
-}
 
 function Sidebar({
   menuOpen,
@@ -80,7 +50,7 @@ function Sidebar({
       children: [
         {
           to: '/inventaris/permintaan-saya',
-          label: 'Permintaan saya',
+          label: role === 'admin' ? 'Riwayat permintaan' : 'Permintaan saya',
           roles: ['anggota', 'admin', 'advisor'],
         },
         {
@@ -234,76 +204,78 @@ function Shell() {
   if (!session) return <SignIn />;
 
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">
-        Lewati ke konten utama
-      </a>
-      <Sidebar
-        menuOpen={navigationOpen}
-        onMenuOpenChange={(open) => {
-          setMenuPath(location.pathname);
-          setMenuOpen(open);
-        }}
-        onNavigate={() => setMenuOpen(false)}
-      />
-      <div className="workspace">
-        <main id="main-content" tabIndex={-1}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/jadwal" replace />} />
-            <Route path="/jadwal" element={<SchedulePage />} />
-            <Route path="/reservasi/baru" element={<NewReservationPage />} />
-            <Route path="/inventaris" element={<InventoryPage />} />
-            <Route path="/inventaris/permintaan-saya" element={<MyRequestsPage />} />
-            <Route path="/inventaris/baru" element={<InventoryNewPage />} />
-            <Route path="/inventaris/kotak-masuk" element={<InventoryInboxPage />} />
-            <Route path="/inventaris/:id" element={<InventoryItemPage />} />
-            <Route
-              path="/monitor"
-              element={
-                <RoleRoute roles={['admin', 'advisor']}>
-                  <MonitorPage key={session.user?.id} />
-                </RoleRoute>
-              }
-            />
-            <Route
-              path="/monitor/rekap"
-              element={
-                <RoleRoute roles={['advisor']}>
-                  <AdvisorAttendancePage key={session.user?.id} />
-                </RoleRoute>
-              }
-            />
-            <Route
-              path="/monitor/admin"
-              element={
-                <RoleRoute roles={['admin']}>
-                  <AdminAttendancePage key={session.user?.id} />
-                </RoleRoute>
-              }
-            />
-            <Route path="/kehadiran" element={<AttendancePage />} />
-            <Route
-              path="/kehadiran/rekap"
-              element={<MyAttendanceSummaryPage key={session.user?.id} />}
-            />
-            <Route path="/laporan-fasilitas" element={<FacilityReportsPage />} />
-            <Route path="/notifikasi" element={<NotificationsPage key={session.user?.id} />} />
-            <Route
-              path="*"
-              element={
-                <section className="page-state">
-                  <h1>Halaman tidak ditemukan</h1>
-                  <p className="muted">Periksa alamat atau kembali ke jadwal.</p>
-                  <Link className="button" to="/jadwal">
-                    Buka Jadwal
-                  </Link>
-                </section>
-              }
-            />
-          </Routes>
-        </main>
+    <PendingRequestsProvider>
+      <div className="app-shell">
+        <a className="skip-link" href="#main-content">
+          Lewati ke konten utama
+        </a>
+        <Sidebar
+          menuOpen={navigationOpen}
+          onMenuOpenChange={(open) => {
+            setMenuPath(location.pathname);
+            setMenuOpen(open);
+          }}
+          onNavigate={() => setMenuOpen(false)}
+        />
+        <div className="workspace">
+          <main id="main-content" tabIndex={-1}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/jadwal" replace />} />
+              <Route path="/jadwal" element={<SchedulePage />} />
+              <Route path="/reservasi/baru" element={<NewReservationPage />} />
+              <Route path="/inventaris" element={<InventoryPage />} />
+              <Route path="/inventaris/permintaan-saya" element={<MyRequestsPage />} />
+              <Route path="/inventaris/baru" element={<InventoryNewPage />} />
+              <Route path="/inventaris/kotak-masuk" element={<InventoryInboxPage />} />
+              <Route path="/inventaris/:id" element={<InventoryItemPage />} />
+              <Route
+                path="/monitor"
+                element={
+                  <RoleRoute roles={['admin', 'advisor']}>
+                    <MonitorPage key={session.user?.id} />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/monitor/rekap"
+                element={
+                  <RoleRoute roles={['advisor']}>
+                    <AdvisorAttendancePage key={session.user?.id} />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="/monitor/admin"
+                element={
+                  <RoleRoute roles={['admin']}>
+                    <AdminAttendancePage key={session.user?.id} />
+                  </RoleRoute>
+                }
+              />
+              <Route path="/kehadiran" element={<AttendancePage />} />
+              <Route
+                path="/kehadiran/rekap"
+                element={<MyAttendanceSummaryPage key={session.user?.id} />}
+              />
+              <Route path="/laporan-fasilitas" element={<FacilityReportsPage />} />
+              <Route path="/notifikasi" element={<NotificationsPage key={session.user?.id} />} />
+              <Route
+                path="*"
+                element={
+                  <section className="page-state">
+                    <h1>Halaman tidak ditemukan</h1>
+                    <p className="muted">Periksa alamat atau kembali ke jadwal.</p>
+                    <Link className="button" to="/jadwal">
+                      Buka Jadwal
+                    </Link>
+                  </section>
+                }
+              />
+            </Routes>
+          </main>
+        </div>
       </div>
-    </div>
+    </PendingRequestsProvider>
   );
 }
 

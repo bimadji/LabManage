@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
+import { InventoryNavigation } from '../inventory/InventoryNavigation';
 import { apiFetch, ApiRequestError } from '../lib/api';
 import { REQUEST_STATUS_LABEL, type BadgeTone } from '../lib/inventory';
 import type { ComponentRequest, LoanRequest, RequestStatus } from '../types';
@@ -75,14 +75,16 @@ export function MyRequestsPage() {
 
   return (
     <section className="inventory-requests-page">
+      <InventoryNavigation />
       <div className="page-head">
         <div>
-          <h1>Permintaan saya</h1>
-          <p className="muted">Pantau laporan ambil dan status peminjaman Anda.</p>
+          <h1>{profile?.role === 'admin' ? 'Riwayat permintaan' : 'Permintaan saya'}</h1>
+          <p className="muted">
+            {profile?.role === 'admin'
+              ? 'Pantau seluruh laporan ambil dan permintaan peminjaman anggota.'
+              : 'Pantau laporan ambil dan status peminjaman Anda.'}
+          </p>
         </div>
-        <Link className="link-back" to="/inventaris">
-          Kembali ke inventaris
-        </Link>
       </div>
 
       {status === 'loading' && (
