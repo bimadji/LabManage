@@ -123,7 +123,6 @@ describe('Rekap dan peringatan pribadi', () => {
     renderPage();
     expect(await screen.findByText('KURANG')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Status target' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Periode').closest('form')).toHaveClass('summary-filters');
     expect(screen.getByText('2,5 jam')).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Kehadiran per hari' }).children).toHaveLength(2);
     expect(await screen.findByText(warning.message)).toBeInTheDocument();
@@ -253,6 +252,10 @@ describe('Rekap dan peringatan pribadi', () => {
       profileState.profile = { id: role, role, fullName: role };
       renderPage();
       expect(screen.getByText(/halaman ini khusus anggota/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Buka monitoring lab' })).toHaveAttribute(
+        'href',
+        '/monitor',
+      );
       expect(
         vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/attendance/')),
       ).toBe(false);

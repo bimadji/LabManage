@@ -157,7 +157,7 @@ export function InventoryItemPage() {
     );
   if (status === 'error') {
     return (
-      <section className="inventory-detail-page card">
+      <section className="inventory-detail-page card card-alert">
         <p className="error" role="alert">
           Item gagal dimuat. Coba muat kembali.
         </p>
@@ -180,7 +180,7 @@ export function InventoryItemPage() {
   }
   if (status === 'missing' || !item) {
     return (
-      <section className="inventory-detail-page card">
+      <section className="inventory-detail-page card card-empty">
         <p className="muted">Item tidak ditemukan.</p>
         <Link className="link-back" to="/inventaris">
           Kembali ke inventaris
@@ -286,7 +286,7 @@ export function InventoryItemPage() {
                   <button
                     ref={editToggle}
                     type="button"
-                    className="link-back inventory-edit-toggle"
+                    className="btn-ghost inventory-edit-toggle"
                     aria-expanded={editing}
                     aria-controls="inventory-edit-form"
                     onClick={() => setEditing((v) => !v)}
@@ -295,7 +295,7 @@ export function InventoryItemPage() {
                   </button>
                   <button
                     type="button"
-                    className="link-back inventory-delete"
+                    className="btn-ghost btn-ghost-danger inventory-delete"
                     onClick={() => void removeItem()}
                   >
                     Hapus item
@@ -313,7 +313,7 @@ export function InventoryItemPage() {
 
       <section className="inventory-detail-history" aria-labelledby="item-history-heading">
         <h2 id="item-history-heading">Riwayat</h2>
-        {history.length === 0 && <p className="card muted">Belum ada riwayat.</p>}
+        {history.length === 0 && <p className="card card-empty muted">Belum ada riwayat.</p>}
         <ul className="cards" aria-label="Riwayat perubahan item">
           {history.map((entry) => {
             const described = describeHistory(entry);
@@ -399,7 +399,7 @@ function EditItemForm({ item, onSave, onCancel }: EditItemFormProps) {
       )}
 
       <button type="submit">Simpan perubahan</button>
-      <button type="button" className="link-back" onClick={onCancel}>
+      <button type="button" className="btn-ghost" onClick={onCancel}>
         Batal
       </button>
     </form>

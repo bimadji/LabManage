@@ -4,7 +4,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MyRequestsPage } from './MyRequestsPage';
 import type { ComponentRequest, LoanRequest } from '../types';
+const profileState: {
+  profile: { id: string; role: 'anggota' | 'advisor' | 'admin'; fullName: string } | null;
+  loading: boolean;
+} = {
+  profile: { id: 'user-1', role: 'anggota', fullName: 'Anggota Demo' },
+  loading: false,
+};
 
+vi.mock('../auth/useProfile', () => ({ useProfile: () => profileState }));
 vi.mock('../lib/supabase', () => ({
   supabaseClient: () => ({
     auth: { getSession: async () => ({ data: { session: { access_token: 'test-token' } } }) },
@@ -258,5 +266,56 @@ describe('MyRequestsPage', () => {
 
     expect(await screen.findByText('Belum ada laporan.')).toBeInTheDocument();
     expect(screen.getByText('Belum ada permintaan.')).toBeInTheDocument();
+  });
+
+  it('advisor hanya melihat permintaan miliknya sendiri', async () => {
+    profileState.profile = { id: 'user-1', role: 'advisor', fullName: 'Advisor Demo' };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        jsonResponse(
+          200,
+          String(url).endsWith('/component-requests')
+            ? [
+                ...COMPONENT_REQUESTS,
+                {
+                  ...COMPONENT_REQUESTS[0],
+                  id: 'comp-x',
+                  userId: 'user-lain',
+                  itemName: 'Milik Orang Lain',
+                },
+              ]
+            : LOAN_REQUESTS,
+        ),
+      ),
+    );
+    renderPage();
+    expect(await screen.findByText('Resistor 220 Ohm')).toBeInTheDocument();
+    expect(screen.queryByText('Milik Orang Lain')).not.toBeInTheDocument();
+  });
+
+  it('admin melihat riwayat semua permintaan, termasuk milik anggota lain', async () => {
+    profileState.profile = { id: 'admin-1', role: 'admin', fullName: 'Admin Demo' };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        jsonResponse(
+          200,
+          String(url).endsWith('/component-requests')
+            ? [
+                ...COMPONENT_REQUESTS,
+                {
+                  ...COMPONENT_REQUESTS[0],
+                  id: 'comp-x',
+                  userId: 'user-lain',
+                  itemName: 'Milik Orang Lain',
+                },
+              ]
+            : LOAN_REQUESTS,
+        ),
+      ),
+    );
+    renderPage();
+    expect(await screen.findByText('Milik Orang Lain')).toBeInTheDocument();
   });
 });

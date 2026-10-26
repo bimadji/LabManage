@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jadwal · LabManage</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f172a;background:#f8fafc}
+    *{box-sizing:border-box}html,body{width:1440px;height:900px;margin:0;overflow:hidden}body{font-size:15px;line-height:1.5}
+    a,button,select{min-height:44px;font:inherit;cursor:pointer}a{display:inline-flex;align-items:center;color:inherit;text-decoration:none}button,select{border:1px solid #dbe2ea;border-radius:7px;background:#fff;color:#0f172a;padding:0 14px}
+    a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #1d4ed8;outline-offset:3px}.shell{display:grid;grid-template-columns:232px 1208px;width:1440px;height:900px}.sidebar{background:#fff;border-right:1px solid #dbe2ea;padding:26px 16px;display:flex;flex-direction:column}
+    .brand{font-size:23px;font-weight:750;letter-spacing:-.025em;padding:0 12px;margin-bottom:34px}.sidebar nav{display:grid;gap:6px}.sidebar nav a{min-height:48px;padding:0 13px;border-radius:7px;color:#475569;font-weight:600}.sidebar nav a:hover{background:#f1f5f9;color:#0f172a}.sidebar nav a[aria-current="page"]{background:#eff6ff;color:#1d4ed8}
+    .workspace{min-width:0}.topbar{height:72px;background:#fff;border-bottom:1px solid #dbe2ea;display:flex;align-items:center;justify-content:space-between;padding:0 32px}.context{color:#475569;font-weight:600}.keluar{font-weight:650;min-width:92px}.keluar:hover{background:#f1f5f9}
+    main{padding:0 32px}.page-head{height:112px;display:flex;align-items:center;justify-content:space-between}h1,h2,p{margin:0}h1{font-size:30px;line-height:1.25;letter-spacing:-.025em}.intro{margin-top:5px;color:#475569}.cta{background:#1d4ed8;color:#fff;border:1px solid #1d4ed8;border-radius:7px;padding:0 19px;font-weight:700}.cta:hover{background:#1e40af}
+    .filters{min-height:72px;background:#fff;border:1px solid #dbe2ea;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}.filters label{display:flex;align-items:center;gap:12px;font-weight:650}.filters select{width:250px;min-height:46px}.count{color:#475569;font-size:14px;font-variant-numeric:tabular-nums}
+    .table-wrap{margin-top:20px;background:#fff;border:1px solid #dbe2ea;border-radius:10px;overflow:hidden}table{width:100%;border-collapse:collapse;table-layout:fixed}th{height:46px;text-align:left;background:#f8fafc;color:#475569;border-bottom:1px solid #dbe2ea;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.045em}th,td{padding:12px 16px}th:nth-child(1){width:184px}th:nth-child(2){width:158px}th:nth-child(3){width:228px}th:nth-child(5){width:100px}th:nth-child(6){width:92px}
+    td{height:104px;border-bottom:1px solid #e7edf2;vertical-align:middle}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#fbfdff}.date{font-weight:650}.date span,.time span{display:block;color:#475569;font-size:13px;font-weight:400;margin-top:4px}.time{font-variant-numeric:tabular-nums;font-weight:700}.room{font-weight:650}.status{color:#166534;font-weight:700}.detail{justify-content:center;min-width:64px;color:#1d4ed8;font-weight:700;border-radius:6px}.detail:hover{background:#eff6ff;text-decoration:underline;text-underline-offset:4px}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar"><a class="brand" href="#">LabManage</a><nav aria-label="Navigasi utama"><a href="#" aria-current="page">Jadwal</a><a href="#">Reservasi</a><a href="#">Inventaris</a><a href="#">Monitoring</a><a href="#">Kehadiran</a><a href="#">Laporan</a><a href="#">Notifikasi</a></nav></aside>
+    <div class="workspace">
+      <header class="topbar"><span class="context">Operasional laboratorium</span><button class="keluar" type="button">Keluar</button></header>
+      <main>
+        <header class="page-head"><div><h1>Jadwal</h1><p class="intro">Dua minggu ke depan. Semua jam dalam WIB.</p></div><a class="cta" href="#">Reservasi baru</a></header>
+        <div class="filters"><label for="ruang">Ruang<select id="ruang"><option>Semua ruang</option><option>Ruang Robotik A</option><option>Printer 3D</option><option>Ruang Robotik B</option></select></label><span class="count">3 reservasi ditampilkan</span></div>
+        <section class="table-wrap" aria-label="Daftar jadwal reservasi">
+          <table>
+            <thead><tr><th scope="col">Tanggal</th><th scope="col">Waktu</th><th scope="col">Ruang</th><th scope="col">Tim</th><th scope="col">Status</th><th scope="col"><span>Aksi</span></th></tr></thead>
+            <tbody>
+              <tr><td class="date"><time datetime="2026-10-26">26 Oktober 2026</time><span>Senin</span></td><td class="time"><time datetime="2026-10-26T09:00:00+07:00">09.00</time>–<time datetime="2026-10-26T11:00:00+07:00">11.00</time><span>WIB</span></td><td class="room">Ruang Robotik A</td><td>Tim Robotik</td><td><span class="status">Aktif</span></td><td><a class="detail" href="#" aria-label="Lihat detail reservasi Ruang Robotik A pada Senin 09.00">Detail</a></td></tr>
+              <tr><td class="date"><time datetime="2026-10-26">26 Oktober 2026</time><span>Senin</span></td><td class="time"><time datetime="2026-10-26T13:00:00+07:00">13.00</time>–<time datetime="2026-10-26T15:00:00+07:00">15.00</time><span>WIB</span></td><td class="room">Printer 3D</td><td>Divisi Mekanik</td><td><span class="status">Aktif</span></td><td><a class="detail" href="#" aria-label="Lihat detail reservasi Printer 3D pada Senin 13.00">Detail</a></td></tr>
+              <tr><td class="date"><time datetime="2026-10-27">27 Oktober 2026</time><span>Selasa</span></td><td class="time"><time datetime="2026-10-27T16:00:00+07:00">16.00</time>–<time datetime="2026-10-27T18:00:00+07:00">18.00</time><span>WIB</span></td><td class="room">Ruang Robotik B</td><td>Tim Robotik</td><td><span class="status">Aktif</span></td><td><a class="detail" href="#" aria-label="Lihat detail reservasi Ruang Robotik B pada Selasa 16.00">Detail</a></td></tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

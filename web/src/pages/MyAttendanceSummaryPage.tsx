@@ -66,7 +66,7 @@ function LoadError({
   label: string;
 }) {
   return (
-    <div className="card">
+    <div className="card card-alert">
       <p className="error" role="alert">
         {message}
       </p>
@@ -93,13 +93,14 @@ function SummaryPanel({
   if (error) return <LoadError message={error} retry={retry} label="Coba lagi rekap" />;
   if (!data) return <p role="status">Memuat rekap…</p>;
   const own = data.members.find((member) => member.userId === userId);
-  if (!own) return <p className="card">Rekap pribadi belum tersedia untuk periode ini.</p>;
+  if (!own)
+    return <p className="card card-empty">Rekap pribadi belum tersedia untuk periode ini.</p>;
   return (
     <>
       <p className="summary-period">
         {calendarDay(data.period.days[0])} — {calendarDay(data.period.days.at(-1)!)} (WIB)
       </p>
-      <div className="card summary-total" aria-labelledby="summary-status-heading">
+      <div className="card card-summary summary-total" aria-labelledby="summary-status-heading">
         <div className="summary-status">
           <h3 id="summary-status-heading">Status target</h3>
           <span className={own.status === 'KURANG' ? 'badge badge-warn' : 'badge badge-ok'}>
@@ -168,7 +169,9 @@ function WarningsPanel({ userId, retry }: { userId: string; retry: () => void })
   const own = data.filter((warning) => warning.userId === userId);
   if (own.length === 0)
     return (
-      <p className="card muted">Belum ada peringatan. Muat ulang untuk memeriksa pesan baru.</p>
+      <p className="card card-empty muted">
+        Belum ada peringatan. Muat ulang untuk memeriksa pesan baru.
+      </p>
     );
   return (
     <ul className="cards" aria-label="Riwayat peringatan">
@@ -285,7 +288,14 @@ export function MyAttendanceSummaryPage() {
           Profil gagal dimuat. Muat ulang halaman.
         </p>
       ) : profile.role !== 'anggota' ? (
-        <p>Halaman ini khusus anggota. Gunakan halaman monitoring untuk memantau kehadiran lab.</p>
+        <div className="card">
+          <p>
+            Halaman ini khusus anggota. Gunakan halaman monitoring untuk memantau kehadiran lab.
+          </p>
+          <Link className="button" to="/monitor">
+            Buka monitoring lab
+          </Link>
+        </div>
       ) : (
         <PersonalContent key={profile.id} userId={profile.id} />
       )}

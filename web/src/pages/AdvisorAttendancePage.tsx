@@ -155,7 +155,7 @@ function SummaryPanel({
   }, [period, date]);
   if (error)
     return (
-      <div className="card">
+      <div className="card card-alert">
         <p role="alert" className="error">
           {error}
         </p>
@@ -167,7 +167,7 @@ function SummaryPanel({
   if (!data) return <p role="status">Memuat rekap…</p>;
   if (data.members.length === 0)
     return (
-      <p className="card">
+      <p className="card card-empty">
         Belum ada anggota untuk ditampilkan. Muat ulang setelah anggota terdaftar.
       </p>
     );
@@ -190,7 +190,7 @@ function SummaryPanel({
       <div className="advisor-members">
         {data.members.map((member) => (
           <article
-            className="card advisor-member"
+            className="card card-summary advisor-member"
             key={member.userId}
             aria-label={`Rekap ${member.fullName}`}
           >
@@ -327,7 +327,12 @@ export function AdvisorAttendancePage() {
           Profil gagal dimuat. Muat ulang halaman.
         </p>
       ) : profile.role !== 'advisor' ? (
-        <p>Halaman ini khusus advisor. Gunakan halaman yang sesuai dengan peran Anda.</p>
+        <div className="card">
+          <p>Halaman ini khusus advisor. Gunakan halaman yang sesuai dengan peran Anda.</p>
+          <Link className="button" to="/monitor">
+            Buka monitoring lab
+          </Link>
+        </div>
       ) : (
         <AdvisorContent key={profile.id} />
       )}

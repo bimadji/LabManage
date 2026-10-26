@@ -64,11 +64,21 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('Notifikasi pribadi dari navigasi aplikasi', () => {
+  it('memberi label Kehadiran pada peringatan target dari server', async () => {
+    mockApi(() => json(200, [{ ...unread, kind: 'kehadiran' }]));
+    renderPage();
+    expect(await screen.findByRole('article', { name: 'Kehadiran' })).toHaveTextContent(
+      unread.message,
+    );
+  });
+
   it('memperlihatkan daftar dari API, jenis, waktu WIB, dan status baca', async () => {
     renderPage();
     expect(await screen.findByText(unread.message)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Notifikasi' })).toHaveAttribute('href', '/notifikasi');
-    const cards = screen.getAllByRole('listitem');
+    const cards = within(screen.getByRole('list', { name: 'Daftar notifikasi' })).getAllByRole(
+      'listitem',
+    );
     expect(cards).toHaveLength(2);
     expect(cards[0]).toHaveTextContent(unread.message);
     expect(cards[0]).toHaveTextContent('Lembur');

@@ -176,22 +176,26 @@ describe('Rekap advisor', () => {
   it.each(['anggota', 'admin'] as const)('menolak peran %s tanpa mengambil rekap', async (role) => {
     profileState.profile = { id: 'other', role, fullName: 'Bukan advisor' };
     renderPage();
-    expect(screen.getByText(/Halaman ini khusus advisor/)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Halaman tidak tersedia' }),
+    ).toBeInTheDocument();
     await act(async () => {});
     expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/attendance/'))).toBe(
       false,
     );
   });
 
-  it('tidak memuat rekap saat profil belum siap atau gagal', async () => {
+  it('tidak memuat rekap saat profil belum siap', async () => {
     profileState.loading = true;
     const view = renderPage();
-    expect(screen.getByText('Memuat profil…')).toBeInTheDocument();
+    expect(screen.getByText('Memuat…')).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
     profileState.loading = false;
     profileState.profile = null;
     view.rerender(<App />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Profil gagal dimuat');
+    expect(
+      await screen.findByRole('heading', { name: 'Halaman tidak tersedia' }),
+    ).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
   });
 

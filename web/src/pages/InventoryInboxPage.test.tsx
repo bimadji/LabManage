@@ -1,9 +1,10 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InventoryInboxPage } from './InventoryInboxPage';
 import type { ComponentRequest, LoanRequest } from '../types';
+import type { ProfileState } from '../auth/useProfile';
 
 vi.mock('../lib/supabase', () => ({
   supabaseClient: () => ({
@@ -11,7 +12,7 @@ vi.mock('../lib/supabase', () => ({
   }),
 }));
 
-const profileState = {
+const profileState: ProfileState = {
   profile: { id: 'admin-1', role: 'admin', fullName: 'Admin Demo' },
   loading: false,
 };
@@ -115,6 +116,21 @@ afterEach(() => {
 });
 
 describe('InventoryInboxPage', () => {
+  it('profil tidak tersedia mendapat konteks halaman dan jalur kembali tanpa kontrol keputusan', () => {
+    profileState.profile = null;
+    renderPage();
+
+    expect(
+      screen.getByRole('heading', { name: 'Kotak masuk inventaris', level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Halaman ini hanya untuk admin dan advisor.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Kembali ke inventaris' })).toHaveAttribute(
+      'href',
+      '/inventaris',
+    );
+    expect(screen.queryByRole('button', { name: 'Konfirmasi' })).not.toBeInTheDocument();
+  });
+
   it('mengumumkan loading dan memulihkan error baca melalui retry', async () => {
     let finish!: (value: Response) => void;
     vi.stubGlobal(
@@ -140,7 +156,7 @@ describe('InventoryInboxPage', () => {
     expect(screen.getByRole('list', { name: 'Laporan ambil' })).toBeInTheDocument();
   });
 
-  it('mengunci keputusan dan filter selama simpan lalu menampilkan hasil', async () => {
+  it('mengunci keputusan selama simpan lalu menghapus permintaan dari daftar menunggu', async () => {
     let finish!: (value: Response) => void;
     let row = { ...COMPONENTS[0], adminReadAt: '2026-10-23T00:00:00Z' };
     const writes: string[] = [];
@@ -163,12 +179,8 @@ describe('InventoryInboxPage', () => {
     expect(writes).toHaveLength(1);
     expect(screen.getByRole('status')).toHaveTextContent('Menyimpan');
     expect(screen.getByRole('button', { name: 'Tolak' })).toBeDisabled();
-    expect(screen.getByLabelText('Jenis permintaan')).toBeDisabled();
     row = { ...row, status: 'dikonfirmasi' };
     await act(async () => finish(jsonResponse(200, row)));
-    expect(
-      await within(screen.getByRole('list', { name: 'Laporan ambil' })).findByText('DIKONFIRMASI'),
-    ).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Keputusan berhasil disimpan');
     expect(screen.queryByRole('button', { name: 'Konfirmasi' })).not.toBeInTheDocument();
   });

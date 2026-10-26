@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfile } from '../auth/useProfile';
 import { apiFetch, ApiRequestError } from '../lib/api';
@@ -18,6 +18,7 @@ export function InventoryPage() {
   const { profile } = useProfile();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [reloadKey, setReloadKey] = useState(0);
   const [kind, setKind] = useState<'semua' | 'komponen' | 'barang'>('semua');
   const [flag, setFlag] = useState<FlagFilter>('semua');
   const [query, setQuery] = useState('');
@@ -37,10 +38,10 @@ export function InventoryPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadKey]);
 
   const visible = filterItems(items, { kind, flag, query });
-  const canRequest = profile !== null && profile.role !== 'advisor';
+  const canRequest = profile !== null && profile.role !== 'admin';
   const hasFilters = kind !== 'semua' || flag !== 'semua' || query !== '';
 
   function clearFilters() {
@@ -60,18 +61,18 @@ export function InventoryPage() {
           </p>
         </div>
         <div className="inventory-actions">
-          <Link className="link-back" to="/inventaris/permintaan-saya">
+          <Link className="link" to="/inventaris/permintaan-saya">
             Permintaan saya
           </Link>
+          {(profile?.role === 'admin' || profile?.role === 'advisor') && (
+            <Link className="link" to="/inventaris/kotak-masuk">
+              Kotak masuk
+            </Link>
+          )}
           {profile?.role === 'admin' && (
-            <>
-              <Link className="link-back" to="/inventaris/kotak-masuk">
-                Kotak masuk
-              </Link>
-              <Link className="link-back" to="/inventaris/baru">
-                Tambah item
-              </Link>
-            </>
+            <Link className="button" to="/inventaris/baru">
+              Tambah item
+            </Link>
           )}
         </div>
       </div>
@@ -125,9 +126,20 @@ export function InventoryPage() {
         </p>
       )}
       {status === 'error' && (
-        <p className="card error" role="alert">
-          Inventaris gagal dimuat. Muat ulang halaman.
-        </p>
+        <div className="card card-alert inventory-load-error">
+          <p className="error" role="alert">
+            Inventaris gagal dimuat. Periksa koneksi lalu coba lagi.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus('loading');
+              setReloadKey((key) => key + 1);
+            }}
+          >
+            Coba lagi
+          </button>
+        </div>
       )}
       {status === 'ready' && (
         <div className="inventory-results">
@@ -135,30 +147,32 @@ export function InventoryPage() {
             Menampilkan {visible.length} dari {items.length} item.
           </p>
           {hasFilters && (
-            <button type="button" className="link-back inventory-clear" onClick={clearFilters}>
+            <button type="button" className="btn-ghost inventory-clear" onClick={clearFilters}>
               Hapus filter
             </button>
           )}
         </div>
       )}
       {status === 'ready' && items.length === 0 && (
-        <div className="card inventory-empty">
+        <div className="card card-empty inventory-empty">
           <h2>Inventaris belum tersedia.</h2>
           <p className="muted">Hubungi admin untuk menambahkan item inventaris.</p>
         </div>
       )}
       {status === 'ready' && items.length > 0 && visible.length === 0 && (
-        <div className="card inventory-empty">
+        <div className="card card-empty inventory-empty">
           <h2>Tidak ada item yang cocok dengan filter.</h2>
           <p className="muted">Ubah pencarian atau hapus filter untuk melihat semua item.</p>
         </div>
       )}
 
-      <ul className="cards inventory-cards" aria-label="Daftar inventaris">
-        {visible.map((item) => (
-          <ItemCard key={item.id} item={item} canRequest={canRequest} />
-        ))}
-      </ul>
+      {status === 'ready' && visible.length > 0 && (
+        <ul className="cards inventory-cards" aria-label="Daftar inventaris">
+          {visible.map((item) => (
+            <ItemCard key={item.id} item={item} canRequest={canRequest} />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
@@ -168,8 +182,11 @@ interface ItemCardProps {
   canRequest: boolean;
 }
 
-function ItemCard({ item, canRequest }: ItemCardProps) {
+export function ItemCard({ item, canRequest }: ItemCardProps) {
+  const instanceId = useId();
   const badge = itemBadge(item);
+  const disclosureId = `${item.kind === 'komponen' ? 'ambil' : 'pinjam'}-${instanceId}`;
+  const triggerId = `${disclosureId}-trigger`;
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -181,7 +198,7 @@ function ItemCard({ item, canRequest }: ItemCardProps) {
   }
 
   return (
-    <li className="card inventory-card">
+    <li className="card card-interactive inventory-card">
       <div className="inventory-card-status">
         <span className="muted">{item.kind === 'komponen' ? 'Komponen' : 'Barang'}</span>
         <span className={TONE_CLASS[badge.tone]}>{badge.label}</span>
@@ -218,14 +235,23 @@ function ItemCard({ item, canRequest }: ItemCardProps) {
         <>
           <button
             type="button"
-            className="link-back"
+            className="disclosure-trigger"
+            id={triggerId}
             aria-expanded={open}
+            aria-controls={disclosureId}
             onClick={toggle}
             disabled={item.quantity === 0}
           >
-            Lapor ambil
+            <span>Lapor ambil</span>
+            <span aria-hidden="true">{open ? '−' : '+'}</span>
           </button>
-          {open && (
+          <div
+            id={disclosureId}
+            className="request-disclosure"
+            role="region"
+            aria-labelledby={triggerId}
+            hidden={!open}
+          >
             <ComponentRequestForm
               item={item}
               onDone={(text) => {
@@ -235,16 +261,30 @@ function ItemCard({ item, canRequest }: ItemCardProps) {
               }}
               onError={setError}
             />
-          )}
+          </div>
         </>
       )}
 
       {canRequest && item.kind === 'barang' && item.status === 'tersedia' && (
         <>
-          <button type="button" className="link-back" aria-expanded={open} onClick={toggle}>
-            Ajukan pinjam
+          <button
+            type="button"
+            className="disclosure-trigger"
+            id={triggerId}
+            aria-expanded={open}
+            aria-controls={disclosureId}
+            onClick={toggle}
+          >
+            <span>Ajukan pinjam</span>
+            <span aria-hidden="true">{open ? '−' : '+'}</span>
           </button>
-          {open && (
+          <div
+            id={disclosureId}
+            className="request-disclosure"
+            role="region"
+            aria-labelledby={triggerId}
+            hidden={!open}
+          >
             <LoanRequestForm
               item={item}
               onDone={(text) => {
@@ -254,7 +294,7 @@ function ItemCard({ item, canRequest }: ItemCardProps) {
               }}
               onError={setError}
             />
-          )}
+          </div>
         </>
       )}
     </li>

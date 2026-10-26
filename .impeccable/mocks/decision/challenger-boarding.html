@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jadwal · LabManage</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1c2d31;background:#eef1ef}
+    *{box-sizing:border-box}html,body{width:1440px;height:900px;margin:0;overflow:hidden}body{font-size:15px;line-height:1.45}
+    a,button,select{min-height:44px;font:inherit;cursor:pointer}a{display:inline-flex;align-items:center;color:inherit;text-decoration:none}button,select{border:1px solid #aebbb9;border-radius:3px;background:#fff;color:#1c2d31;padding:0 14px}
+    a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #925b00;outline-offset:3px}.shell{display:grid;grid-template-columns:184px 1256px;width:1440px;height:900px}.rail{background:#173c46;color:#fff;padding:26px 12px 22px;display:flex;flex-direction:column}
+    .brand{font-size:22px;font-weight:750;padding:0 12px;letter-spacing:-.02em}.rail p{font-size:12px;color:#d8e4e5;margin:5px 12px 30px}.rail nav{display:grid;gap:6px}.rail nav a{min-height:49px;padding:0 12px;font-weight:600;border:1px solid transparent}.rail nav a:hover{background:#234b55}.rail nav a[aria-current="page"]{background:#eef1ef;color:#173c46;border-color:#eef1ef}
+    .keluar{margin-top:auto;width:100%;background:transparent;border-color:#8ca5aa;color:#fff;font-weight:650}.keluar:hover{background:#234b55}.rail a:focus-visible,.rail button:focus-visible{outline-color:#fff}
+    main{padding:26px 28px;background:#eef1ef}.page-head{min-height:80px;display:flex;align-items:center;justify-content:space-between;gap:24px}h1,h2,p{margin:0}h1{font-size:31px;line-height:1.15;letter-spacing:-.025em}.intro{margin-top:7px;color:#52676b}.actions{display:flex;align-items:end;gap:12px}.actions label{display:grid;gap:5px;font-size:12px;font-weight:700}.actions select{width:210px}.cta{background:#173c46;color:#fff;border:1px solid #173c46;border-radius:3px;padding:0 18px;font-weight:700}.cta:hover{background:#234b55}
+    .date-strip{height:80px;margin-top:22px;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #9eacaa;border-bottom:1px solid #9eacaa;background:#f7f9f7}.date-strip a{padding:0 24px;gap:14px}.date-strip a+a{border-left:1px solid #aebbb9}.date-strip a:hover{background:#e3e9e6}.date-strip strong{font-size:23px;font-weight:750}.date-strip span{color:#52676b}.date-strip .full-date{margin-left:auto;font-size:13px}
+    .board{margin-top:24px;border-top:2px solid #173c46}.board-head,.segment{display:grid;grid-template-columns:250px minmax(0,1.2fr) minmax(0,1fr) 150px;column-gap:22px}.board-head{min-height:46px;align-items:center;padding:0 22px;color:#52676b;border-bottom:1px solid #9eacaa;font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.06em}
+    .segment{min-height:156px;align-items:center;padding:20px 22px;border-bottom:1px solid #9eacaa;border-left:5px solid transparent;background:#f7f9f7}.segment.next{border-left-color:#925b00}.date-label{display:block;font-size:13px;color:#52676b;margin-bottom:8px}.time{display:block;font-size:23px;font-weight:750;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.room{font-size:18px;font-weight:700}.team{font-size:16px;font-weight:600}.status{font-weight:750}.next-label{display:block;color:#925b00;font-size:12px;font-weight:800;letter-spacing:.065em;text-transform:uppercase;margin-bottom:8px}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail"><a class="brand" href="#">LabManage</a><p>Operasional laboratorium</p><nav aria-label="Navigasi utama"><a href="#" aria-current="page">Jadwal</a><a href="#">Reservasi</a><a href="#">Inventaris</a><a href="#">Monitoring</a><a href="#">Kehadiran</a><a href="#">Laporan</a><a href="#">Notifikasi</a></nav><button class="keluar" type="button">Keluar</button></aside>
+    <main>
+      <header class="page-head"><div><h1>Jadwal</h1><p class="intro">Papan reservasi ruang dan perlengkapan.</p></div><div class="actions"><label for="ruang">Ruang<select id="ruang"><option>Semua ruang</option><option>Ruang Robotik A</option><option>Printer 3D</option><option>Ruang Robotik B</option></select></label><a class="cta" href="#">Reservasi baru</a></div></header>
+      <nav class="date-strip" aria-label="Lompat ke tanggal"><a href="#senin"><strong>Senin</strong><span class="full-date">26 Oktober 2026</span></a><a href="#selasa"><strong>Selasa</strong><span class="full-date">27 Oktober 2026</span></a></nav>
+      <section class="board" aria-label="Papan jadwal reservasi">
+        <div class="board-head" aria-hidden="true"><span>Waktu (WIB)</span><span>Ruang</span><span>Tim</span><span>Status</span></div>
+        <article class="segment next" id="senin" aria-label="Slot berikutnya, Senin 09.00 sampai 11.00"><div><span class="date-label">Senin, 26 Oktober 2026</span><strong class="time"><time datetime="2026-10-26T09:00:00+07:00">09.00</time>–<time datetime="2026-10-26T11:00:00+07:00">11.00</time></strong></div><h2 class="room">Ruang Robotik A</h2><span class="team">Tim Robotik</span><div><span class="next-label">Berikutnya</span><span class="status">Aktif</span></div></article>
+        <article class="segment"><div><span class="date-label">Senin, 26 Oktober 2026</span><strong class="time"><time datetime="2026-10-26T13:00:00+07:00">13.00</time>–<time datetime="2026-10-26T15:00:00+07:00">15.00</time></strong></div><h2 class="room">Printer 3D</h2><span class="team">Divisi Mekanik</span><span class="status">Aktif</span></article>
+        <article class="segment" id="selasa"><div><span class="date-label">Selasa, 27 Oktober 2026</span><strong class="time"><time datetime="2026-10-27T16:00:00+07:00">16.00</time>–<time datetime="2026-10-27T18:00:00+07:00">18.00</time></strong></div><h2 class="room">Ruang Robotik B</h2><span class="team">Tim Robotik</span><span class="status">Aktif</span></article>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -91,19 +91,22 @@ function StatisticsData({
         anggota. Tingkat kehadiran memakai hari kalender berlalu, termasuk hari ini. Rasio malam
         menghitung sesi yang melewati 21:00 WIB.
       </p>
-      <section className="card admin-statistics-overview" aria-label="Ringkasan statistik">
+      <section
+        className="card card-summary admin-statistics-overview"
+        aria-label="Ringkasan statistik"
+      >
         <h3>Ringkasan statistik</h3>
         <Aggregate data={data.aggregate} />
       </section>
       <section className="admin-statistics-members" aria-label="Statistik per anggota">
         <h3>Statistik per anggota</h3>
         {data.members.length === 0 ? (
-          <p>Belum ada anggota untuk ditampilkan.</p>
+          <p className="card card-empty">Belum ada anggota untuk ditampilkan.</p>
         ) : (
           <div className="admin-attendance-list admin-member-grid">
             {data.members.map((member) => (
               <article
-                className="card admin-member-card"
+                className="card card-summary admin-member-card"
                 key={member.userId}
                 aria-label={`Statistik ${member.fullName}`}
               >

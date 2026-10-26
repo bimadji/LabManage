@@ -1,107 +1,88 @@
 # DESIGN LabManage
 
-Status: draft, belum disetujui. Arah ini adalah fallback dari panduan UX umum, karena query `ui-ux-pro-max` tidak menghasilkan pola yang cocok untuk aplikasi booking lab.
+Status: dunia visual **Agenda regu yang terukur**, dipilih pengguna untuk overhaul Fase 1. Berlaku pada shell dan permukaan operasional web. Audit dan keputusan arah: `docs/ui-review/AUDIT-2026-10.md` serta `.impeccable/decision-direction.json`.
 
-## Prinsip
+## Tesis
 
-- Fungsi dulu: jadwal, reservasi, dan stok harus bisa dibaca dan dipakai dalam tiga ketukan.
-- Konsisten dengan tampilan yang sudah ada. Perubahan bertahap, bukan redesign.
+Satu agenda kerja menghubungkan waktu, entitas, dan status. Antarmuka mengutamakan pekerjaan yang dapat dipindai dan tindakan yang sah, bukan kartu dashboard dekoratif, gambar hero, atau navigasi yang memenuhi viewport pertama.
 
-## Palet
+- **Agenda, bukan poster.** Tanggal, jam, nama entitas, dan status membentuk ritme baca yang konsisten.
+- **Konteks sebelum aksi.** Identitas akun, tujuan aktif, metadata, dan konsekuensi status tersedia sebelum pengguna mengirim perubahan.
+- **Satu dunia, tugas berbeda.** Jadwal, inventaris, kehadiran, monitoring, laporan, dan notifikasi memakai token serta aturan interaksi yang sama tanpa menyamakan proses bisnisnya.
+- **Pulih dengan konteks.** Error menjelaskan kegagalan dan menyediakan retry pada resource yang sama. Filter dan input tidak dibuang oleh tampilan.
 
-Ikuti variabel CSS yang sudah ada di `web/src/index.css`. Tidak ada warna baru tanpa alasan kontras.
+## Bahasa visual
 
-- Teks utama: kontras minimal 4.5:1 terhadap latar.
-- Status: AMAN, MENIPIS, HABIS, TERSEDIA, DIPINJAM dibedakan dengan label teks, bukan warna saja.
+| Token                                 | Nilai     | Fungsi                                              |
+| ------------------------------------- | --------- | --------------------------------------------------- |
+| `--color-background`                  | `#f4f6f3` | Kertas sejuk di belakang area kerja                 |
+| `--color-foreground`                  | `#172d35` | Tinta untuk judul dan isi                           |
+| `--color-primary`, `--color-rail`     | `#164e5a` | Rail biru-petro dan aksi utama                      |
+| `--color-secondary`, `--color-accent` | `#b94d25` | Aksi kerja dan fokus yang menonjol, digunakan hemat |
+| `--color-card`                        | `#ffffff` | Panel form, ledger, dan isi berulang                |
+| `--color-link`                        | `#0f4552` | Tautan konten pada latar terang                     |
+| `--color-link-hover`                  | `#0a323b` | Tautan konten saat hover                            |
+| `--color-muted`                       | `#e7ede8` | Bidang pembeda sekunder                             |
+| `--color-surface-summary`             | `#f1f5f2` | Kartu ringkasan dan notifikasi belum dibaca         |
+| `--color-surface-alert`               | `#fdf3f2` | Kartu kegagalan dan konteks yang perlu dipulihkan   |
+| `--color-muted-foreground`            | `#475569` | Metadata pada latar terang                          |
+| `--color-border`                      | `#c5cfca` | Garis aturan dan batas kontrol                      |
+| `--color-destructive`                 | `#b91c1c` | Error dan tindakan destruktif                       |
+| `--color-success`                     | `#25634b` | Status positif, selalu disertai teks                |
+| `--color-rail-ink`                    | `#f8faf7` | Teks terang pada rail                               |
 
-## Tipografi
+Radius kontrol 6 px; kartu memakai `--radius-card` 10 px dan `--shadow-card` yang tipis untuk memisahkan isi berulang dari kertas halaman. Tidak ada gradien, ilustrasi, atau ikon sebagai pengganti label. Garis 1 px dan ruang kosong tetap menjadi pembeda utama kelompok. Skala spasi 4/8/12/16/24/32 px memakai `--space-1` sampai `--space-6`.
 
-- Font sistem yang sudah dipakai. Ukuran dasar 16px.
-- Judul halaman 1.5rem (mobile), 1.75rem (≥768px).
+Tipografi memakai system sans (`system-ui`, Segoe UI, Roboto), dasar 16 px, line-height 1,5. Judul halaman responsif 26–32 px; judul bagian 18 px. Jam, durasi, jumlah, dan metrik memakai angka tabular agar kolom mudah dibandingkan. Keterangan tetap berupa teks, bukan warna atau bentuk saja.
 
-## Komponen
+## Struktur aplikasi
 
-- Tombol dan tautan interaktif: tinggi minimum 44px, jarak antar target minimal 8px.
-- Error: `role="alert"` di atas aksi.
-- Kondisi kosong: jelaskan dan beri satu aksi berikutnya.
+### Mobile, di bawah 768 px
 
-## Spasi dan layout
+Header rail ringkas memuat identitas LabManage, tombol **Menu**, dan **Keluar**. Navigasi tertutup tidak dirender dalam layout maupun urutan fokus. Tombol mengumumkan **Buka navigasi**/**Tutup navigasi**, `aria-expanded`, dan `aria-controls`. Perpindahan route menutup menu. Konten tugas muncul langsung setelah header.
 
-- Skala spasi dari variabel `--space-*`.
-- Tanpa scroll horizontal pada 375, 768, dan 1280 px.
-- Navigasi mobile: grid 2x2 (sudah ada, `@media (max-width: 767px)`).
+### Tablet dan desktop, mulai 768 px
 
-## Aksesibilitas
+Rail sticky selebar 220 px memuat tujuh tujuan utama, subtautan role yang sah, dan identitas akun. Area kerja mengambil sisa lebar dengan `minmax(0, 1fr)`. Padding area kerja bertambah pada 1280 px; tidak ada sidebar kedua atau dashboard sambutan.
 
-- Fokus keyboard terlihat.
-- Animasi dinonaktifkan untuk `prefers-reduced-motion` (sudah ada).
+Skip link **Lewati ke konten utama** menjadi target Tab pertama, menuju satu `<main id="main-content">`. Tujuan utama memakai `aria-current="page"`; subtautan aktif memakai `aria-current="location"`. Kotak masuk membawa badge jumlah pending untuk admin tanpa mengubah nama tujuan.
 
-## Tugas 3A — Jadwal
+## Signature move: ledger kerja
 
-- Halaman `/jadwal` memakai daftar per tanggal: tanggal sebagai penanda, jam dan ruang sebagai informasi utama, tim sebagai teks pendukung, status aktif/dibatalkan dengan label teks. Di desktop tanggal berada di kolom kiri; di ponsel di atas daftar. Palet, font sistem, radius, dan skala spasi tetap mengikuti variabel yang ada.
-- Referensi yang ditinjau pada 22 Oktober 2026: [Modern Timeline oleh Caio Bonato di 21st.dev](https://21st.dev/@chowlol202/components/modern-timeline). Pola pengelompokan tanggal dan kartu dipilih karena cocok untuk membaca urutan reservasi. Animasi, gambar, progress, serta layout horizontal dari referensi tidak diperlukan untuk jadwal ini.
-- Pemeriksaan sumber: metadata `license` kosong dan `license_url` tidak tersedia pada halaman tersebut, sehingga kode/aset komponen tidak diambil. Referensi hanya inspirasi susunan informasi; JSX/CSS ditulis sendiri dengan React + Vite yang sudah ada. Dependensi sumber yang tercantum adalah `lucide-react` dan `framer-motion`, dengan ShadCN UI/Tailwind pada deskripsinya; tidak ada yang ditambahkan ke proyek.
-- Audit awal direkonstruksi karena file lokal `UI-REVIEW.md` lama tidak tersedia: nama ruang/tim panjang menyebabkan overflow; zona WIB dan status aktif belum eksplisit; kondisi kosong belum punya aksi. Perbaikan dibatasi ke Jadwal, tanpa mengubah API, rentang dua minggu, filter, atau aturan reservasi.
-- Bukti sebelum/sesudah pada 375 dan 1280px disimpan di `docs/ui-review/helper-8/` dan disertakan dalam PR. Pengujian juga mencakup 768px, teks panjang, fokus keyboard, kontras teks/badge, loading, kosong, error, serta filter ruang. Semua data pada screenshot adalah data simulasi.
+Jadwal mengelompokkan reservasi per hari. Pada desktop, tanggal menjadi rail 144 px di kiri dan daftar waktu–ruang/tim–status berada di kanan. Pada mobile, tanggal berada di atas entri. Formatter WIB, rentang 14 hari, filter, dan status bisnis tetap menjadi sumber kebenaran.
 
-## Tugas 3B — Reservasi baru
+Pola yang sama diterapkan sesuai tugas:
 
-- Halaman `/reservasi/baru` mengelompokkan isian menjadi Ruang dan tim serta Waktu penggunaan memakai `fieldset`/`legend`. Satu kolom pada ponsel, dua kolom mulai 768px; tombol simpan terpisah dengan garis pembatas. Palet, font, radius, spasi, dan kontrol native tetap mengikuti proyek.
-- Referensi yang diperiksa 22 Oktober 2026: [Form](https://21st.dev/@shadcn/components/form) dan [Input](https://21st.dev/@shadcn/components/input) dari shadcn/ui di 21st.dev. Pola label, bantuan isian, dan pesan error cocok untuk form reservasi singkat. Keduanya mencantumkan lisensi MIT. Form mencantumkan dependensi `react-hook-form`, Radix Slot/Label, dan `sonner`; contoh kalender juga memakai Zod/resolver, `date-fns`, serta `lucide-react`. Tidak ada dependensi/kode/aset sumber yang diambil; pola diadaptasi dengan JSX, elemen HTML native, dan CSS proyek.
-- Audit awal menunjukkan nama ruang panjang membuat form melebar (scrollWidth 1226/1242/1370 pada 375/768/1280). Lebar minimum grid, fieldset, dan input dibatasi agar form tetap berada di layar. Kondisi memuat/kosong/gagal daftar ruang diberi pesan; form belum dapat dikirim sampai tersedia pilihan dan isian dikunci selama penyimpanan. Error API mempertahankan isian agar dapat dicoba kembali.
-- Jam operasional tetap 07:00–21:00 WIB. Bantuan isian menjelaskan perilaku yang sudah ada: `datetime-local` mengikuti zona waktu perangkat. Validasi rentang, konversi waktu, payload API, aturan konflik, dan navigasi setelah simpan tidak diubah.
-- Screenshot sebelum/sesudah 375/1280 ada di `docs/ui-review/helper-9/`, dengan data simulasi. Verifikasi mencakup 768px, teks panjang, fokus keyboard, kontras, state form, penyimpanan nyata menggunakan fixture lokal, konflik, dan percobaan ulang.
+- **Inventaris:** nama item adalah fokus; jenis, kategori, lokasi, stok, peminjam, dan status membentuk metadata stabil. Form ambil/pinjam dibuka melalui disclosure berlabel, bukan modal atau perpindahan fokus otomatis.
+- **Kehadiran dan monitoring:** waktu, durasi, target, dan peringatan menjadi data utama. Aksi refresh/check-in/check-out berada dekat konteksnya.
+- **Rekap dan admin:** filter periode berada dalam panel; metrik dan rincian harian mengikuti, tanpa mengganti tabel/daftar bermakna menjadi kartu kosmetik.
+- **Permintaan dan notifikasi:** entitas, pemohon, status, waktu, catatan, dan aksi mempunyai urutan stabil. Status selalu tertulis.
+- **Form:** label terlihat, bantuan dekat dengan kontrol, validasi native dan pesan server dipertahankan, serta aksi submit tidak bergeser ke pola baru.
 
-## Tugas 3C — Katalog Inventaris
+## Kartu dan tautan
 
-- Halaman `/inventaris` memisahkan filter dalam panel, menampilkan jumlah hasil, serta menyediakan tombol Hapus filter ketika pencarian/filter aktif. Katalog kosong dibedakan dari hasil pencarian kosong. Kartu menempatkan jenis dan badge status di atas nama item, kategori/lokasi diberi label, dan tombol permintaan dipisahkan dari informasi stok. Satu kolom pada ponsel dan dua kolom mulai 768px memberi ruang bagi form permintaan. Palet, font, radius, dan spasi tetap mengikuti proyek.
-- Referensi yang diperiksa 22 Oktober 2026: [Card oleh shadcn/ui di 21st.dev](https://21st.dev/@shadcn/components/card). Pemisahan kepala, isi, dan aksi kartu cocok untuk membaca ketersediaan item sebelum mengajukan permintaan. Halaman mencantumkan lisensi MIT dan dependensi contoh `lucide-react`; contoh juga menggunakan komponen shadcn dan kelas Tailwind. Pola diadaptasi dengan JSX/CSS sendiri, tanpa mengambil kode/aset atau menambah dependensi.
-- Audit awal: nama item, kategori, lokasi, dan peminjam yang panjang membuat scrollWidth 1258/1615/2033 pada viewport 375/768/1280; badge menempel pada aksi; pencarian kosong belum memiliki cara cepat menghapus filter. Lebar minimum kartu/form/kontrol dibatasi dan teks dibungkus. Status memuat, jumlah hasil, serta keberhasilan permintaan diumumkan melalui `role="status"`; error tetap memakai `role="alert"`.
-- Filter lokal, perhitungan badge, akses anggota/admin/advisor, payload ambil/pinjam, dan aturan stok/persetujuan tetap. Screenshot sebelum/sesudah 375/1280 di `docs/ui-review/helper-10/` memakai data simulasi. Verifikasi browser mencakup 768px, teks panjang, fokus keyboard, kontras, loading/kosong/error, reset filter, form ambil/pinjam, pending, sukses, percobaan ulang, serta tampilan admin/advisor. API inventaris dalam pemeriksaan browser disimulasikan; autentikasi memakai akun uji lokal yang dibersihkan setelah selesai.
+Semua panel memakai `.card` dengan batas 1 px, radius 10 px, dan bayangan tipis yang sama. Varian memiliki fungsi, bukan dekorasi acak: `.card-summary` untuk ringkasan, `.card-alert` untuk error yang dapat dipulihkan, `.card-empty` dengan batas putus-putus untuk keadaan kosong, dan `.card-interactive` untuk kartu inventaris. Kartu interaktif terangkat 2 px saat hover; transisinya hanya memakai `transform` dan otomatis hilang pada reduced motion. Notifikasi belum dibaca memakai surface ringkasan serta badge teks, bukan warna saja.
 
-## Tugas 3D — Detail item Inventaris
+Tautan konten memakai warna tema dan garis bawah melalui aturan global `a` serta kelas `.link`; tidak ada biru/ungu bawaan browser. `.link-back` khusus navigasi kembali memakai ghost button dan chevron CSS. `.btn-ghost` untuk aksi sekunder dan `.btn-ghost-danger` untuk aksi destruktif sekunder. Aksi utama tetap `.button`. Rail, merek, skip link, dan tombol mempertahankan gaya komponennya sendiri.
 
-- Halaman `/inventaris/:id` memisahkan informasi item, kontrol pengelolaan admin, dan riwayat. Informasi dan kontrol berada dalam dua kolom mulai 768px, bertumpuk pada ponsel; anggota/advisor hanya melihat informasi dan riwayat. Palet, font, radius, dan spasi mengikuti proyek. Riwayat memakai daftar bernama dan waktu semantik.
-- Referensi yang diperiksa 22 Oktober 2026: [Card](https://21st.dev/@shadcn/components/card) dan [Form](https://21st.dev/@shadcn/components/form) dari shadcn/ui di 21st.dev. Pemisahan informasi dan aksi kartu serta pengelompokan label/isian cocok untuk halaman detail. Keduanya mencantumkan lisensi MIT. Contoh Card memakai `lucide-react`; Form mencantumkan `react-hook-form`, Radix Slot/Label, dan `sonner`, dengan Zod/resolver, `date-fns`, dan `lucide-react` pada contoh. Tidak ada kode/aset sumber atau dependensi baru yang diambil; pola diadaptasi dengan JSX, elemen HTML native, dan CSS proyek.
-- Audit awal: teks panjang membuat scrollWidth 2257/2474/2602 pada viewport 375/768/1280. Lebar minimum kartu/form/kontrol dibatasi dan teks dibungkus. Kontrol dikunci selama penyimpanan untuk mencegah pengiriman ganda, keberhasilan diumumkan melalui `role="status"`, dan error mempertahankan isian untuk percobaan ulang. Gagal memuat memiliki tombol Coba lagi; menutup form edit mengembalikan fokus ke Ubah item.
-- Endpoint, payload, validasi stok, perhitungan badge, konfirmasi hapus, serta aturan akses tetap. Bukti sebelum/sesudah 375/1280 disimpan di `docs/ui-review/helper-11/`. Pemeriksaan juga mencakup 768px, teks panjang, fokus/hover, kontras, loading/error/item hilang, riwayat kosong, pending/sukses/error aksi, percobaan ulang, pengembalian barang, dan tampilan anggota/advisor. Data inventaris dan respons API pada browser disimulasikan; akun autentikasi uji Supabase lokal dibersihkan setelah pengujian.
+## Interaksi dan aksesibilitas
 
-## Tugas 3E — Item inventaris baru
+- Target kontrol minimum **44 × 44 px**, termasuk tombol keputusan yang sempit.
+- Teks normal minimal **4,5:1**; teks besar mengikuti ambang WCAG yang sesuai.
+- Fokus keyboard terlihat pada tautan, tombol, field, disclosure, dan skip link. Urutan fokus mengikuti urutan DOM; navigasi tertutup tidak ikut menerima fokus.
+- Disclosure memakai tombol dengan `aria-expanded`, `aria-controls`, dan region `aria-labelledby`. Region inventaris tetap mounted dengan `hidden` agar input tidak hilang saat ditutup.
+- Loading memakai `role="status"`; kegagalan memakai `role="alert"`. Status bisnis tidak dibedakan hanya melalui warna.
+- `prefers-reduced-motion: reduce` menghilangkan animasi/transisi. Tidak ada autoplay atau gerakan dekoratif.
+- `document.documentElement.scrollWidth <= window.innerWidth` wajib pada 375, 768, dan 1280 px. Grid dan anak fleksibel menggunakan `min-width: 0`; teks panjang dibungkus tanpa memotong isi bermakna.
 
-- Halaman `/inventaris/baru` mengelompokkan isian menjadi Informasi item serta Jenis dan stok menggunakan `fieldset`/`legend`. Satu kolom pada ponsel dan dua kolom mulai 768px mengikuti pola form Reservasi. Bantuan yang terhubung lewat `aria-describedby` menjelaskan lokasi opsional serta perbedaan komponen habis pakai dan barang satuan. Palet, font, radius, dan spasi tetap mengikuti proyek.
-- Referensi yang diperiksa 23 Oktober 2026: [Form](https://21st.dev/@shadcn/components/form) dan [Input](https://21st.dev/@shadcn/components/input) dari shadcn/ui di 21st.dev, untuk pengelompokan label, bantuan, dan pesan error. Keduanya mencantumkan lisensi MIT. Form mencantumkan `react-hook-form`, Radix Slot/Label, dan `sonner`; contohnya juga memakai Zod/resolver, `date-fns`, dan `lucide-react`. Contoh Input menggunakan komponen Input/Label/Button shadcn. Tidak ada kode/aset sumber atau dependensi baru yang diambil; adaptasi memakai HTML native, JSX, dan CSS proyek.
-- Audit awal: pesan error tanpa spasi membuat scrollWidth 3419/3435/3563 pada viewport 375/768/1280. Grid, fieldset, dan isian dibatasi lebarnya, pesan dibungkus. Pemuatan profil dan penyimpanan diumumkan melalui `role="status"`; seluruh isian dikunci selama simpan. Error memakai `role="alert"` dan mempertahankan isian untuk percobaan ulang. Tampilan non-admin menyediakan tautan kembali ke inventaris.
-- Payload komponen/barang, trim nama/kategori/lokasi, lokasi kosong yang tidak dikirim, validasi API, akses admin, dan navigasi ke katalog setelah sukses tetap. Screenshot sebelum/sesudah 375/1280 berada di `docs/ui-review/helper-12/`; pengujian juga mencakup 768px, bantuan jenis, pending, error/retry, sukses/navigasi, teks panjang, fokus/hover, kontras, serta akses anggota/advisor. Data dan API inventaris browser disimulasikan; akun autentikasi uji lokal dibersihkan setelah selesai.
+## Kontrak yang tidak berubah pada Fase 1
 
-## Tugas 3F — Permintaan saya dan Kotak masuk inventaris
+Perubahan dunia visual tidak mengubah endpoint, payload, validasi, kalkulasi, React Query/fetch/state, kondisi guard, RLS, atau izin. Monitoring anggota, cakupan Permintaan saya, serta hak inventaris admin/advisor tetap sesuai build awal dan ditangani terpisah pada Fase 2. Discoverability Kotak masuk advisor diperbaiki karena akses bacanya sudah sah.
 
-- Kedua halaman memakai kartu dengan informasi permintaan, badge status berteks, dan aksi yang dipisahkan garis pembatas. Daftar bernama dibagi menjadi Laporan ambil dan Permintaan pinjam; satu kolom pada ponsel dan dua kolom mulai 768px. Filter Kotak masuk berada dalam panel. Palet, font, radius, dan spasi mengikuti proyek.
-- Referensi yang diperiksa 23 Oktober 2026: [Card oleh shadcn/ui di 21st.dev](https://21st.dev/@shadcn/components/card), untuk pemisahan kepala/isi/aksi kartu dan form di dalam kartu. Lisensi MIT dan dependensi contoh `lucide-react` diperiksa; contoh juga menggunakan komponen shadcn dan kelas Tailwind. Tidak mengambil kode/aset atau menambah dependensi; adaptasi memakai JSX, HTML native, dan CSS proyek.
-- Audit awal: teks panjang membuat scrollWidth Permintaan saya 2590/2589/2717 dan Kotak masuk 2520/2519/2647 pada viewport 375/768/1280. Teks dibungkus dan lebar minimum kartu/form/kontrol dibatasi. Loading dan hasil aksi diumumkan melalui `role="status"`; error memakai `role="alert"` dan gagal memuat menyediakan Coba lagi. Tombol dikunci selama aksi/refetch, serta filter Kotak masuk dikunci saat pengiriman keputusan.
-- Test mereproduksi pengiriman ganda pada pembatalan/keputusan dan ID alasan penolakan yang sama antar kartu. Ref sinkron mencegah pengiriman ganda; `useId` menghubungkan tiap label dengan inputnya sendiri. Form penolakan baru ditutup setelah sukses agar error mempertahankan catatan untuk percobaan ulang. Endpoint, payload, status/filter, syarat tombol berdasarkan peran/status, dan penandaan dibaca tetap.
-- Delapan screenshot sebelum/sesudah kedua halaman pada 375/1280 tersedia di `docs/ui-review/helper-13/`. Verifikasi juga mencakup 768px, teks panjang, fokus/hover, kontras, loading/kosong/error baca dan retry, pending/error/sukses pembatalan, konfirmasi/persetujuan/penolakan, retry catatan, filter kosong, serta advisor tanpa aksi keputusan. API permintaan browser disimulasikan dan payload diperiksa; autentikasi memakai akun uji lokal yang dibersihkan setelah selesai.
+Tidak ada dependency UI, pembatalan baru, filter bisnis baru, bulk action, pagination, atau penghapusan route dalam overhaul ini.
 
-## Tugas 3G â€” Kehadiran dan rekap anggota
+## Bukti dan batas metode
 
-- Halaman `/kehadiran` menyusun judul sesi dan status dalam satu kepala yang dapat membungkus pada layar sempit. Waktu check-in, check-out, dan durasi dikelompokkan sebagai daftar definisi; tombol aksi dipisahkan garis pembatas dan tetap memiliki target minimum 44px. Halaman `/kehadiran/rekap` menempatkan status target berdampingan dengan badge berlabel, memberi jarak antara filter, rekap, dan peringatan, serta menampilkan hari dalam dua kolom mulai 768px. Warna, font, radius, dan spasi memakai token yang sudah ada.
-- Referensi yang diperiksa 25 Oktober 2026: [Card](https://21st.dev/@shadcn/components/card) dan [Form](https://21st.dev/@shadcn/components/form) dari shadcn/ui di 21st.dev. Susunan kepala/isi/aksi pada Card sesuai untuk sesi dan status target; pola label dan kontrol pada Form sesuai untuk filter periode. Keduanya mencantumkan lisensi MIT. Card mencantumkan `lucide-react`; Form mencantumkan `react-hook-form`, Radix Slot/Label, dan `sonner`. Tidak ada kode/aset sumber atau dependensi baru yang diambil; adaptasi memakai JSX, HTML semantik, dan CSS proyek.
-- Aturan check-in/out, durasi, pemuatan ulang, periode, ringkasan, dan peringatan tidak diubah. Screenshot sebelum/sesudah 375/1280 disimpan di `docs/ui-review/helper-14/`; verifikasi mencakup 768px, state dan teks panjang, fokus keyboard, kontras, target sentuh, serta overflow.
+Audit awal beserta 90 capture baseline tersimpan di `docs/ui-review/ui-overhaul-2026-10/before/`. Capture after memakai akun demo, route, seed, dan lebar CSS 375/768/1280 yang sama di `docs/ui-review/ui-overhaul-2026-10/after/`. Pengukuran DOM melengkapi capture untuk overflow, target, label, keyboard, reduced motion, serta role; capture bukan bukti API atau izin.
 
-## Tugas 3H - Monitoring, rekap advisor, statistik admin
-
-- Monitoring mengelompokkan nama anggota, status sesi, waktu mulai, dan durasi dalam kartu yang dapat membungkus pada layar sempit. Tautan berdasarkan peran berada pada baris yang dapat membungkus. Rekap advisor dan statistik admin memakai panel terpisah untuk filter, ringkasan, sesi terbuka, koreksi, dan tren; grid bertambah dari satu kolom pada ponsel menjadi dua mulai 768px dan tiga mulai 1280px.
-- Referensi yang diperiksa 25 Oktober 2026: [Card](https://21st.dev/@shadcn/components/card) dan [Form](https://21st.dev/@shadcn/components/form) dari shadcn/ui di 21st.dev. Struktur kepala/isi kartu cocok untuk sesi monitoring dan anggota, sementara pola label dan kontrol cocok untuk filter. Keduanya mencantumkan lisensi MIT; contoh Card menggunakan `lucide-react`, sedangkan Form mencantumkan `react-hook-form`, Radix Slot/Label, dan `sonner`. Tidak mengambil kode/aset dan tidak menambah dependensi; pola disusun ulang memakai JSX semantik dan CSS proyek.
-- Perubahan hanya pada hierarki informasi, pembungkusan teks, panel, dan grid. Aturan absensi, target, koreksi, akses, dan permintaan API tetap.
-
-## Tugas 3I - Laporan fasilitas dan notifikasi
-
-- Kartu laporan dan notifikasi memakai elemen artikel dengan judul yang memberi nama kontennya. Judul dan status berada dalam satu kepala yang bisa membungkus pada layar sempit. Notifikasi belum dibaca diberi garis tepi warna utama sebagai penanda tambahan; label status tetap tertulis. Pesan panjang dibungkus dan tombol aksi tetap terpisah dari isi.
-- Referensi yang diperiksa 25 Oktober 2026: [Card oleh shadcn/ui di 21st.dev](https://21st.dev/@shadcn/components/card), khususnya struktur kepala, isi, dan kaki kartu serta daftar notifikasi. Halaman mencantumkan lisensi MIT dan dependensi contoh `lucide-react`; tidak ada kode sumber yang diambil dan tidak ada dependensi yang ditambahkan. Polanya diadaptasi memakai elemen semantik, JSX, dan CSS LabManage.
-- Perubahan hanya pada semantik dan hierarki tampilan kartu. Payload laporan, transisi status, izin peran, endpoint notifikasi, dan aksi tandai dibaca tidak berubah. Bukti sebelum/sesudah 375/1280px disimpan di `docs/ui-review/helper-16/`; browser juga diperiksa pada 768px.
-
-## Tugas 3J - Login, navigasi bersama, audit akhir
-
-- Status pemuatan sesi pada shell diumumkan lewat `role="status"`. Tautan navigasi mempertahankan nama dan state aktif, fokus keyboard, tinggi target 44px, serta jarak minimum 8px sesuai token spasi. Form login tetap berupa kartu terpusat dengan label yang terhubung, error `role="alert"`, dan tombol terkunci selama permintaan.
-- Referensi yang diperiksa 25 Oktober 2026: [Form](https://21st.dev/@shadcn/components/form) untuk label dan pengelompokan form, serta [Navigation menu](https://21st.dev/@shadcn/components/navigation-menu) untuk pola tautan, state fokus, dan navigasi responsif. Keduanya mencantumkan lisensi MIT. Form mencantumkan `react-hook-form`, `@radix-ui/react-slot`, `@radix-ui/react-label`, dan `sonner`; contohnya juga memakai `zod`, `@hookform/resolvers`, `date-fns`, dan `lucide-react`. Navigation menu mencantumkan `@radix-ui/react-icons`, `class-variance-authority`, dan `@radix-ui/react-navigation-menu`. Tidak mengambil kode/aset dan tidak menambah dependensi; pola diadaptasi ke React Router, HTML native, dan CSS proyek.
-- Audit kontras token teks/status/fokus menghasilkan rasio minimum 4.94:1 (fokus sekunder pada latar); seluruh pasangan lain yang diperiksa lebih tinggi. Semua tahap 3A-3I sudah memiliki bukti per halaman dan test masing-masing; audit ini memeriksa ulang shell bersama pada 375/768/1280px. Screenshot login dan navigasi sebelum/sesudah 375/1280 berada di `docs/ui-review/helper-17/`.
-- Tidak ada perubahan autentikasi, routing, izin, request, atau logika bisnis. Perubahan hanya semantik status loading dan jarak navigasi.
+Model pada sesi implementasi tidak menerima input gambar. Karena itu dokumen ini tidak mengklaim inspeksi piksel atau perbandingan visual subjektif dari PNG. Kontras diperiksa melalui computed CSS dan pasangan warna; gradien/gambar tidak dipakai dalam dunia final.

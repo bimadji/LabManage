@@ -25,11 +25,16 @@ export function InventoryNewPage() {
     );
   if (profile?.role !== 'admin') {
     return (
-      <section className="inventory-new-page card">
-        <p className="muted">Halaman ini hanya untuk admin.</p>
-        <Link className="link-back" to="/inventaris">
-          Kembali ke inventaris
-        </Link>
+      <section className="inventory-new-page">
+        <div className="page-head">
+          <div>
+            <h1>Item inventaris baru</h1>
+            <p className="muted">Halaman ini hanya untuk admin.</p>
+          </div>
+          <Link className="link-back" to="/inventaris">
+            Kembali ke inventaris
+          </Link>
+        </div>
       </section>
     );
   }

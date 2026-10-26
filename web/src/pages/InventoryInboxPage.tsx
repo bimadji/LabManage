@@ -6,7 +6,6 @@ import { REQUEST_STATUS_LABEL, type BadgeTone } from '../lib/inventory';
 import type { ComponentRequest, LoanRequest, RequestStatus } from '../types';
 
 type Tab = 'komponen' | 'pinjam';
-type StatusFilter = 'semua' | RequestStatus;
 
 const STATUS_TONE: Record<RequestStatus, BadgeTone> = {
   menunggu: 'warn',
@@ -29,7 +28,6 @@ export function InventoryInboxPage() {
   const isAdmin = profile?.role === 'admin';
 
   const [tab, setTab] = useState<Tab>('komponen');
-  const [status, setStatus] = useState<StatusFilter>('semua');
   const [components, setComponents] = useState<ComponentRequest[]>([]);
   const [loans, setLoans] = useState<LoanRequest[]>([]);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -108,11 +106,23 @@ export function InventoryInboxPage() {
         Memuat…
       </p>
     );
-  if (profile === null) return <p className="muted">Halaman ini hanya untuk admin dan advisor.</p>;
+  if (profile === null)
+    return (
+      <section className="inventory-requests-page">
+        <div className="page-head">
+          <div>
+            <h1>Kotak masuk inventaris</h1>
+            <p className="muted">Halaman ini hanya untuk admin dan advisor.</p>
+          </div>
+          <Link className="link-back" to="/inventaris">
+            Kembali ke inventaris
+          </Link>
+        </div>
+      </section>
+    );
 
-  const matches = (rowStatus: RequestStatus) => status === 'semua' || rowStatus === status;
-  const visibleComponents = components.filter((row) => matches(row.status));
-  const visibleLoans = loans.filter((row) => matches(row.status));
+  const visibleComponents = components.filter((row) => row.status === 'menunggu');
+  const visibleLoans = loans.filter((row) => row.status === 'menunggu');
 
   return (
     <section className="inventory-requests-page">
@@ -139,23 +149,6 @@ export function InventoryInboxPage() {
             <option value="pinjam">Permintaan pinjam</option>
           </select>
         </label>
-
-        <label className="filter" htmlFor="inbox-status">
-          <span>Status</span>
-          <select
-            id="inbox-status"
-            disabled={saving}
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-          >
-            <option value="semua">Semua</option>
-            <option value="menunggu">MENUNGGU</option>
-            <option value="dikonfirmasi">DIKONFIRMASI</option>
-            <option value="disetujui">DISETUJUI</option>
-            <option value="ditolak">DITOLAK</option>
-            <option value="dibatalkan">DIBATALKAN</option>
-          </select>
-        </label>
       </div>
 
       {loadState === 'loading' && (
@@ -164,7 +157,7 @@ export function InventoryInboxPage() {
         </p>
       )}
       {loadState === 'error' && (
-        <div className="card requests-message">
+        <div className="card card-alert requests-message">
           <p className="error" role="alert">
             Permintaan gagal dimuat. Coba lagi.
           </p>
@@ -191,7 +184,7 @@ export function InventoryInboxPage() {
         <>
           <h2 className="requests-section-heading">Laporan ambil</h2>
           {loadState === 'ready' && visibleComponents.length === 0 && (
-            <p className="card muted">Tidak ada laporan.</p>
+            <p className="card card-empty muted">Tidak ada laporan.</p>
           )}
           <ul className="cards requests-cards" aria-label="Laporan ambil">
             {visibleComponents.map((row) => (
@@ -235,7 +228,7 @@ export function InventoryInboxPage() {
         <>
           <h2 className="requests-section-heading">Permintaan pinjam</h2>
           {loadState === 'ready' && visibleLoans.length === 0 && (
-            <p className="card muted">Tidak ada permintaan.</p>
+            <p className="card card-empty muted">Tidak ada permintaan.</p>
           )}
           <ul className="cards requests-cards" aria-label="Permintaan pinjam">
             {visibleLoans.map((row) => (
@@ -298,7 +291,7 @@ function RejectForm({ onSubmit }: RejectFormProps) {
 
   if (!open) {
     return (
-      <button type="button" className="link-back" onClick={() => setOpen(true)}>
+      <button type="button" className="btn-ghost btn-ghost-danger" onClick={() => setOpen(true)}>
         Tolak
       </button>
     );

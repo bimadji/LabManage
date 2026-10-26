@@ -7,6 +7,7 @@ import type { UserNotification } from '../types';
 const KIND_LABELS: Record<string, string> = {
   reservasi: 'Reservasi',
   lembur: 'Lembur',
+  kehadiran: 'Kehadiran',
   laporan: 'Laporan fasilitas',
   inventaris: 'Inventaris',
 };
@@ -78,7 +79,7 @@ function NotificationsContent() {
         Pesan untuk akun Anda, dari yang terbaru. Muat ulang untuk melihat pembaruan.
       </p>
       {loadError ? (
-        <div className="card">
+        <div className="card card-alert">
           <p className="error" role="alert">
             {loadError}
           </p>
@@ -105,7 +106,7 @@ function NotificationsContent() {
           )}
           {notice && <p role="status">{notice}</p>}
           {notifications.length === 0 ? (
-            <p className="card muted">
+            <p className="card card-empty muted">
               Belum ada notifikasi. Gunakan Muat ulang untuk memeriksa pesan baru.
             </p>
           ) : (

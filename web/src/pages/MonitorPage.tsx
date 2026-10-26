@@ -89,12 +89,12 @@ export function MonitorPage() {
         </p>
       )}
       {status === 'error' && (
-        <p className="card error monitor-state" role="alert">
+        <p className="card card-alert error monitor-state" role="alert">
           Kehadiran gagal dimuat, atau akun Anda bukan admin/advisor.
         </p>
       )}
       {status === 'ready' && sessions.length === 0 && (
-        <p className="card muted monitor-state">Tidak ada anggota di lab saat ini.</p>
+        <p className="card card-empty muted monitor-state">Tidak ada anggota di lab saat ini.</p>
       )}
 
       <ul className="cards monitor-members" aria-label="Anggota yang sedang di lab">
