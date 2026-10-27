@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LabManage
 
-## Getting Started
+Sistem Manajemen Laboratorium Robotika Politeknik Elektronika Negeri Surabaya (PENS).
 
-First, run the development server:
+Platform terpadu untuk pengelolaan fasilitas laboratorium, peminjaman inventaris riset, pencatatan presensi mingguan anggota tim riset (EROS & EIRA), serta reservasi arena uji coba dan bengkel fabrikasi bagi tim riset dan UKM Robotika Roboholic.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Fitur Utama
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Inventaris Terpadu**: Pemisahan visibilitas aset milik bersama laboratorium, aset khusus kelompok, dan aset yang dapat dipinjam lintas kelompok.
+- **Peminjaman Alat**: Alur pengajuan dan persetujuan peminjaman komponen mikrokontroler, aktuator, dan sensor.
+- **Presensi Tim Riset**: Timer sesi aktif dan pencatatan akumulasi jam riset mingguan terhadap target wajib 10 jam (khusus anggota tim riset).
+- **Reservasi Fasilitas**: Pemesanan jadwal arena uji coba dan bengkel mekanik dengan pencegahan tabrakan jadwal (*anti-collision constraint*).
+- **Monitoring & Evaluasi**: Dashboard rekapitulasi kehadiran mahasiswa dan utilisasi fasilitas khusus Admin Lab dan Advisor.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack Teknologi
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Frontend**: Next.js (App Router), React, Tailwind CSS, Lucide Icons, Recharts.
+- **Backend & Database**: Supabase (PostgreSQL, Row Level Security, Auth).
+- **Client Supabase**: `@supabase/ssr`, `@supabase/supabase-js`.
 
-## Learn More
+## Menjalankan Proyek Lokal
 
-To learn more about Next.js, take a look at the following resources:
+1. Salin konfigurasi environment:
+   ```bash
+   cp .env.local.example .env.local # atau lengkapi nilai di .env.local
+   ```
+2. Pasang dependensi:
+   ```bash
+   npm install
+   ```
+3. Jalankan development server:
+   ```bash
+   npm run dev
+   ```
+4. Buka [http://localhost:3000](http://localhost:3000) pada browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Skrip Basis Data
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Migrasi skema: `supabase/migrations/20261027_fase2_group_based_schema.sql`
+- Seeder dummy: `npx tsx scripts/seed-dummy.ts`
+- Pengujian RLS: `npx tsx scripts/test-rls.ts`
