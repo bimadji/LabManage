@@ -9,7 +9,7 @@ Dokumen ini memandu pengoperasian dan navigasi fitur **LabManage** bagi seluruh 
 Untuk keperluan pengujian antarmuka dan evaluasi sistem, tombol profil di pojok kanan atas bilah navigasi (*Header*) dilengkapi menu *Ganti Akun & Simulasi Peran*:
 
 - **Ahmad Zaki Fauzan**: Peran **Admin** (Kepala Lab Robotika PENS).
-- **Dimas Aditya**: Peran **Anggota** dari kelompok **Tim Riset EROS** (target 10 jam/minggu, presensi aktif).
+- **Dimas Aditya**: Peran **Anggota** dari **Tim Riset** (target 10 jam/minggu, presensi aktif).
 - **Rina Kusuma**: Peran **Anggota** dari kelompok **UKM Roboholic** (status kelompok bebas target jam riset).
 - **Dr. Ir. Budi Santoso, M.T.**: Peran **Advisor** (Dosen Pembina Tim Robotika).
 
@@ -58,7 +58,7 @@ Memilih salah satu akun akan secara otomatis menyesuaikan konteks izin, tampilan
 
 ## 4. Presensi Kehadiran Lab (Khusus Anggota Tim Riset)
 
-1. Masuk sebagai anggota tim riset (misal: Dimas dari EROS).
+1. Masuk sebagai anggota tim riset.
 2. Di Beranda Utama, lihat kartu **Absensi Kehadiran Lab**.
 3. Klik tombol hijau **Check-In Sekarang** saat Anda tiba di lab dan memulai aktivitas mekatronika.
 4. Timer durasi sesi aktif akan berjalan secara langsung (*live-timer*).
