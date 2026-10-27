@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
+import { useRole } from "@/contexts/role-context";
+
 export function AttendanceWidget() {
+  const { currentUser } = useRole();
   const {
     isCheckedIn,
     checkInTime,
@@ -20,6 +23,36 @@ export function AttendanceWidget() {
     resetWeeklyDemo,
     formattedElapsed,
   } = useAttendance();
+
+  // Sesuai Aturan Ketat: UKM (Roboholic) TIDAK memiliki kewajiban absensi jam lab
+  if (currentUser.teamType === "ukm") {
+    return (
+      <Card className="border-purple-200/80 shadow-xs relative overflow-hidden bg-white">
+        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-purple-500 to-indigo-500" />
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-purple-50 text-purple-700">
+              <Clock className="h-4 w-4 stroke-[2]" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold text-slate-800">
+                Status Kelompok: UKM Roboholic
+              </CardTitle>
+              <p className="text-xs text-slate-500">
+                Bebas Target Jam Lab Mingguan
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-200/80 text-xs text-purple-900 leading-relaxed">
+            <p className="font-semibold mb-1">ℹ️ Kebijakan UKM Robotika PENS:</p>
+            Sebagai anggota <strong>Roboholic</strong>, Anda tidak dikenakan kewajiban presensi 10 jam riset mingguan. Anda tetap dapat meminjam alat lab yang dialokasikan bersama dan memesan ruangan lab untuk perakitan/kegiatan UKM.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const percentage = Math.min(
     100,

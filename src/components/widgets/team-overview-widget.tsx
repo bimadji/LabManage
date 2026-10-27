@@ -12,7 +12,7 @@ export function TeamOverviewWidget() {
   const members = MOCK_TEAM_MONITORING;
   const inLabCount = members.filter((m) => m.isCurrentlyInLab).length;
   const targetCompletedCount = members.filter(
-    (m) => m.hoursThisWeek >= m.targetHours
+    (m) => m.targetHours !== null && m.hoursThisWeek >= m.targetHours
   ).length;
 
   const avgHours = (
@@ -103,7 +103,7 @@ export function TeamOverviewWidget() {
 
                 <div className="text-right shrink-0">
                   <span className="text-xs font-mono font-bold text-emerald-700">
-                    {member.hoursThisWeek} / {member.targetHours} Jam
+                    {member.targetHours !== null ? `${member.hoursThisWeek} / ${member.targetHours} Jam` : "UKM (Bebas Jam)"}
                   </span>
                   <span className="text-[10px] text-slate-400 block">
                     {member.isCurrentlyInLab ? "Sedang di Lab" : "Offline"}

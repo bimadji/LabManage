@@ -9,12 +9,12 @@ export type StatusType =
   | "disetujui"
   | "ditolak"
   | "rusak"
+  | "habis"
   | "tersedia"
   | "dipinjam"
   | "aktif"
   | "ditangani"
   | "selesai";
-
 interface StatusBadgeProps {
   status: StatusType;
   label?: string;
@@ -71,9 +71,14 @@ export function StatusBadge({
           icon: <ShieldCheck className="h-3 w-3 text-sky-700" />,
           defaultLabel: "Tersedia",
         };
-      case "dipinjam":
-      case "ditangani":
-      case "aktif":
+      case "habis":
+        return {
+          bg: "bg-red-100",
+          border: "border-red-200",
+          text: "text-red-800",
+          icon: <AlertTriangle className="h-3 w-3 text-red-700" />,
+          defaultLabel: "Habis",
+        };
         return {
           bg: "bg-purple-100",
           border: "border-purple-200",

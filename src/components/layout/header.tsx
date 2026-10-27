@@ -14,7 +14,8 @@ import {
 import { useRole } from "@/contexts/role-context";
 import { useOverlay } from "@/contexts/overlay-context";
 import { BRANDING } from "@/lib/branding";
-import { UserRole } from "@/types";
+import type { UserRole, User } from "@/types";
+import { MOCK_USERS_LIST } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -187,61 +188,103 @@ export function Header({ onMenuToggle }: HeaderProps) {
           </button>
 
           {showRoleMenu && (
-            <div className="absolute right-0 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3 py-2 border-b border-slate-100 mb-1">
+            <div className="absolute right-0 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 max-h-[85vh] overflow-y-auto">
+              <div className="px-3 py-2 border-b border-slate-100 mb-2">
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Ganti Simulasi Peran
+                  Pengguna Aktif
                 </p>
                 <p className="text-xs font-bold text-slate-700 mt-0.5">
                   {currentUser.name}
                 </p>
-                <p className="text-[11px] text-slate-500 font-mono">
-                  {currentUser.nimOrNip}
+                <p className="text-[11px] text-slate-500">
+                  {currentUser.team} • <span className="font-mono">{currentUser.nimOrNip}</span>
+                </p>
+                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5 uppercase tracking-wider">
+                  Peran: {roleLabels[role].label} {currentUser.teamType === "ukm" ? "(UKM)" : "(Tim Riset)"}
                 </p>
               </div>
 
-              {(["anggota", "admin", "advisor"] as UserRole[]).map((r) => {
-                const isSelected = role === r;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setRole(r);
-                      setShowRoleMenu(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-start gap-2.5 p-2 rounded-lg text-left transition-colors mb-1",
-                      isSelected
-                        ? "bg-emerald-50 text-emerald-900 border border-emerald-200/80"
-                        : "hover:bg-slate-50 text-slate-700"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "mt-0.5 h-4 w-4 rounded-full border flex items-center justify-center shrink-0",
-                        isSelected
-                          ? "border-emerald-600 bg-emerald-600 text-white"
-                          : "border-slate-300 bg-white"
-                      )}
-                    >
-                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold flex items-center gap-1.5">
-                        <span>{roleLabels[r].label}</span>
-                        {isSelected && (
-                          <span className="text-[10px] text-emerald-700 font-semibold">
-                            (Aktif)
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                        {roleLabels[r].desc}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+              <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                Pilih Akun Simulasi & Kelompok
+              </p>
+              <div className="space-y-1">
+                {/* Quick switcher to all simulated users */}
+                <button
+                  onClick={() => {
+                    setRole("admin");
+                    setShowRoleMenu(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
+                    role === "admin" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  <div>
+                    <div className="font-semibold">Ahmad Zaki (Admin Lab)</div>
+                    <div className="text-[10px] text-slate-500 font-normal">Tim Riset EROS • NIP: 198503152010121001</div>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">Admin</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const erosUser = MOCK_USERS_LIST.find((u: User) => u.id === "usr-eros-01");
+                    if (erosUser) {
+                      setRole("anggota");
+                    }
+                    setShowRoleMenu(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
+                    role === "anggota" && currentUser.team === "Tim Riset EROS" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  <div>
+                    <div className="font-semibold">Dimas Aditya (Tim Riset EROS)</div>
+                    <div className="text-[10px] text-slate-500 font-normal">Target: 10 Jam/Minggu • Absensi Aktif</div>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Riset</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const roboUser = MOCK_USERS_LIST.find((u: User) => u.id === "usr-robo-01");
+                    if (roboUser) {
+                      setRole("anggota");
+                      localStorage.setItem("labmanage_user_id", "usr-robo-01");
+                      window.location.reload();
+                    }
+                    setShowRoleMenu(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
+                    role === "anggota" && currentUser.team === "Roboholic" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  <div>
+                    <div className="font-semibold">Rina Kusuma (UKM Roboholic)</div>
+                    <div className="text-[10px] text-slate-500 font-normal">UKM • Tanpa Absensi / Target Jam</div>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">UKM</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setRole("advisor");
+                    setShowRoleMenu(false);
+                  }}
+                  className={cn(
+                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
+                    role === "advisor" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
+                  )}
+                >
+                  <div>
+                    <div className="font-semibold">Dr. Ir. Budi Santoso (Advisor)</div>
+                    <div className="text-[10px] text-slate-500 font-normal">Dosen Pembina • Tim Riset EROS</div>
+                  </div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Advisor</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -32,14 +32,19 @@ export function RoomBookingDialog() {
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!purpose.trim()) {
       setErrorMsg("Keperluan booking wajib diisi.");
       return;
     }
 
-    addRoomBooking({
+    const result = await addRoomBooking({
+      roomId: roomName.includes("Arena")
+        ? "arena-kontes"
+        : roomName.includes("Mekanik")
+        ? "bengkel-mekanik"
+        : "lab-utama",
       roomName,
       roomCode: roomName.includes("Arena")
         ? "ARENA-01"
@@ -51,9 +56,17 @@ export function RoomBookingDialog() {
       timeSlot,
       picName: currentUser.name,
       picNim: currentUser.nimOrNip,
+      userId: currentUser.id,
+      kelompokId: currentUser.teamId,
+      kelompokNama: currentUser.team,
       purpose,
       participantsCount,
     });
+
+    if (!result.success) {
+      setErrorMsg(result.error || "Gagal melakukan pemesanan ruangan.");
+      return;
+    }
 
     setSuccess(true);
     setTimeout(() => {

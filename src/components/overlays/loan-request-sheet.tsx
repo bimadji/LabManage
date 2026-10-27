@@ -20,7 +20,7 @@ import { CheckCircle2, AlertCircle, Box, Calendar } from "lucide-react";
 
 export function LoanRequestSheet() {
   const { activeSheet, closeAllOverlays, selectedItemForLoan } = useOverlay();
-  const { currentUser } = useRole();
+  const { currentUser, role } = useRole();
   const { items, addLoanRequest } = useData();
 
   const isOpen = activeSheet === "loan";
@@ -52,8 +52,12 @@ export function LoanRequestSheet() {
 
   const currentItem = items.find((it) => it.id === selectedItemId);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (role === "admin") {
+      setErrorMsg("Admin Laboratorium tidak diizinkan membuat permohonan peminjaman barang.");
+      return;
+    }
     if (!currentItem) {
       setErrorMsg("Silakan pilih komponen yang akan dipinjam.");
       return;
@@ -67,7 +71,7 @@ export function LoanRequestSheet() {
       return;
     }
 
-    addLoanRequest({
+    await addLoanRequest({
       itemId: currentItem.id,
       itemName: currentItem.name,
       itemCode: currentItem.code,
@@ -76,6 +80,8 @@ export function LoanRequestSheet() {
       requesterName: currentUser.name,
       requesterNim: currentUser.nimOrNip,
       requesterAvatar: currentUser.avatar,
+      requesterKelompokId: currentUser.teamId,
+      requesterKelompokNama: currentUser.team,
       quantity,
       projectPurpose,
       expectedReturnDate,
