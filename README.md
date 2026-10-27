@@ -30,7 +30,7 @@
 
 Laboratorium Robotika Politeknik Elektronika Negeri Surabaya (PENS) menaungi dua kategori kegiatan mahasiswa dengan tata kelola yang berbeda:
 
-1. **Tim Riset Robotika Nasional** (seperti Tim Riset EROS dan EIRA) yang dibebani target wajib presensi 10 jam riset per minggu untuk persiapan kompetisi robot nasional.
+1. **Tim Riset Robotika Nasional** yang dibebani target wajib presensi 10 jam riset per minggu untuk persiapan kompetisi robot nasional.
 2. **Unit Kegiatan Mahasiswa (UKM) Robotika** (seperti Roboholic) yang menjadi wadah eksplorasi minat bakat mahasiswa dan tidak dibebani target jam riset mingguan.
 
 Ketika kedua kelompok ini beraktivitas di satu gedung laboratorium bersama, timbul tiga kendala operasional harian:
@@ -49,14 +49,14 @@ LabManage menyatukan pencatatan inventaris, reservasi arena, dan pelacakan jam r
   <img src="docs/assets/overview-dashboard.png" alt="Tampilan Beranda Utama LabManage menampilkan widget presensi lab, jadwal arena, pinjaman aktif, dan katalog inventaris" width="100%" />
 </p>
 
-<p align="center"><em>Tangkapan layar aplikasi produksi pada sesi Anggota Tim Riset (Dimas Aditya - Tim Riset EROS) dengan data benih dummy.</em></p>
+<p align="center"><em>Tangkapan layar aplikasi produksi pada sesi Anggota Tim Riset (Dimas Aditya) dengan data benih dummy.</em></p>
 
 ### Matriks Peran dan Izin Akses
 
 | Peran | Ruang Lingkup & Kemampuan Utama |
 |---|---|
 | **Admin Lab (Kepala Lab)** | Menambah barang baru ke inventaris, menambah kuantitas unit stok secara atomik, memverifikasi laporan kerusakan/kehabisan alat, serta memantau seluruh utilisasi lab. |
-| **Anggota Tim Riset (EROS & EIRA)** | Menjalankan live-timer presensi lab, memantau capaian target 10 jam mingguan, meminjam instrumen lab, dan mereservasi slot arena uji coba. |
+| **Anggota Tim Riset** | Menjalankan live-timer presensi lab, memantau capaian target 10 jam mingguan, meminjam instrumen lab, dan mereservasi slot arena uji coba. |
 | **Anggota UKM (Roboholic)** | Kartu presensi otomatis beralih ke status bebas jam riset, dapat meminjam alat lab yang dialokasikan terbuka, dan mereservasi fasilitas perakitan. |
 | **Advisor (Dosen Pembina)** | Memantau grafik kepatuhan jam riset mahasiswa bimbingan, memonitor tingkat okupansi ruangan lab, dan melihat permohonan pinjam alat. |
 
@@ -70,7 +70,7 @@ LabManage menyatukan pencatatan inventaris, reservasi arena, dan pelacakan jam r
   <img src="docs/assets/inventory-management.png" alt="Halaman Katalog Inventaris LabManage menampilkan filter kepemilikan aset, status unit, tombol tambah barang baru, dan tombol tambah stok untuk admin" width="100%" />
 </p>
 
-- Admin dapat menambahkan barang baru lengkap dengan penentuan kepemilikan: **Milik Bersama Lab** atau **Milik Kelompok Tertentu** (EROS, EIRA, Roboholic), serta opsi izin pinjam lintas kelompok.
+- Admin dapat menambahkan barang baru lengkap dengan penentuan kepemilikan: **Milik Bersama Lab** atau **Milik Kelompok Tertentu** (seperti Roboholic), serta opsi izin pinjam lintas kelompok.
 - Admin dapat menambah kuantitas unit barang yang sudah ada melalui tombol **+ Stok**. Pembaruan dilakukan secara atomik di database PostgreSQL (`SELECT ... FOR UPDATE`), sehingga status barang yang sebelumnya **Habis** otomatis berganti ke **Tersedia**, sementara status **Rusak** tetap dipertahankan.
 
 ### 2. Monitoring Utilisasi Fasilitas & Jam Riset (Advisor & Admin)

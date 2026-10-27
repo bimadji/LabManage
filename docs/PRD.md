@@ -4,7 +4,7 @@
 
 Laboratorium Robotika Politeknik Elektronika Negeri Surabaya (PENS) menaungi dua kategori kelompok kegiatan mahasiswa dengan tata kelola dan mandat yang berbeda:
 
-1. **Tim Riset Robotika Nasional**: Memiliki target jam riset wajib mingguan (10 jam/minggu) untuk persiapan kompetisi robotika nasional (KRI/KRAI/KRSRI/KRSBI), seperti **Tim Riset EROS** dan **Tim Riset EIRA**.
+1. **Tim Riset Robotika Nasional**: Memiliki target jam riset wajib mingguan (10 jam/minggu) untuk persiapan kompetisi robotika nasional (KRI/KRAI/KRSRI/KRSBI).
 2. **Unit Kegiatan Mahasiswa (UKM) Robotika**: Wadah eksplorasi minat bakat mahasiswa robotika umum, seperti **Roboholic**, yang tidak dibebani target jam riset mingguan namun membutuhkan akses inventaris dan pemakaian fasilitas perakitan lab secara teratur.
 
 Penggunaan bersama ruangan fisik, instrumen uji, dan komponen riset tanpa sistem kendali digital memicu bentrok jadwal lapangan, hilangnya riwayat peminjaman modul berharga, serta tidak terukurnya pemenuhan jam riset mahasiswa. **LabManage** hadir sebagai platform terintegrasi berbasis Web untuk menyelesaikan permasalahan koordinasi tersebut dengan pengamanan hak akses data berbasis peran dan kelompok.
@@ -29,7 +29,7 @@ Penggunaan bersama ruangan fisik, instrumen uji, dan komponen riset tanpa sistem
 
 ## 3. Matriks Peran Pengguna (Role Matrix)
 
-| Kemampuan Sistem | Admin Lab (Kepala Lab) | Anggota Tim Riset (EROS / EIRA) | Anggota UKM (Roboholic) | Advisor (Dosen Pembina) |
+| Kemampuan Sistem | Admin Lab (Kepala Lab) | Anggota Tim Riset | Anggota UKM (Roboholic) | Advisor (Dosen Pembina) |
 |---|:---:|:---:|:---:|:---:|
 | **Tambah Barang Baru** | Ya | Tidak (RLS Blocked) | Tidak (RLS Blocked) | Tidak (RLS Blocked) |
 | **Tambah Stok Unit Barang** | Ya (RPC Atomik) | Tidak | Tidak | Tidak |
