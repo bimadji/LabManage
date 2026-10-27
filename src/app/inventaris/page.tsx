@@ -11,6 +11,7 @@ import {
   Box,
   Building2,
   Users,
+  PlusCircle,
 } from "lucide-react";
 import { useData } from "@/contexts/data-context";
 import { useOverlay } from "@/contexts/overlay-context";
@@ -22,6 +23,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/common/status-badge";
 import { EmptyState } from "@/components/common/empty-state";
+import { AddItemDialog } from "@/components/overlays/add-item-dialog";
+import { AddStockDialog } from "@/components/overlays/add-stock-dialog";
+import type { Item } from "@/types";
 
 export default function InventarisPage() {
   const { items } = useData();
@@ -31,6 +35,10 @@ export default function InventarisPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("semua");
   const [ownershipFilter, setOwnershipFilter] = useState<"semua" | "lab" | "kelompok" | "bisa_pinjam">("semua");
+
+  // State dialog admin
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [stockItemTarget, setStockItemTarget] = useState<Item | null>(null);
 
   const categories = [
     { id: "semua", label: "Semua Kategori" },
@@ -43,7 +51,6 @@ export default function InventarisPage() {
 
   // RLS-aware item filtering in UI
   const filteredItems = items.filter((item) => {
-    // RLS emulation:
     // Admin & Advisor see all
     // Anggota can see: lab owned, own group owned, or can be borrowed by other groups
     if (role === "anggota") {
@@ -81,13 +88,24 @@ export default function InventarisPage() {
         description={`Jelajahi ketersediaan aset lab, mikrokontroler STM32, sensor LiDAR, aktuator Roboholic & Tim Riset, serta instrumen uji bersama.`}
         badgeText={`Inventaris Terpadu Lab Robotika`}
         action={
-          <Button
-            onClick={() => openLoanSheet()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Ajukan Pinjam Barang</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {role === "admin" && (
+              <Button
+                onClick={() => setShowAddDialog(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-xs gap-1.5"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>Tambah Barang Baru</span>
+              </Button>
+            )}
+            <Button
+              onClick={() => openLoanSheet()}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs gap-1.5"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Ajukan Pinjam Barang</span>
+            </Button>
+          </div>
         }
         icon={<Cpu className="h-28 w-28" />}
       />
@@ -258,18 +276,31 @@ export default function InventarisPage() {
                         </span>
                       </div>
 
-                      <Button
-                        size="sm"
-                        disabled={!isAvailable}
-                        onClick={() => openLoanSheet(item)}
-                        className={`h-8 text-xs font-semibold ${
-                          isAvailable
-                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                            : "bg-slate-100 text-slate-400 border border-slate-200"
-                        }`}
-                      >
-                        {isAvailable ? "Ajukan Pinjam" : "Tidak Tersedia"}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setStockItemTarget(item)}
+                            className="h-8 text-xs font-semibold border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                            title="Tambah stok unit barang ini"
+                          >
+                            + Stok
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          disabled={!isAvailable}
+                          onClick={() => openLoanSheet(item)}
+                          className={`h-8 text-xs font-semibold ${
+                            isAvailable
+                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                              : "bg-slate-100 text-slate-400 border border-slate-200"
+                          }`}
+                        >
+                          {isAvailable ? "Ajukan Pinjam" : "Tidak Tersedia"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -278,6 +309,19 @@ export default function InventarisPage() {
           })}
         </div>
       )}
+
+      {/* Dialog Admin Tambah Barang Baru */}
+      <AddItemDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
+
+      {/* Dialog Admin Tambah Stok Unit */}
+      <AddStockDialog
+        item={stockItemTarget}
+        open={Boolean(stockItemTarget)}
+        onOpenChange={(open) => !open && setStockItemTarget(null)}
+      />
     </div>
   );
 }

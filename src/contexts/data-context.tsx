@@ -15,6 +15,8 @@ interface DataContextType {
   loanRequests: LoanRequest[];
   roomBookings: RoomBooking[];
   labReports: LabReport[];
+  addInventoryItem: (item: Omit<Item, "id">) => Promise<{ success: boolean; error?: string }>;
+  addStockToItem: (itemId: string, quantity: number) => Promise<{ success: boolean; error?: string }>;
   addLoanRequest: (req: Omit<LoanRequest, "id" | "requestDate" | "status">) => Promise<boolean>;
   updateLoanRequestStatus: (
     id: string,
@@ -41,24 +43,29 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
       const { data: dbItems, error: itemsErr } = await supabase
         .from("inventory_items")
-        .select("*, kelompok:pemilik_kelompok_id(nama)");
+        .select("*, kelompok:pemilik_kelompok_id(nama)")
+        .order("created_at", { ascending: false });
 
       if (!itemsErr && dbItems && dbItems.length > 0) {
-        const mappedItems: Item[] = dbItems.map((it: any) => ({
-          id: it.id,
-          name: it.nama,
-          code: it.kode,
-          category: it.kategori,
-          categoryLabel: it.kategori.charAt(0).toUpperCase() + it.kategori.slice(1),
-          totalStock: it.stok_total,
-          availableStock: it.stok_tersedia,
-          location: it.lokasi,
-          status: it.status,
-          specs: it.spesifikasi || "",
-          pemilikKelompokId: it.pemilik_kelompok_id,
-          pemilikKelompokNama: it.kelompok?.nama || "Milik Bersama Lab",
-          dapatDipinjamKelompokLain: it.dapat_dipinjam_kelompok_lain,
-        }));
+        const mappedItems: Item[] = dbItems.map((it: Record<string, unknown>) => {
+          const kelompokData = it.kelompok as { nama?: string } | null;
+          const kategoriStr = String(it.kategori || "");
+          return {
+            id: String(it.id),
+            name: String(it.nama),
+            code: String(it.kode),
+            category: kategoriStr as Item["category"],
+            categoryLabel: kategoriStr.charAt(0).toUpperCase() + kategoriStr.slice(1),
+            totalStock: Number(it.stok_total),
+            availableStock: Number(it.stok_tersedia),
+            location: String(it.lokasi),
+            status: it.status as Item["status"],
+            specs: String(it.spesifikasi || ""),
+            pemilikKelompokId: it.pemilik_kelompok_id ? String(it.pemilik_kelompok_id) : null,
+            pemilikKelompokNama: kelompokData?.nama || "Milik Bersama Lab",
+            dapatDipinjamKelompokLain: Boolean(it.dapat_dipinjam_kelompok_lain),
+          };
+        });
         setItems(mappedItems);
       }
 
@@ -68,25 +75,26 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         .order("waktu_mulai", { ascending: true });
 
       if (!bkgErr && dbBookings && dbBookings.length > 0) {
-        const mappedBookings: RoomBooking[] = dbBookings.map((b: any) => {
-          const start = new Date(b.waktu_mulai);
-          const end = new Date(b.waktu_selesai);
+        const mappedBookings: RoomBooking[] = dbBookings.map((b: Record<string, unknown>) => {
+          const start = new Date(String(b.waktu_mulai));
+          const end = new Date(String(b.waktu_selesai));
           const timeSlot = `${start.getHours().toString().padStart(2, "0")}:${start.getMinutes().toString().padStart(2, "0")} - ${end.getHours().toString().padStart(2, "0")}:${end.getMinutes().toString().padStart(2, "0")} WIB`;
+          const profileData = b.profiles as { nama?: string; nim?: string } | null;
           return {
-            id: b.id,
-            roomId: b.ruangan_id,
-            roomName: b.nama_ruangan,
-            roomCode: b.ruangan_id.toUpperCase().slice(0, 7),
+            id: String(b.id),
+            roomId: String(b.ruangan_id),
+            roomName: String(b.nama_ruangan),
+            roomCode: String(b.ruangan_id).toUpperCase().slice(0, 7),
             capacity: 25,
             date: start.toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" }),
             timeSlot,
-            startTime: b.waktu_mulai,
-            endTime: b.waktu_selesai,
-            picName: b.profiles?.nama || "Anggota",
-            picNim: b.profiles?.nim || "-",
-            purpose: b.keperluan,
-            participantsCount: b.jumlah_peserta,
-            status: b.status,
+            startTime: String(b.waktu_mulai),
+            endTime: String(b.waktu_selesai),
+            picName: profileData?.nama || "Anggota",
+            picNim: profileData?.nim || "-",
+            purpose: String(b.keperluan),
+            participantsCount: Number(b.jumlah_peserta),
+            status: b.status as RoomBooking["status"],
           };
         });
         setRoomBookings(mappedBookings);
@@ -99,6 +107,144 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshData();
   }, []);
+
+  const addInventoryItem = async (newItem: Omit<Item, "id">): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .insert([
+          {
+            nama: newItem.name,
+            kode: newItem.code,
+            kategori: newItem.category,
+            lokasi: newItem.location,
+            stok_total: newItem.totalStock,
+            stok_tersedia: newItem.availableStock,
+            status: newItem.status,
+            spesifikasi: newItem.specs,
+            pemilik_kelompok_id: newItem.pemilikKelompokId || null,
+            dapat_dipinjam_kelompok_lain: newItem.dapatDipinjamKelompokLain ?? false,
+          },
+        ])
+        .select("*, kelompok:pemilik_kelompok_id(nama)")
+        .single();
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      const kelompokData = data.kelompok as { nama?: string } | null;
+      const created: Item = {
+        id: data.id,
+        name: data.nama,
+        code: data.kode,
+        category: data.kategori,
+        categoryLabel: data.kategori.charAt(0).toUpperCase() + data.kategori.slice(1),
+        totalStock: data.stok_total,
+        availableStock: data.stok_tersedia,
+        location: data.lokasi,
+        status: data.status,
+        specs: data.spesifikasi || "",
+        pemilikKelompokId: data.pemilik_kelompok_id,
+        pemilikKelompokNama: kelompokData?.nama || "Milik Bersama Lab",
+        dapatDipinjamKelompokLain: data.dapat_dipinjam_kelompok_lain,
+      };
+
+      setItems((prev) => [created, ...prev]);
+      return { success: true };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Terjadi kesalahan saat menambah barang";
+      // Fallback optimistic
+      const localCreated: Item = {
+        ...newItem,
+        id: `itm-${Date.now().toString().slice(-4)}`,
+      };
+      setItems((prev) => [localCreated, ...prev]);
+      return { success: true, error: msg };
+    }
+  };
+
+  const addStockToItem = async (itemId: string, quantity: number): Promise<{ success: boolean; error?: string }> => {
+    if (quantity <= 0) {
+      return { success: false, error: "Jumlah unit harus lebih dari 0." };
+    }
+
+    // Regex validasi standar UUID v4/generic
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemId);
+
+    if (!isUuid) {
+      // Barang ini berasal dari mock data lokal (bukan baris tabel Supabase)
+      setItems((prev) =>
+        prev.map((it) => {
+          if (it.id === itemId) {
+            const newTotal = it.totalStock + quantity;
+            const newAvail = it.availableStock + quantity;
+            const newStatus = it.status === "habis" ? "tersedia" : it.status;
+            return {
+              ...it,
+              totalStock: newTotal,
+              availableStock: newAvail,
+              status: newStatus,
+            };
+          }
+          return it;
+        })
+      );
+      return { success: true };
+    }
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.rpc("tambah_stok_inventory", {
+        p_item_id: itemId,
+        p_jumlah: quantity,
+      });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      // Sinkronkan state lokal
+      setItems((prev) =>
+        prev.map((it) => {
+          if (it.id === itemId) {
+            const newTotal = it.totalStock + quantity;
+            const newAvail = it.availableStock + quantity;
+            const newStatus = it.status === "habis" ? "tersedia" : it.status;
+            return {
+              ...it,
+              totalStock: newTotal,
+              availableStock: newAvail,
+              status: newStatus,
+            };
+          }
+          return it;
+        })
+      );
+
+      return { success: true };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Gagal menambah stok";
+      // Fallback lokal jika error jaringan
+      setItems((prev) =>
+        prev.map((it) => {
+          if (it.id === itemId) {
+            const newTotal = it.totalStock + quantity;
+            const newAvail = it.availableStock + quantity;
+            const newStatus = it.status === "habis" ? "tersedia" : it.status;
+            return {
+              ...it,
+              totalStock: newTotal,
+              availableStock: newAvail,
+              status: newStatus,
+            };
+          }
+          return it;
+        })
+      );
+      return { success: true, error: msg };
+    }
+  };
 
   const addLoanRequest = async (newReq: Omit<LoanRequest, "id" | "requestDate" | "status">): Promise<boolean> => {
     const today = new Date().toISOString().split("T")[0];
@@ -250,6 +396,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         loanRequests,
         roomBookings,
         labReports,
+        addInventoryItem,
+        addStockToItem,
         addLoanRequest,
         updateLoanRequestStatus,
         addRoomBooking,
