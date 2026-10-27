@@ -5,6 +5,7 @@ Dokumen ini mengunci seluruh aturan desain, token warna, tipografi, dan gaya kom
 ---
 
 ## 1. Tipografi
+
 - **Font Utama**: `DM Sans` (diimpor via `next/font/google`).
 - **Font Variable**: `--font-dm-sans`.
 - **Bobot Font**:

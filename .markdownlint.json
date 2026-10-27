@@ -1,0 +1,21 @@
+# Konfigurasi markdownlint untuk LabManage
+default: true
+
+# Mengizinkan elemen HTML pada markdown (seperti <p align="center"> untuk banner & badge)
+MD033: false
+
+# Mengizinkan baris panjang untuk tabel dan badge
+MD013: false
+
+# Mengizinkan first line bukan H1 (karena diawali banner gambar terpusat)
+MD041: false
+
+# Trailing punctuation pada heading diperbolehkan untuk pertanyaan
+MD026: false
+
+# Format spasi kolom tabel fleksibel
+MD060: false
+
+# Whitespace handling
+MD009: false
+MD012: false
