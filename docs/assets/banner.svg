@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img" aria-label="LabManage — Sistem Manajemen Laboratorium Robotika PENS">
+  <defs>
+    <!-- Background Canvas Palette (Senada dengan hero.svg bimadji) -->
+    <linearGradient id="stage" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2ecdd"/>
+      <stop offset="1" stop-color="#e8dfca"/>
+    </linearGradient>
+
+    <!-- Card/Window Background Palette -->
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12171a"/>
+      <stop offset="1" stop-color="#0b0f11"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Elevation -->
+    <filter id="lift" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#4a3f2a" flood-opacity="0.22"/>
+    </filter>
+
+    <style>
+      .s    { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+      .m    { font-family: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; }
+      .name { font-size: 52px; font-weight: 800; fill: #f3f7f4; letter-spacing: -1.2px; }
+      .role { font-size: 14.5px; fill: #d5ded8; }
+      .sub  { font-size: 12.5px; fill: #93a09a; }
+      .lab  { font-size: 10px; letter-spacing: 2px; fill: #8a968f; }
+      .val  { font-size: 13.5px; font-weight: 700; fill: #e9efeb; }
+      .tag  { font-size: 11px; fill: #93a09a; }
+      .foot { font-size: 10.5px; letter-spacing: 2px; fill: #6f6753; }
+    </style>
+  </defs>
+
+  <!-- Canvas Stage Background -->
+  <rect width="1200" height="400" fill="url(#stage)"/>
+
+  <!-- Left Main Window Card -->
+  <g filter="url(#lift)">
+    <!-- Window Body -->
+    <rect x="64" y="48" width="600" height="280" rx="14" fill="#12171a"/>
+    <!-- Window Header Titlebar -->
+    <rect x="64" y="48" width="600" height="34" rx="14" fill="#181e21"/>
+    <rect x="64" y="70" width="600" height="12" fill="#181e21"/>
+    <line x1="64" y1="82" x2="664" y2="82" stroke="#000000" stroke-opacity="0.5"/>
+
+    <!-- Traffic Lights Dot -->
+    <circle cx="84" cy="65" r="4.5" fill="#e06c5f"/>
+    <circle cx="100" cy="65" r="4.5" fill="#d9a441"/>
+    <circle cx="116" cy="65" r="4.5" fill="#4fa86b"/>
+    <text class="m" x="134" y="69" font-size="11" fill="#8b969b">labmanage &#183; robotics</text>
+
+    <!-- Status Badge Pill -->
+    <rect x="584" y="55" width="64" height="20" rx="10" fill="#17301f" stroke="#2f5a3d"/>
+    <text class="m" x="616" y="69" text-anchor="middle" font-size="9" letter-spacing="1" fill="#4ade80">ONLINE</text>
+  </g>
+
+  <!-- Left Card Content -->
+  <text class="m lab" x="88" y="116">POLITEKNIK ELEKTRONIKA NEGERI SURABAYA</text>
+  <text class="s name" x="86" y="176">Lab<tspan fill="#68d99a">Manage</tspan></text>
+  <rect x="88" y="196" width="64" height="3" fill="#68d99a"/>
+  <text class="s role" x="88" y="234">Sistem Manajemen Laboratorium Robotika PENS</text>
+  <text class="s sub" x="88" y="260">Pengelolaan inventaris, presensi riset terpadu, dan reservasi fasilitas lab</text>
+  <text class="m tag" x="88" y="300">Next.js 16 &#183; React 19 &#183; Supabase PostgreSQL &#183; Tailwind CSS</text>
+
+  <!-- Middle Tile: Logo / Identity -->
+  <g filter="url(#lift)">
+    <rect x="696" y="48" width="210" height="280" rx="14" fill="url(#screen)"/>
+  </g>
+  <!-- Robot Icon Box Container -->
+  <rect x="761" y="96" width="80" height="80" rx="40" fill="#17301f" stroke="#2f5a3d" stroke-width="1.5"/>
+  <!-- Robot Graphic -->
+  <g transform="translate(801, 136)">
+    <rect x="-18" y="-12" width="36" height="28" rx="6" fill="#ffffff"/>
+    <path d="M 0 -22 V -12 M 0 -22 L -6 -28 M 0 -22 L 6 -28" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="-9" cy="-2" r="3.5" fill="#17301f"/>
+    <circle cx="9" cy="-2" r="3.5" fill="#17301f"/>
+    <path d="M -8 8 H 8" stroke="#17301f" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <text class="s val" x="801" y="208" text-anchor="middle">Laboratorium</text>
+  <text class="s val" x="801" y="228" text-anchor="middle">Robotika</text>
+  <text class="m" x="801" y="248" text-anchor="middle" font-size="10" letter-spacing="1.4" fill="#8a968f">EEPIS / PENS</text>
+  <line x1="728" y1="264" x2="874" y2="264" stroke="#ffffff" stroke-opacity="0.08"/>
+  <text class="s tag" x="801" y="284" text-anchor="middle">Gedung D4 Lt. 2</text>
+  <text class="s" x="801" y="306" text-anchor="middle" font-size="11.5" fill="#4ade80">lab-manage-lilac.vercel.app</text>
+
+  <!-- Right Tile: Core Pillars -->
+  <g filter="url(#lift)">
+    <rect x="938" y="48" width="198" height="280" rx="14" fill="url(#screen)"/>
+  </g>
+  <text class="m lab" x="960" y="86">FITUR INTI</text>
+  
+  <text class="s val" x="960" y="116">Inventaris Terpadu</text>
+  <text class="s sub" x="960" y="134">Aset bersama &amp; kelompok</text>
+
+  <line x1="960" y1="148" x2="1110" y2="148" stroke="#ffffff" stroke-opacity="0.08"/>
+
+  <text class="s val" x="960" y="174">Presensi Riset</text>
+  <text class="s sub" x="960" y="192">Live timer &amp; target 10 jam</text>
+
+  <line x1="960" y1="206" x2="1110" y2="206" stroke="#ffffff" stroke-opacity="0.08"/>
+
+  <text class="s val" x="960" y="232">Jadwal Anti-Bentrok</text>
+  <text class="s sub" x="960" y="250">GiST Exclusion Constraint</text>
+
+  <line x1="960" y1="264" x2="1110" y2="264" stroke="#ffffff" stroke-opacity="0.08"/>
+
+  <text class="m" x="960" y="292" font-size="10" letter-spacing="1.2" fill="#8a968f">STATUS</text>
+  <text class="s" x="960" y="310" font-size="12" font-weight="700" fill="#4ade80">Production Ready &#10003;</text>
+
+  <!-- Footer Meta -->
+  <text class="m foot" x="64" y="364">LABORATORIUM ROBOTIKA &#183; POLITEKNIK ELEKTRONIKA NEGERI SURABAYA</text>
+  <text class="m foot" x="1136" y="364" text-anchor="end">2026</text>
+</svg>
