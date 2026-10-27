@@ -15,8 +15,33 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "LabManage - Sistem Manajemen Laboratorium Robotika PENS",
-  description: "Platform manajemen inventaris, absensi, penjadwalan, dan monitoring lab robotika PENS",
+  title: {
+    default: "LabManage - Sistem Manajemen Laboratorium Robotika PENS",
+    template: "%s | LabManage PENS",
+  },
+  description:
+    "Platform terpadu pengelolaan inventaris, presensi riset, peminjaman alat, dan reservasi fasilitas Laboratorium Robotika PENS.",
+  applicationName: "LabManage",
+  authors: [{ name: "Lab Robotika PENS" }],
+  generator: "LabManage",
+  keywords: [
+    "LabManage",
+    "Laboratorium Robotika",
+    "PENS",
+    "Inventaris Robotika",
+    "Presensi Lab",
+    "Tim Riset EROS",
+    "Tim Riset EIRA",
+    "Roboholic",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: "LabManage PENS",
+    title: "LabManage - Sistem Manajemen Laboratorium Robotika PENS",
+    description:
+      "Platform terpadu pengelolaan inventaris, presensi riset, peminjaman alat, dan reservasi fasilitas Laboratorium Robotika PENS.",
+  },
 };
 
 export default function RootLayout({

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
+  <rect width="180" height="180" rx="40" fill="#047857"/>
+  <!-- Robot/Chip head -->
+  <rect x="40" y="55" width="100" height="80" rx="18" fill="#ffffff"/>
+  <!-- Antennas -->
+  <path d="M90 30V55M90 30L75 20M90 30L105 20" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <circle cx="68" cy="85" r="11" fill="#047857"/>
+  <circle cx="112" cy="85" r="11" fill="#047857"/>
+  <!-- Mouth / Circuit line -->
+  <path d="M64 112H116" stroke="#047857" stroke-width="8" stroke-linecap="round"/>
+</svg>
