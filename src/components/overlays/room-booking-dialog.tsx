@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useOverlay } from "@/contexts/overlay-context";
 import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useData } from "@/contexts/data-context";
+import { RUANGAN, SLOT_WAKTU, todayWib, toWibIso } from "@/lib/rooms";
 import { Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function RoomBookingDialog() {
@@ -24,13 +25,16 @@ export function RoomBookingDialog() {
 
   const isOpen = activeDialog === "booking";
 
-  const [roomName, setRoomName] = useState("Arena Uji Coba KRAI / KRI");
-  const [date, setDate] = useState("Hari Ini");
-  const [timeSlot, setTimeSlot] = useState("13:30 - 17:30 WIB (Siang)");
+  const [ruanganId, setRuanganId] = useState(RUANGAN[0].id);
+  const [tanggal, setTanggal] = useState(todayWib());
+  const [slotIndex, setSlotIndex] = useState(1);
   const [purpose, setPurpose] = useState("");
   const [participantsCount, setParticipantsCount] = useState(5);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const ruangan = RUANGAN.find((r) => r.id === ruanganId) ?? RUANGAN[0];
+  const slot = SLOT_WAKTU[slotIndex];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,21 +43,22 @@ export function RoomBookingDialog() {
       return;
     }
 
+    const startTime = toWibIso(tanggal, slot.mulai);
+    const endTime = toWibIso(tanggal, slot.selesai);
+    if (!startTime || !endTime) {
+      setErrorMsg("Tanggal atau jam sesi tidak valid. Silakan pilih ulang.");
+      return;
+    }
+
     const result = await addRoomBooking({
-      roomId: roomName.includes("Arena")
-        ? "arena-kontes"
-        : roomName.includes("Mekanik")
-        ? "bengkel-mekanik"
-        : "lab-utama",
-      roomName,
-      roomCode: roomName.includes("Arena")
-        ? "ARENA-01"
-        : roomName.includes("Mekanik")
-        ? "FAB-02"
-        : "SOFT-03",
-      capacity: 25,
-      date,
-      timeSlot,
+      roomId: ruangan.id,
+      roomName: ruangan.nama,
+      roomCode: ruangan.kode,
+      capacity: ruangan.kapasitas,
+      date: tanggal,
+      timeSlot: slot.label,
+      startTime,
+      endTime,
       picName: currentUser.name,
       picNim: currentUser.nimOrNip,
       userId: currentUser.id,
@@ -98,7 +103,7 @@ export function RoomBookingDialog() {
               Pemesanan Berhasil Dicatat!
             </h4>
             <p className="text-xs text-slate-500">
-              Jadwal penggunaan {roomName} telah diperbarui pada kalender lab.
+              Jadwal penggunaan {ruangan.nama} telah diperbarui pada kalender lab.
             </p>
           </div>
         ) : (
@@ -115,41 +120,43 @@ export function RoomBookingDialog() {
                 Pilih Ruangan / Fasilitas Lab
               </label>
               <select
-                value={roomName}
-                onChange={(e) => setRoomName(e.target.value)}
+                value={ruanganId}
+                onChange={(e) => setRuanganId(e.target.value)}
                 className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm shadow-xs focus:ring-2 focus:ring-emerald-500 outline-none"
               >
-                <option value="Arena Uji Coba KRAI / KRI">Arena Uji Coba KRAI / KRI (Kapasitas: 25)</option>
-                <option value="Ruang Mekanik & Fabrikasi">Ruang Mekanik & Fabrikasi (Kapasitas: 15)</option>
-                <option value="Ruang Diskusi & Pemrograman">Ruang Diskusi & Pemrograman (Kapasitas: 20)</option>
+                {RUANGAN.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nama} (Kapasitas: {r.kapasitas})
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700">Hari / Tanggal</label>
-                <select
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm shadow-xs focus:ring-2 focus:ring-emerald-500 outline-none"
-                >
-                  <option value="Hari Ini">Hari Ini</option>
-                  <option value="Besok">Besok</option>
-                  <option value="Lusa">Lusa</option>
-                  <option value="Minggu Depan">Minggu Depan</option>
-                </select>
+                <Input
+                  type="date"
+                  value={tanggal}
+                  min={todayWib()}
+                  onChange={(e) => setTanggal(e.target.value)}
+                  className="text-sm"
+                  required
+                />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700">Sesi Waktu</label>
                 <select
-                  value={timeSlot}
-                  onChange={(e) => setTimeSlot(e.target.value)}
+                  value={slotIndex}
+                  onChange={(e) => setSlotIndex(Number(e.target.value))}
                   className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 py-1 text-sm shadow-xs focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  <option value="08:00 - 12:00 WIB (Pagi)">08:00 - 12:00 (Pagi)</option>
-                  <option value="13:30 - 17:30 WIB (Siang)">13:30 - 17:30 (Siang)</option>
-                  <option value="18:30 - 21:30 WIB (Malam)">18:30 - 21:30 (Malam)</option>
+                  {SLOT_WAKTU.map((slot, i) => (
+                    <option key={slot.mulai} value={i}>
+                      {slot.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

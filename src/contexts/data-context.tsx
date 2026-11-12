@@ -18,6 +18,7 @@ import {
   MOCK_ROOM_BOOKINGS,
 } from "@/lib/mock-data";
 import { DEMO_MODE } from "@/lib/demo";
+import { overlaps } from "@/lib/rooms";
 import { createClient } from "@/lib/supabase/client";
 import { useRole } from "@/contexts/role-context";
 
@@ -171,7 +172,11 @@ function mapKelompok(row: Row): Kelompok {
 export function friendlyError(error: { message?: string; code?: string } | null): string {
   if (!error) return "Terjadi kesalahan tak terduga.";
   const message = error.message || "";
-  if (error.code === "23P01" || message.includes("no_overlapping_room_bookings")) {
+  if (
+    error.code === "23P01" ||
+    message.includes("no_overlapping_room_bookings") ||
+    message.includes("exclusion constraint")
+  ) {
     return "Ruangan sudah dipesan pada jam tersebut. Silakan pilih slot lain.";
   }
   if (error.code === "23505") {
@@ -392,18 +397,20 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: "Tanggal dan jam sesi belum lengkap." };
     }
 
-    // Pemeriksaan awal di klien; constraint GiST di database tetap penjaga terakhir.
-    const hasConflict = snapshot.roomBookings.some(
+    // Pemeriksaan bentrok di klien memakai rentang waktu, bukan label.
+    // Constraint GiST di database tetap penjaga terakhir.
+    const bentrok = snapshot.roomBookings.some(
       (b) =>
         b.status === "aktif" &&
-        b.roomName === booking.roomName &&
-        b.date === booking.date &&
-        b.timeSlot === booking.timeSlot
+        b.roomId === booking.roomId &&
+        b.startTime &&
+        b.endTime &&
+        overlaps(b.startTime, b.endTime, booking.startTime!, booking.endTime!)
     );
-    if (hasConflict) {
+    if (bentrok) {
       return {
         success: false,
-        error: `Jadwal bentrok! Ruangan ${booking.roomName} sudah dipesan pada slot ${booking.timeSlot}.`,
+        error: `Ruangan ${booking.roomName} sudah dipesan pada jam tersebut. Silakan pilih slot lain.`,
       };
     }
 

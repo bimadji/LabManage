@@ -11,6 +11,7 @@ import {
 import { useData } from "@/contexts/data-context";
 import { useOverlay } from "@/contexts/overlay-context";
 import { BRANDING } from "@/lib/branding";
+import { RUANGAN } from "@/lib/rooms";
 import { Banner } from "@/components/common/banner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,32 +22,21 @@ export default function JadwalPage() {
 
   const [filterRoom, setFilterRoom] = useState<string>("semua");
 
-  const roomsList = [
-    {
-      id: "ARENA-01",
-      name: "Arena Uji Coba KRAI / KRI",
-      capacity: 25,
-      desc: "Lapangan karpet standar kontes robot nasional untuk manuver & uji sensor.",
-      color: "border-emerald-200 bg-emerald-50/40",
-    },
-    {
-      id: "FAB-02",
-      name: "Ruang Mekanik & Fabrikasi",
-      capacity: 15,
-      desc: "Area mesin bubut, gerinda, CNC router, perakitan mekanik, dan perkakas potong.",
-      color: "border-sky-200 bg-sky-50/40",
-    },
-    {
-      id: "SOFT-03",
-      name: "Ruang Diskusi & Software UKM",
-      capacity: 20,
-      desc: "Ruang ber-AC dengan layar proyektor, meja workstation, dan switch LAN gigabit.",
-      color: "border-purple-200 bg-purple-50/40",
-    },
-  ];
+  const roomsList = RUANGAN.map((r) => ({
+    id: r.kode,
+    name: r.nama,
+    capacity: r.kapasitas,
+    desc: r.deskripsi,
+    color:
+      r.id === "arena-kontes"
+        ? "border-emerald-200 bg-emerald-50/40"
+        : r.id === "bengkel-mekanik"
+          ? "border-sky-200 bg-sky-50/40"
+          : "border-purple-200 bg-purple-50/40",
+  }));
 
   const filteredBookings = roomBookings.filter(
-    (bkg) => filterRoom === "semua" || bkg.roomName.includes(filterRoom)
+    (bkg) => filterRoom === "semua" || bkg.roomId === filterRoom
   );
 
   return (
@@ -110,9 +100,11 @@ export default function JadwalPage() {
               className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="semua">Semua Ruangan</option>
-              <option value="Arena">Arena Uji Coba</option>
-              <option value="Mekanik">Ruang Fabrikasi</option>
-              <option value="Diskusi">Ruang Diskusi & Software</option>
+              {RUANGAN.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nama}
+                </option>
+              ))}
             </select>
           </div>
         </CardHeader>
