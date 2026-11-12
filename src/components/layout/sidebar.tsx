@@ -13,7 +13,7 @@ import {
   Clock,
   Sparkles,
 } from "lucide-react";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useAttendance } from "@/contexts/attendance-context";
 import { useData } from "@/contexts/data-context";
 import { BRANDING } from "@/lib/branding";
@@ -27,7 +27,8 @@ interface SidebarProps {
 
 export function Sidebar({ onNavClick, className }: SidebarProps) {
   const pathname = usePathname();
-  const { role, currentUser } = useRole();
+  const { role } = useRole();
+  const currentUser = useCurrentUser();
   const { loanRequests, labReports } = useData();
   const { isCheckedIn, weeklyAccumulatedHours, weeklyTargetHours, formattedElapsed } =
     useAttendance();

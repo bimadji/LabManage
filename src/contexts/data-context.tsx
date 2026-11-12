@@ -19,6 +19,7 @@ import {
 } from "@/lib/mock-data";
 import { DEMO_MODE } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
+import { useRole } from "@/contexts/role-context";
 
 export type ActionResult = { success: boolean; error?: string };
 
@@ -265,6 +266,7 @@ const DEMO_BLOCKED: ActionResult = {
 };
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
+  const { currentUser } = useRole();
   const [snapshot, setSnapshot] = useState(DEMO_MODE ? DEMO_SNAPSHOT : EMPTY_SNAPSHOT);
   const [isLoading, setIsLoading] = useState(!DEMO_MODE);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -287,13 +289,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     mounted.current = true;
-    // Muat data sekali saat mount; setState terjadi setelah await, bukan render berantai.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refreshData();
     return () => {
       mounted.current = false;
     };
   }, []);
+
+  // Muat data setelah sesi tersedia (identitas & RLS butuh user yang login).
+  useEffect(() => {
+    if (DEMO_MODE) return;
+    if (!currentUser) {
+      setSnapshot(EMPTY_SNAPSHOT);
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    // Muat data sekali per pengguna; setState terjadi setelah await, bukan render berantai.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refreshData();
+  }, [currentUser?.id]);
 
   const addInventoryItem = async (newItem: Omit<Item, "id">): Promise<ActionResult> => {
     if (DEMO_MODE) return DEMO_BLOCKED;

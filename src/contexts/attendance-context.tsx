@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { DEMO_MODE } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/contexts/data-context";
@@ -28,7 +28,7 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
   const [checkInTime, setCheckInTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [weeklyAccumulatedHours, setWeeklyAccumulatedHours] = useState<number>(6.5);
-  const weeklyTargetHours = currentUser.weeklyTargetHours || 10;
+  const weeklyTargetHours = currentUser?.weeklyTargetHours || 10;
 
   useEffect(() => {
     if (!isCheckedIn || !checkInTime) return;
@@ -39,6 +39,9 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
   }, [isCheckedIn, checkInTime]);
 
   const checkIn = async (): Promise<AttendanceResult> => {
+    if (!currentUser) {
+      return { success: false, error: "Belum masuk. Silakan login terlebih dahulu." };
+    }
     if (currentUser.teamType === "ukm") {
       return {
         success: false,
@@ -70,6 +73,9 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
   };
 
   const checkOut = async (): Promise<AttendanceResult> => {
+    if (!currentUser) {
+      return { success: false, error: "Belum masuk. Silakan login terlebih dahulu." };
+    }
     if (!checkInTime) return { success: false, error: "Tidak ada sesi aktif." };
     if (DEMO_MODE) {
       return { success: false, error: "MODE DEMO: presensi tidak disimpan ke database." };

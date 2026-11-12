@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useOverlay } from "@/contexts/overlay-context";
 import { useData } from "@/contexts/data-context";
+import { useRole } from "@/contexts/role-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/common/status-badge";
 import { ShieldCheck, Check, X, AlertCircle } from "lucide-react";
@@ -26,6 +27,10 @@ export function ReviewRequestSheet() {
     selectedReportForReview,
   } = useOverlay();
   const { updateLoanRequestStatus, updateReportStatus } = useData();
+  const { role } = useRole();
+
+  // Advisor memantau saja: tanpa aksi tulis (RLS juga menolak tulisan advisor).
+  const canWrite = role === "admin";
 
   const isOpen = activeSheet === "review";
   const [rejectMode, setRejectMode] = useState(false);
@@ -231,7 +236,13 @@ export function ReviewRequestSheet() {
         )}
 
         <SheetFooter className="mt-4">
-          {!rejectMode && selectedRequestForReview?.status === "disetujui" && (
+          {!canWrite && (
+            <p className="w-full rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[11px] text-slate-600">
+              Peran Advisor hanya memantau: verifikasi dan perubahan status dilakukan Admin
+              Laboratorium.
+            </p>
+          )}
+          {canWrite && !rejectMode && selectedRequestForReview?.status === "disetujui" && (
             <div className="flex w-full items-center justify-end gap-2">
               <Button
                 size="sm"
@@ -244,30 +255,31 @@ export function ReviewRequestSheet() {
               </Button>
             </div>
           )}
-          {!rejectMode &&
+          {canWrite &&
+            !rejectMode &&
             (selectedReportForReview || selectedRequestForReview?.status === "menunggu") && (
-            <div className="flex w-full items-center justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setRejectMode(true)}
-                disabled={busy}
-                className="border-rose-200 text-rose-700 hover:bg-rose-50 text-xs"
-              >
-                <X className="h-3.5 w-3.5 mr-1" />
-                Tolak
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleApprove}
-                disabled={busy}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
-              >
-                <Check className="h-3.5 w-3.5 mr-1" />
-                {selectedReportForReview ? "Tandai Ditangani" : "Setujui Peminjaman"}
-              </Button>
-            </div>
-          )}
+              <div className="flex w-full items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRejectMode(true)}
+                  disabled={busy}
+                  className="border-rose-200 text-rose-700 hover:bg-rose-50 text-xs"
+                >
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Tolak
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleApprove}
+                  disabled={busy}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                >
+                  <Check className="h-3.5 w-3.5 mr-1" />
+                  {selectedReportForReview ? "Tandai Ditangani" : "Setujui Peminjaman"}
+                </Button>
+              </div>
+            )}
         </SheetFooter>
       </SheetContent>
     </Sheet>

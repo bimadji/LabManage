@@ -35,13 +35,14 @@ export default function MonitoringPage() {
   const { role } = useRole();
   const [activeGroupFilter, setActiveGroupFilter] = useState<"semua" | "tim_riset" | "ukm">("semua");
 
-  // Proteksi Tampilan: Anggota TIDAK boleh mengakses halaman ini (RLS & UI protection)
+  // Proteksi Tampilan: Anggota TIDAK boleh mengakses halaman ini.
+  // Guard utama ada di server (src/proxy.ts): anggota dialihkan ke beranda.
   if (role === "anggota") {
     return (
       <div className="py-12 max-w-xl mx-auto">
         <ErrorState
           title={`Akses Terbatas: Khusus Admin & Advisor`}
-          message={`Halaman Monitoring Kehadiran Lab Robotika hanya dapat diakses oleh Kepala Laboratorium (Admin) atau Dosen Pembina (Advisor). Silakan gunakan Role Switcher di header jika Anda sedang menguji coba tampilan.`}
+          message={`Halaman Monitoring Kehadiran Lab Robotika hanya dapat diakses oleh Kepala Laboratorium (Admin) atau Dosen Pembina (Advisor).`}
         />
       </div>
     );

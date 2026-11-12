@@ -7,7 +7,7 @@ import {
   Search,
   AlertTriangle,
 } from "lucide-react";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useData } from "@/contexts/data-context";
 import { useOverlay } from "@/contexts/overlay-context";
 import { BRANDING } from "@/lib/branding";
@@ -36,7 +36,8 @@ interface DisplayItem {
 }
 
 export default function KotakMasukPage() {
-  const { role, currentUser } = useRole();
+  const { role } = useRole();
+  const currentUser = useCurrentUser();
   const { loanRequests, labReports } = useData();
   const { openReviewSheet, openReportReviewSheet, openLoanSheet, openReportDialog } =
     useOverlay();
@@ -46,10 +47,12 @@ export default function KotakMasukPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const isAdmin = role === "admin";
+  // Admin & advisor boleh membaca semua (RLS mengizinkan); advisor tanpa aksi tulis.
+  const canSeeAll = role === "admin" || role === "advisor";
 
   const loanItems: DisplayItem[] = loanRequests
     .filter((req) => {
-      if (isAdmin) return true;
+      if (canSeeAll) return true;
       return (
         req.requesterId === currentUser.id ||
         req.requesterNim === currentUser.nimOrNip
@@ -71,7 +74,7 @@ export default function KotakMasukPage() {
 
   const reportItems: DisplayItem[] = labReports
     .filter((rep) => {
-      if (isAdmin) return true;
+      if (canSeeAll) return true;
       return rep.reporterName.toLowerCase().includes(currentUser.name.toLowerCase().split(" ")[0]);
     })
     .map((item) => ({
@@ -124,11 +127,19 @@ export default function KotakMasukPage() {
         description={
           isAdmin
             ? `Pusat verifikasi terpadu untuk permohonan pinjam alat serta penanganan laporan kendala inventaris di ${BRANDING.scopeName}.`
-            : `Pantau status persetujuan peminjaman komponen dan laporan masalah yang Anda ajukan di ${BRANDING.scopeName}.`
+            : role === "advisor"
+              ? `Monitoring semua permohonan dan laporan di ${BRANDING.scopeName}. Advisor hanya memantau: verifikasi dilakukan Admin Laboratorium.`
+              : `Pantau status persetujuan peminjaman komponen dan laporan masalah yang Anda ajukan di ${BRANDING.scopeName}.`
         }
-        badgeText={isAdmin ? "Panel Verifikasi Kepala Lab" : `Status Permintaan ${BRANDING.userGroupSingular}`}
+        badgeText={
+          isAdmin
+            ? "Panel Verifikasi Kepala Lab"
+            : role === "advisor"
+              ? "Panel Monitoring Advisor"
+              : `Status Permintaan ${BRANDING.userGroupSingular}`
+        }
         action={
-          !isAdmin ? (
+          role === "anggota" ? (
             <div className="flex gap-2">
               <Button
                 onClick={() => openLoanSheet()}
@@ -268,13 +279,17 @@ export default function KotakMasukPage() {
               {/* Tombol Aksi */}
               <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
                 {item.type === "permohonan" && item.loanData ? (
-                  <Button
-                    size="sm"
-                    onClick={() => openReviewSheet(item.loanData!)}
-                    className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
-                  >
-                    {isAdmin ? "Tinjau Permohonan" : "Lihat Rincian"}
-                  </Button>
+                  isAdmin ? (
+                    <Button
+                      size="sm"
+                      onClick={() => openReviewSheet(item.loanData!)}
+                      className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      Tinjau Permohonan
+                    </Button>
+                  ) : (
+                    <span className="text-[11px] text-slate-500">Hanya Admin yang dapat memverifikasi</span>
+                  )
                 ) : item.reportData ? (
                   <Button
                     size="sm"

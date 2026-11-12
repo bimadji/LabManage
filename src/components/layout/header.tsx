@@ -9,12 +9,12 @@ import {
   Calendar,
   AlertTriangle,
   ChevronDown,
-  Sparkles,
+  LogOut,
 } from "lucide-react";
-import { useRole } from "@/contexts/role-context";
+import { useRole, useCurrentUser } from "@/contexts/role-context";
 import { useOverlay } from "@/contexts/overlay-context";
 import { BRANDING } from "@/lib/branding";
-import type { UserRole, User } from "@/types";
+import type { UserRole } from "@/types";
 import { MOCK_USERS_LIST } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,7 +26,8 @@ interface HeaderProps {
 
 export function Header({ onMenuToggle }: HeaderProps) {
   const pathname = usePathname();
-  const { role, currentUser, setRole } = useRole();
+  const { role, isDemoMode, setDemoUser, signOut } = useRole();
+  const currentUser = useCurrentUser();
   const { openLoanSheet, openBookingDialog, openReportDialog } = useOverlay();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
@@ -163,7 +164,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           )}
         </div>
 
-        {/* Role Switcher Pill Dropdown */}
+        {/* Akun aktif: identitas login (mode demo menampilkan simulator akun) */}
         <div className="relative">
           <button
             onClick={() => {
@@ -204,87 +205,50 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 </p>
               </div>
 
-              <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                Pilih Akun Simulasi & Kelompok
-              </p>
-              <div className="space-y-1">
-                {/* Quick switcher to all simulated users */}
-                <button
-                  onClick={() => {
-                    setRole("admin");
-                    setShowRoleMenu(false);
-                  }}
-                  className={cn(
-                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
-                    role === "admin" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
-                  )}
-                >
-                  <div>
-                    <div className="font-semibold">Ahmad Zaki (Admin Lab)</div>
-                    <div className="text-[10px] text-slate-500 font-normal">Tim Riset EROS • NIP: 198503152010121001</div>
+              {isDemoMode ? (
+                <>
+                  <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Pilih Akun Simulasi & Kelompok
+                  </p>
+                  <div className="space-y-1">
+                    {MOCK_USERS_LIST.map((user) => (
+                      <button
+                        key={user.id}
+                        onClick={() => {
+                          setDemoUser(user.id);
+                          setShowRoleMenu(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
+                          currentUser.id === user.id
+                            ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200"
+                            : "hover:bg-slate-50 text-slate-700"
+                        )}
+                      >
+                        <div>
+                          <div className="font-semibold">{user.name}</div>
+                          <div className="text-[10px] text-slate-500 font-normal">{user.team}</div>
+                        </div>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">
+                          {user.role}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">Admin</span>
-                </button>
-
+                </>
+              ) : (
                 <button
-                  onClick={() => {
-                    const erosUser = MOCK_USERS_LIST.find((u: User) => u.id === "usr-eros-01");
-                    if (erosUser) {
-                      setRole("anggota");
-                    }
+                  onClick={async () => {
                     setShowRoleMenu(false);
+                    await signOut();
+                    window.location.href = "/login";
                   }}
-                  className={cn(
-                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
-                    role === "anggota" && currentUser.team === "Tim Riset EROS" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
-                  )}
+                  className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors"
                 >
-                  <div>
-                    <div className="font-semibold">Dimas Aditya (Tim Riset EROS)</div>
-                    <div className="text-[10px] text-slate-500 font-normal">Target: 10 Jam/Minggu • Absensi Aktif</div>
-                  </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Riset</span>
+                  <LogOut className="h-3.5 w-3.5" />
+                  Keluar dari akun
                 </button>
-
-                <button
-                  onClick={() => {
-                    const roboUser = MOCK_USERS_LIST.find((u: User) => u.id === "usr-robo-01");
-                    if (roboUser) {
-                      setRole("anggota");
-                      localStorage.setItem("labmanage_user_id", "usr-robo-01");
-                      window.location.reload();
-                    }
-                    setShowRoleMenu(false);
-                  }}
-                  className={cn(
-                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
-                    role === "anggota" && currentUser.team === "Roboholic" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
-                  )}
-                >
-                  <div>
-                    <div className="font-semibold">Rina Kusuma (UKM Roboholic)</div>
-                    <div className="text-[10px] text-slate-500 font-normal">UKM • Tanpa Absensi / Target Jam</div>
-                  </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">UKM</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setRole("advisor");
-                    setShowRoleMenu(false);
-                  }}
-                  className={cn(
-                    "w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors",
-                    role === "advisor" ? "bg-emerald-50 text-emerald-900 font-bold border border-emerald-200" : "hover:bg-slate-50 text-slate-700"
-                  )}
-                >
-                  <div>
-                    <div className="font-semibold">Dr. Ir. Budi Santoso (Advisor)</div>
-                    <div className="text-[10px] text-slate-500 font-normal">Dosen Pembina • Tim Riset EROS</div>
-                  </div>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Advisor</span>
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>

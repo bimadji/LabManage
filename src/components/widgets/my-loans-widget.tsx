@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Box, Plus, Calendar, ArrowRight } from "lucide-react";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useData } from "@/contexts/data-context";
 import { useOverlay } from "@/contexts/overlay-context";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { StatusBadge } from "@/components/common/status-badge";
 import { EmptyState } from "@/components/common/empty-state";
 
 export function MyLoansWidget() {
-  const { currentUser } = useRole();
+  const currentUser = useCurrentUser();
   const { loanRequests } = useData();
   const { openLoanSheet } = useOverlay();
 

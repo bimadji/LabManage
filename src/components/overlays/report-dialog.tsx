@@ -14,13 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useOverlay } from "@/contexts/overlay-context";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useData } from "@/contexts/data-context";
 import { AlertTriangle, CheckCircle2, Box } from "lucide-react";
 
 export function ReportDialog() {
   const { activeDialog, closeAllOverlays } = useOverlay();
-  const { currentUser, role } = useRole();
+  const { role } = useRole();
+  const currentUser = useCurrentUser();
   const { addLabReport } = useData();
 
   const isOpen = activeDialog === "report";

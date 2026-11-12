@@ -13,14 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useOverlay } from "@/contexts/overlay-context";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useData } from "@/contexts/data-context";
 import { Item } from "@/types";
 import { CheckCircle2, AlertCircle, Box, Calendar } from "lucide-react";
 
 export function LoanRequestSheet() {
   const { activeSheet, closeAllOverlays, selectedItemForLoan } = useOverlay();
-  const { currentUser, role } = useRole();
+  const { role } = useRole();
+  const currentUser = useCurrentUser();
   const { items, addLoanRequest } = useData();
 
   const isOpen = activeSheet === "loan";

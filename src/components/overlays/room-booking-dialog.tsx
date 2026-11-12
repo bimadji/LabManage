@@ -13,13 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useOverlay } from "@/contexts/overlay-context";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useData } from "@/contexts/data-context";
 import { Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function RoomBookingDialog() {
   const { activeDialog, closeAllOverlays } = useOverlay();
-  const { currentUser } = useRole();
+  const currentUser = useCurrentUser();
   const { addRoomBooking } = useData();
 
   const isOpen = activeDialog === "booking";

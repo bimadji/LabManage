@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useData } from "@/contexts/data-context";
 import { useOverlay } from "@/contexts/overlay-context";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { BRANDING } from "@/lib/branding";
 import { Banner } from "@/components/common/banner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +30,8 @@ import type { Item } from "@/types";
 export default function InventarisPage() {
   const { items } = useData();
   const { openLoanSheet } = useOverlay();
-  const { currentUser, role } = useRole();
+  const { role } = useRole();
+  const currentUser = useCurrentUser();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("semua");
@@ -98,13 +99,15 @@ export default function InventarisPage() {
                 <span>Tambah Barang Baru</span>
               </Button>
             )}
-            <Button
-              onClick={() => openLoanSheet()}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs gap-1.5"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Ajukan Pinjam Barang</span>
-            </Button>
+            {role !== "admin" && (
+              <Button
+                onClick={() => openLoanSheet()}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs gap-1.5"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Ajukan Pinjam Barang</span>
+              </Button>
+            )}
           </div>
         }
         icon={<Cpu className="h-28 w-28" />}
@@ -288,18 +291,20 @@ export default function InventarisPage() {
                             + Stok
                           </Button>
                         )}
-                        <Button
-                          size="sm"
-                          disabled={!isAvailable}
-                          onClick={() => openLoanSheet(item)}
-                          className={`h-8 text-xs font-semibold ${
-                            isAvailable
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                              : "bg-slate-100 text-slate-400 border border-slate-200"
-                          }`}
-                        >
-                          {isAvailable ? "Ajukan Pinjam" : "Tidak Tersedia"}
-                        </Button>
+                        {role !== "admin" && (
+                          <Button
+                            size="sm"
+                            disabled={!isAvailable}
+                            onClick={() => openLoanSheet(item)}
+                            className={`h-8 text-xs font-semibold ${
+                              isAvailable
+                                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                : "bg-slate-100 text-slate-400 border border-slate-200"
+                            }`}
+                          >
+                            {isAvailable ? "Ajukan Pinjam" : "Tidak Tersedia"}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

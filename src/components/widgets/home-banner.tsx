@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { Sparkles, ArrowRight, ShieldCheck, Award } from "lucide-react";
-import { useRole } from "@/contexts/role-context";
+import { useCurrentUser, useRole } from "@/contexts/role-context";
 import { useOverlay } from "@/contexts/overlay-context";
 import { BRANDING } from "@/lib/branding";
 import { Banner } from "@/components/common/banner";
 import { Button } from "@/components/ui/button";
 
 export function HomeBanner() {
-  const { role, currentUser } = useRole();
+  const { role } = useRole();
+  const currentUser = useCurrentUser();
   const { openLoanSheet, openBookingDialog } = useOverlay();
   const [greeting, setGreeting] = useState("Selamat Datang");
 
