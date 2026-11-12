@@ -1,4 +1,4 @@
--- Migration: 20261027_fase2_group_based_schema.sql
+-- Migration: 20261027000100_fase2_group_based_schema.sql
 -- Group-based schema (tim_riset vs ukm Roboholic) with strict RLS and anti-collision booking constraints.
 --
 -- CATATAN PENTING:

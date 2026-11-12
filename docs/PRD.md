@@ -53,7 +53,10 @@ Penggunaan bersama ruangan fisik, instrumen uji, dan komponen riset tanpa sistem
 
 - Permohonan pinjam mencatat peminjam, kelompok asal, item, jumlah unit, keperluan proyek, dan rencana tanggal pengembalian.
 - Peran Admin tidak diizinkan membuat permohonan pinjam untuk mencegah konflik kepentingan verifikasi.
-- Pengembalian dan penolakan pinjaman secara otomatis memulihkan jumlah `stok_tersedia`.
+- Stok dipotong dari `stok_tersedia` saat permohonan **disetujui**, bukan saat diajukan. Persetujuan ditolak bila stok tersedia kurang dari jumlah yang diminta.
+- Penolakan tidak mengubah stok (stok belum pernah dipotong).
+- Barang yang dikembalikan (status `selesai`) memulihkan `stok_tersedia` secara atomik, tidak melebihi `stok_total`, dan mencatat `tanggal_kembali`.
+- Seluruh transisi status pinjam (setuju, tolak, selesai) hanya dapat dilakukan Admin dan dijalankan di database sebagai satu transaksi.
 
 ### 4.3 Modul Presensi & Pelacak Jam Riset
 

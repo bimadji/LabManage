@@ -1,97 +1,83 @@
+/**
+ * Verifikasi RLS inti terhadap DB uji nyata.
+ * Jalankan: npx tsx scripts/test-rls.ts
+ * Butuh: TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY, dan akun demo dari scripts/seed-dummy.ts.
+ * Keluar non-zero bila ada pemeriksaan gagal.
+ */
 import { createClient } from '@supabase/supabase-js'
-import * as dotenv from 'dotenv'
+import { check, finish, requireEnv } from './test-harness'
 
-dotenv.config({ path: '.env.local' })
+const { url, anonKey } = requireEnv()
+const PASSWORD = 'password123'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-
-if (!supabaseUrl || !anonKey || supabaseUrl.includes('placeholder')) {
-  console.log('Skipping RLS test: placeholder or missing keys in .env.local')
-  console.log('Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to run live RLS tests.')
-  process.exit(0)
+async function signIn(email: string) {
+  const client = createClient(url, anonKey)
+  const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD })
+  if (error) {
+    console.error(`Gagal login ${email}: ${error.message}`)
+    process.exit(1)
+  }
+  return client
 }
 
-async function runRlsTests() {
-  console.log('🧪 Starting RLS verification test suite...')
+async function main() {
+  const ukm = await signIn('rina.robo@labmanage.test')
+  const eros = await signIn('dimas.eros@labmanage.test')
+  const advisor = await signIn('budi.advisor@labmanage.test')
 
-  // 1. Sign in as Roboholic member (Rina)
-  const clientRobo = createClient(supabaseUrl, anonKey)
-  const { data: roboAuth, error: roboAuthErr } = await clientRobo.auth.signInWithPassword({
-    email: 'rina.robo@labmanage.test',
-    password: 'password123',
+  const { data: ukmProfile } = await ukm.from('profiles').select('kelompok_id').single()
+  const { data: erosAuth } = await eros.auth.getUser()
+
+  // 1. UKM tidak boleh mengisi presensi (RLS attendance_insert_tim_riset)
+  const ukmAttendance = await ukm.from('attendance_sessions').insert([{
+    user_id: (await ukm.auth.getUser()).data.user?.id,
+    kelompok_id: ukmProfile?.kelompok_id,
+    check_in: new Date().toISOString(),
+  }])
+  check('UKM Roboholic diblokir dari attendance_sessions', Boolean(ukmAttendance.error), ukmAttendance.error?.message ?? 'LOLOS')
+
+  // 2. UKM tidak melihat item privat kelompok lain
+  const ukmItems = await ukm.from('inventory_items').select('kode')
+  const seesPrivate = (ukmItems.data ?? []).some((i) => i.kode === 'EROS-ACT-001')
+  check('UKM tidak melihat item privat EROS', !ukmItems.error && !seesPrivate, `error=${ukmItems.error?.message ?? '-'} terlihat=${seesPrivate}`)
+
+  // 3. Anggota hanya melihat presensi miliknya
+  const erosAttendance = await eros.from('attendance_sessions').select('user_id')
+  const onlyOwn = (erosAttendance.data ?? []).every((a) => a.user_id === erosAuth?.user?.id)
+  check('Anggota hanya melihat presensi sendiri', !erosAttendance.error && onlyOwn, `baris=${erosAttendance.data?.length ?? 0} hanya-sendiri=${onlyOwn}`)
+
+  // 4. Anggota tidak bisa membaca permohonan milik orang lain
+  const othersLoans = await eros.from('loan_requests').select('user_id')
+  const ownOnly = (othersLoans.data ?? []).every((l) => l.user_id === erosAuth?.user?.id)
+  check('Anggota hanya melihat permohonan sendiri', !othersLoans.error && ownOnly, `baris=${othersLoans.data?.length ?? 0} hanya-sendiri=${ownOnly}`)
+
+  // 5. Advisor tidak bisa mengubah status laporan (RLS reports_update_policy)
+  const advisorReport = await advisor.from('reports').update({ status: 'selesai' }).neq('id', '00000000-0000-0000-0000-000000000000').select('id')
+  check(
+    'Advisor tidak bisa mengubah status laporan',
+    Boolean(advisorReport.error) || (advisorReport.data ?? []).length === 0,
+    `error=${advisorReport.error?.message ?? '-'} baris-berubah=${advisorReport.data?.length ?? 0}`
+  )
+
+  // 6. Advisor tidak bisa memverifikasi peminjaman (RPC khusus admin)
+  const advisorApprove = await advisor.rpc('verifikasi_pinjam', {
+    p_loan_id: '00000000-0000-0000-0000-000000000000',
+    p_setuju: true,
+    p_alasan: 'x',
   })
+  check('Advisor ditolak oleh verifikasi_pinjam', Boolean(advisorApprove.error), advisorApprove.error?.message ?? 'LOLOS')
 
-  if (roboAuthErr) {
-    console.error('Failed to log in as Roboholic user:', roboAuthErr.message)
-    return
-  }
-
-  console.log('✓ Successfully authenticated as Rina (UKM Roboholic)')
-
-  // Ambil profil Rina untuk mendapatkan kelompok_id
-  const { data: rinaProfile } = await clientRobo
-    .from('profiles')
-    .select('kelompok_id')
-    .eq('id', roboAuth.user.id)
-    .single()
-
-  // TEST 1: Roboholic user tries to insert into attendance_sessions -> MUST FAIL RLS
-  const { error: attendErr } = await clientRobo.from('attendance_sessions').insert([
-    {
-      user_id: roboAuth.user.id,
-      kelompok_id: rinaProfile?.kelompok_id,
-      check_in: new Date().toISOString(),
-    },
-  ])
-
-  if (attendErr) {
-    console.log('✅ TEST 1 PASSED: UKM Roboholic blocked from attendance_sessions:', attendErr.message)
-  } else {
-    console.error('❌ TEST 1 FAILED: UKM Roboholic was able to insert attendance_sessions!')
-  }
-
-  // TEST 2: Roboholic member queries inventory items -> Should NOT see EROS internal items
-  const { data: roboItems, error: itemsErr } = await clientRobo
-    .from('inventory_items')
-    .select('nama, kode, pemilik_kelompok_id, dapat_dipinjam_kelompok_lain')
-
-  if (itemsErr) {
-    console.error('Error fetching items as Roboholic:', itemsErr.message)
-  } else {
-    const hasPrivateEros = roboItems?.some((i) => i.kode === 'EROS-ACT-001')
-    if (!hasPrivateEros) {
-      console.log('✅ TEST 2 PASSED: Roboholic cannot see private EROS items (EROS-ACT-001 is filtered by RLS)')
-    } else {
-      console.error('❌ TEST 2 FAILED: Roboholic could see private EROS actuator!')
-    }
-  }
-
-  // 2. Sign in as Tim Riset EROS member (Dimas)
-  const clientEros = createClient(supabaseUrl, anonKey)
-  const { data: erosAuth, error: erosAuthErr } = await clientEros.auth.signInWithPassword({
-    email: 'dimas.eros@labmanage.test',
-    password: 'password123',
+  // 7. Anggota tidak bisa menambah stok (RPC khusus admin)
+  const memberStock = await eros.rpc('tambah_stok_inventory', {
+    p_item_id: '00000000-0000-0000-0000-000000000000',
+    p_jumlah: 1,
   })
+  check('Anggota ditolak oleh tambah_stok_inventory', Boolean(memberStock.error), memberStock.error?.message ?? 'LOLOS')
 
-  if (erosAuthErr) {
-    console.error('Failed to log in as EROS user:', erosAuthErr.message)
-    return
-  }
-
-  console.log('✓ Successfully authenticated as Dimas (Tim Riset EROS)')
-
-  // TEST 3: Tim Riset queries own attendance vs other user's attendance
-  const { data: erosAttendance } = await clientEros.from('attendance_sessions').select('*')
-  const onlyOwn = erosAttendance?.every((a) => a.user_id === erosAuth.user.id)
-
-  if (onlyOwn) {
-    console.log('✅ TEST 3 PASSED: Anggota Tim Riset only sees own attendance sessions')
-  } else {
-    console.error('❌ TEST 3 FAILED: Anggota Tim Riset saw attendance belonging to other members!')
-  }
-
-  console.log('🏁 All RLS tests completed!')
+  finish()
 }
 
-runRlsTests().catch(console.error)
+main().catch((err) => {
+  console.error('Gagal menjalankan suite:', err)
+  process.exit(1)
+})

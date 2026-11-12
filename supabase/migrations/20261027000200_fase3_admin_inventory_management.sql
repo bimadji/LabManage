@@ -1,4 +1,4 @@
--- Migration: 20261027_fase3_admin_inventory_management.sql
+-- Migration: 20261027000200_fase3_admin_inventory_management.sql
 -- Fitur: Admin Tambah Barang & Tambah Stok Unit Atomik
 
 -- 1. Hapus izin tulis anggota pada inventory_items (hanya admin yang boleh insert/update/delete)

@@ -215,8 +215,9 @@ LabManage/
 
 4. Menjalankan skema basis data di Supabase:
    - Buka menu **SQL Editor** pada Supabase Dashboard Anda.
-   - Jalankan skrip migrasi utama: `supabase/migrations/20261027_fase2_group_based_schema.sql`.
-   - Jalankan skrip fungsi admin stok: `supabase/migrations/20261027_fase3_admin_inventory_management.sql`.
+   - Jalankan skrip migrasi utama: `supabase/migrations/20261027000100_fase2_group_based_schema.sql`.
+   - Jalankan skrip fungsi admin stok: `supabase/migrations/20261027000200_fase3_admin_inventory_management.sql`.
+   - Jalankan skrip siklus pinjam: `supabase/migrations/20261112_fase4_loan_lifecycle.sql`.
 
 5. Mengisi data awal realistis:
 

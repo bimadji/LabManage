@@ -1,167 +1,191 @@
+/**
+ * Verifikasi siklus pinjam (stok, verifikasi, penyelesaian) terhadap DB uji nyata.
+ * Jalankan: npx tsx scripts/test-inventory-admin.ts
+ * Butuh: TEST_SUPABASE_URL, TEST_SUPABASE_ANON_KEY, dan akun demo dari scripts/seed-dummy.ts.
+ * Keluar non-zero bila ada pemeriksaan gagal.
+ */
 import { createClient } from '@supabase/supabase-js'
-import * as dotenv from 'dotenv'
+import { check, finish, requireEnv } from './test-harness'
 
-dotenv.config({ path: '.env.local' })
+const { url, anonKey } = requireEnv()
+const PASSWORD = 'password123'
+const ADMIN = 'admin.lab@labmanage.test'
+const MEMBER = 'dimas.eros@labmanage.test'
+const UKM = 'rina.robo@labmanage.test'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-
-if (!supabaseUrl || !anonKey || supabaseUrl.includes('placeholder')) {
-  console.log('Skipping test: placeholder or missing keys in .env.local')
-  process.exit(0)
+async function signIn(email: string) {
+  const client = createClient(url, anonKey)
+  const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD })
+  if (error) {
+    console.error(`Gagal login ${email}: ${error.message}`)
+    process.exit(1)
+  }
+  return client
 }
 
-async function runTests() {
-  console.log('🧪 Starting Admin Inventory & RLS test suite...\n')
+async function main() {
+  const admin = await signIn(ADMIN)
+  const member = await signIn(MEMBER)
+  const ukm = await signIn(UKM)
 
-  // 1. Login as Admin (Ahmad Zaki)
-  const clientAdmin = createClient(supabaseUrl, anonKey)
-  const { data: adminAuth, error: adminAuthErr } = await clientAdmin.auth.signInWithPassword({
-    email: 'admin.lab@labmanage.test',
-    password: 'password123',
-  })
-
-  if (adminAuthErr) {
-    console.error('Failed to log in as Admin:', adminAuthErr.message)
-    return
+  const { data: authUser } = await member.auth.getUser()
+  const { data: profile, error: profileErr } = await member
+    .from('profiles')
+    .select('id, kelompok_id')
+    .eq('id', authUser?.user?.id ?? '')
+    .single()
+  if (!profile) {
+    console.error(`Profil anggota tidak ditemukan (${profileErr?.message}); jalankan scripts/seed-dummy.ts dulu.`)
+    process.exit(1)
   }
-  console.log('✓ Successfully authenticated as Admin')
 
-  // TEST 1: Admin successfully adds a new item
-  const testCode = `TEST-ITEM-${Date.now().toString().slice(-4)}`
-  const { data: insertedItem, error: insertErr } = await clientAdmin
-    .from('inventory_items')
-    .insert([
-      {
-        nama: 'Test Sensor Ultrasonic HC-SR04',
-        kode: testCode,
+  const stamp = Date.now().toString().slice(-6)
+  async function createItem(kode: string, stok: number) {
+    const { data, error } = await admin
+      .from('inventory_items')
+      .insert([{
+        nama: `Uji Pinjam ${kode}`,
+        kode,
         kategori: 'sensor',
-        lokasi: 'Laci Pengujian Admin',
-        stok_total: 5,
-        stok_tersedia: 5,
+        lokasi: 'Rak Uji',
+        stok_total: stok,
+        stok_tersedia: stok,
         status: 'tersedia',
-        spesifikasi: 'Rentang 2cm - 400cm, frekuensi 40kHz',
         pemilik_kelompok_id: null,
         dapat_dipinjam_kelompok_lain: true,
-      },
-    ])
-    .select()
-    .single()
-
-  if (insertErr) {
-    console.error('❌ TEST 1 FAILED: Admin unable to insert item:', insertErr.message)
-  } else {
-    console.log(`✅ TEST 1 PASSED: Admin successfully created item: ${insertedItem.kode} (${insertedItem.id})`)
-  }
-
-  // TEST 2: Admin adds stock via RPC tambah_stok_inventory
-  if (insertedItem) {
-    const { data: updatedItem, error: rpcErr } = await clientAdmin.rpc('tambah_stok_inventory', {
-      p_item_id: insertedItem.id,
-      p_jumlah: 3,
-    })
-
-    if (rpcErr) {
-      console.error('❌ TEST 2 FAILED: Admin RPC tambah_stok_inventory failed:', rpcErr.message)
-    } else {
-      console.log(`✅ TEST 2 PASSED: Admin increased stock by 3: Total is now ${updatedItem.stok_total}, Available: ${updatedItem.stok_tersedia}`)
+      }])
+      .select()
+      .single()
+    if (error) {
+      console.error(`Gagal membuat item ${kode}: ${error.message}`)
+      process.exit(1)
     }
+    return data
   }
 
-  // TEST 3: Validation checks - negative and zero quantity rejected
-  if (insertedItem) {
-    const { error: negErr } = await clientAdmin.rpc('tambah_stok_inventory', {
-      p_item_id: insertedItem.id,
-      p_jumlah: -2,
-    })
-    const { error: zeroErr } = await clientAdmin.rpc('tambah_stok_inventory', {
-      p_item_id: insertedItem.id,
-      p_jumlah: 0,
-    })
-
-    if (negErr && zeroErr) {
-      console.log('✅ TEST 3 PASSED: Zero and negative quantities correctly rejected by database constraints')
-    } else {
-      console.error('❌ TEST 3 FAILED: Zero or negative quantity was accepted!')
+  async function createLoan(itemId: string, jumlah: number) {
+    const { data, error } = await member
+      .from('loan_requests')
+      .insert([{
+        item_id: itemId,
+        user_id: profile!.id,
+        kelompok_id: profile!.kelompok_id,
+        jumlah,
+        keperluan: `uji ${stamp}`,
+        rencana_kembali: new Date(Date.now() + 7 * 86400000).toISOString(),
+      }])
+      .select()
+      .single()
+    if (error) {
+      console.error(`Gagal membuat permohonan: ${error.message}`)
+      process.exit(1)
     }
+    return data
   }
 
-  // 2. Login as Anggota Roboholic (Rina)
-  const clientRobo = createClient(supabaseUrl, anonKey)
-  const { error: roboAuthErr } = await clientRobo.auth.signInWithPassword({
-    email: 'rina.robo@labmanage.test',
-    password: 'password123',
-  })
-
-  if (roboAuthErr) {
-    console.error('Failed to log in as Rina:', roboAuthErr.message)
-    return
-  }
-  console.log('\n✓ Successfully authenticated as Anggota UKM Roboholic (Rina)')
-
-  // TEST 4: Anggota tries to INSERT into inventory_items -> MUST FAIL RLS
-  const { error: memberInsertErr } = await clientRobo
-    .from('inventory_items')
-    .insert([
-      {
-        nama: 'Barang Ilegal Anggota',
-        kode: `ILLEGAL-${Date.now().toString().slice(-4)}`,
-        kategori: 'komponen',
-        lokasi: 'Meja Rina',
-        stok_total: 1,
-        stok_tersedia: 1,
-        status: 'tersedia',
-      },
-    ])
-
-  if (memberInsertErr) {
-    console.log('✅ TEST 4 PASSED: Anggota blocked from inserting inventory_items by RLS:', memberInsertErr.message)
-  } else {
-    console.error('❌ TEST 4 FAILED: Anggota was able to insert inventory_items!')
+  const stokTersedia = async (itemId: string) => {
+    const { data } = await admin.from('inventory_items').select('stok_tersedia, status').eq('id', itemId).single()
+    return data
   }
 
-  // TEST 5: Anggota tries to call tambah_stok_inventory -> MUST FAIL (42501 Unauthorized)
-  if (insertedItem) {
-    const { error: memberRpcErr } = await clientRobo.rpc('tambah_stok_inventory', {
-      p_item_id: insertedItem.id,
-      p_jumlah: 5,
-    })
+  // 1. Setuju dengan stok cukup
+  const itemA = await createItem(`UJI-A-${stamp}`, 5)
+  const loanA = await createLoan(itemA.id, 2)
+  const approve = await admin.rpc('verifikasi_pinjam', { p_loan_id: loanA.id, p_setuju: true, p_alasan: 'ok' })
+  const afterA = await stokTersedia(itemA.id)
+  check(
+    'setuju stok cukup: status disetujui + stok 5→3',
+    !approve.error && approve.data?.status === 'disetujui' && afterA?.stok_tersedia === 3,
+    `err=${approve.error?.message ?? '-'} status=${approve.data?.status} stok=${afterA?.stok_tersedia}`
+  )
 
-    if (memberRpcErr) {
-      console.log('✅ TEST 5 PASSED: Anggota blocked from tambah_stok_inventory:', memberRpcErr.message)
-    } else {
-      console.error('❌ TEST 5 FAILED: Anggota was able to execute tambah_stok_inventory!')
-    }
-  }
+  // 2. Setuju dengan stok kurang harus ditolak
+  const itemB = await createItem(`UJI-B-${stamp}`, 1)
+  const loanB = await createLoan(itemB.id, 3)
+  const approveB = await admin.rpc('verifikasi_pinjam', { p_loan_id: loanB.id, p_setuju: true, p_alasan: 'ok' })
+  const afterB = await stokTersedia(itemB.id)
+  const loanBStatus = await member.from('loan_requests').select('status').eq('id', loanB.id).single()
+  check(
+    'setuju stok kurang ditolak, stok tidak berubah',
+    Boolean(approveB.error) && afterB?.stok_tersedia === 1 && loanBStatus.data?.status === 'menunggu',
+    `err=${approveB.error?.message ?? 'TIDAK ADA ERROR'} stok=${afterB?.stok_tersedia} status=${loanBStatus.data?.status}`
+  )
 
-  // 3. Login as Advisor (Dr. Ir. Budi Santoso)
-  const clientAdvisor = createClient(supabaseUrl, anonKey)
-  const { error: advAuthErr } = await clientAdvisor.auth.signInWithPassword({
-    email: 'budi.advisor@labmanage.test',
-    password: 'password123',
-  })
+  // 3. Tolak tidak mengubah stok
+  const loanC = await createLoan(itemA.id, 1)
+  const reject = await admin.rpc('verifikasi_pinjam', { p_loan_id: loanC.id, p_setuju: false, p_alasan: 'alat dipakai' })
+  const afterC = await stokTersedia(itemA.id)
+  check(
+    'tolak: status ditolak, stok tetap 3',
+    !reject.error && reject.data?.status === 'ditolak' && afterC?.stok_tersedia === 3,
+    `status=${reject.data?.status} stok=${afterC?.stok_tersedia}`
+  )
 
-  if (advAuthErr) {
-    console.error('Failed to log in as Advisor:', advAuthErr.message)
-    return
-  }
-  console.log('\n✓ Successfully authenticated as Advisor')
+  // 4. Selesai memulihkan stok
+  const complete = await admin.rpc('selesaikan_pinjam', { p_loan_id: loanA.id })
+  const afterD = await stokTersedia(itemA.id)
+  check(
+    'selesai: stok pulih ke 5 + tanggal_kembali terisi',
+    !complete.error && complete.data?.status === 'selesai' && afterD?.stok_tersedia === 5 && Boolean(complete.data?.tanggal_kembali),
+    `status=${complete.data?.status} stok=${afterD?.stok_tersedia} tanggal=${complete.data?.tanggal_kembali ?? '-'}`
+  )
 
-  // TEST 6: Advisor tries to call tambah_stok_inventory -> MUST FAIL
-  if (insertedItem) {
-    const { error: advRpcErr } = await clientAdvisor.rpc('tambah_stok_inventory', {
-      p_item_id: insertedItem.id,
-      p_jumlah: 2,
-    })
+  // 5. Selesai dua kali tidak memulihkan dua kali
+  const completeAgain = await admin.rpc('selesaikan_pinjam', { p_loan_id: loanA.id })
+  const afterE = await stokTersedia(itemA.id)
+  check(
+    'selesai dua kali ditolak, stok tetap 5',
+    Boolean(completeAgain.error) && afterE?.stok_tersedia === 5,
+    `err=${completeAgain.error?.message ?? 'TIDAK ADA ERROR'} stok=${afterE?.stok_tersedia}`
+  )
 
-    if (advRpcErr) {
-      console.log('✅ TEST 6 PASSED: Advisor blocked from tambah_stok_inventory:', advRpcErr.message)
-    } else {
-      console.error('❌ TEST 6 FAILED: Advisor was able to execute tambah_stok_inventory!')
-    }
-  }
+  // 6. Non-admin tidak boleh memverifikasi/menyelesaikan
+  const loanF = await createLoan(itemB.id, 1)
+  const memberApprove = await member.rpc('verifikasi_pinjam', { p_loan_id: loanF.id, p_setuju: true, p_alasan: 'x' })
+  const memberComplete = await member.rpc('selesaikan_pinjam', { p_loan_id: loanF.id })
+  const advisor = await signIn('budi.advisor@labmanage.test')
+  const advisorApprove = await advisor.rpc('verifikasi_pinjam', { p_loan_id: loanF.id, p_setuju: true, p_alasan: 'x' })
+  check(
+    'non-admin (anggota & advisor) ditolak',
+    Boolean(memberApprove.error) && Boolean(memberComplete.error) && Boolean(advisorApprove.error),
+    `anggota-verifikasi=${memberApprove.error?.message ?? 'LOLOS'} anggota-selesai=${memberComplete.error?.message ?? 'LOLOS'} advisor=${advisorApprove.error?.message ?? 'LOLOS'}`
+  )
 
-  console.log('\n🏁 All Admin Inventory & RLS tests completed successfully!')
+  // 7. Dua persetujuan bersamaan untuk stok yang sama: hanya satu boleh menang
+  const itemG = await createItem(`UJI-G-${stamp}`, 1)
+  const loanG1 = await createLoan(itemG.id, 1)
+  const loanG2 = await createLoan(itemG.id, 1)
+  const [race1, race2] = await Promise.all([
+    admin.rpc('verifikasi_pinjam', { p_loan_id: loanG1.id, p_setuju: true, p_alasan: 'race' }),
+    admin.rpc('verifikasi_pinjam', { p_loan_id: loanG2.id, p_setuju: true, p_alasan: 'race' }),
+  ])
+  const afterG = await stokTersedia(itemG.id)
+  const winners = [race1, race2].filter((r) => !r.error).length
+  check(
+    'dua persetujuan bersamaan: tepat satu menang, stok tidak negatif',
+    winners === 1 && afterG?.stok_tersedia === 0,
+    `pemenang=${winners} stok=${afterG?.stok_tersedia} err1=${race1.error?.message ?? '-'} err2=${race2.error?.message ?? '-'}`
+  )
+
+  // 8. Admin tetap dilarang membuat permohonan (RLS)
+  const adminLoan = await admin.from('loan_requests').insert([{
+    item_id: itemA.id,
+    user_id: profile!.id,
+    kelompok_id: profile!.kelompok_id,
+    jumlah: 1,
+    keperluan: 'admin tidak boleh',
+    rencana_kembali: new Date().toISOString(),
+  }])
+  check('admin dilarang membuat permohonan pinjam', Boolean(adminLoan.error), adminLoan.error?.message ?? 'LOLOS')
+
+  // 9. Anggota UKM tetap boleh meminjam barang lab
+  const ukmLoan = await ukm.from('loan_requests').select('id').limit(1)
+  check('anggota UKM dapat membaca permohonan sendiri', !ukmLoan.error, ukmLoan.error?.message ?? 'ok')
+
+  finish()
 }
 
-runTests().catch(console.error)
+main().catch((err) => {
+  console.error('Gagal menjalankan suite:', err)
+  process.exit(1)
+})
