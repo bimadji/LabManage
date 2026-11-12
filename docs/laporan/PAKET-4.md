@@ -1,6 +1,7 @@
 # Paket 4 — Booking ruangan yang benar: SELESAI
 
 Dikerjakan:
+
 - `src/lib/rooms.ts` (baru): konstanta tunggal `RUANGAN` (3 ruang: `arena-kontes`, `bengkel-mekanik`, `lab-utama`) berisi `id`, `nama`, `kode`, `kapasitas`, `deskripsi`, dan `slotWaktu`. `toWibIso(tanggal, jam)` mengubah `YYYY-MM-DD` + `HH:MM` (WIB) ke ISO UTC, mengembalikan `null` bila tidak valid. `overlaps()` membandingkan rentang waktu. `todayWib()`/`addDaysWib()` memakai zona `Asia/Jakarta`.
 - `src/components/overlays/room-booking-dialog.tsx`: field "Hari / Tanggal" diganti input `type="date"` (min = hari ini), "Sesi Waktu" dari `SLOT_WAKTU`, "Pilih Ruangan" dari `RUANGAN`. Submit mengirim `startTime`/`endTime` nyata. Tidak ada lagi `new Date()` fallback.
 - `src/contexts/data-context.tsx`: cek bentrok klien memakai `overlaps()` + perbandingan `roomId` (bukan label string). Pesan: "Ruangan {nama} sudah dipesan pada jam tersebut. Silakan pilih slot lain."
@@ -8,6 +9,7 @@ Dikerjakan:
 - `src/app/jadwal/page.tsx`: daftar ruang + filter memakai `RUANGAN` dan mencocokkan `roomId`.
 
 Verifikasi asli (build + browser + DB uji lokal 127.0.0.1:54521):
+
 - `npx tsc --noEmit` → exit 0.
 - `NODE_OPTIONS=--max-old-space-size=2048 npx next build` → exit 0.
 - Browser, login `dimas.eros@labmanage.test`, Aksi Cepat → "Pesan Ruang / Fasilitas":
@@ -17,11 +19,13 @@ Verifikasi asli (build + browser + DB uji lokal 127.0.0.1:54521):
 - Bug yang ditemukan & diperbaiki saat tes: input tanggal yang tidak valid (hasil ketik otomatis browser) membuat `new Date(...).toISOString()` melempar `RangeError: Invalid time value` dan crash halaman. Sekarang `toWibIso()` mengembalikan `null` dan form menampilkan "Tanggal atau jam sesi tidak valid. Silakan pilih ulang."
 
 Belum beres:
+
 - Skema DB belum punya tabel `ruangan`; `room_bookings.ruangan_id` tetap `TEXT` dan identitas ruangan dijaga oleh konstanta aplikasi. Tidak diubah (butir 3 hanya minta konstanta bersama; tabel baru = perubahan skema besar).
 - Booking yang sudah ada di DB memakai `nama_ruangan` berbeda ("Arena Lapangan Kontes" dari seed lama). Tampil di jadwal apa adanya; tidak dinormalkan.
 - Tidak ada tombol batal/ubah booking (di luar scope).
 
 Butuh darimu:
+
 1. Konfirmasi nama ruangan kanonik yang dipakai di seed (`scripts/seed-dummy.ts` masih menulis "Arena Lapangan Kontes"). Kalau mau diseragamkan ke `RUANGAN[].nama`, perlu suntik seed (perubahan data uji saja).
 
 File: `src/lib/rooms.ts`, `src/components/overlays/room-booking-dialog.tsx`, `src/contexts/data-context.tsx`, `src/app/jadwal/page.tsx`. Commit: `117939d`.

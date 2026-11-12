@@ -1,6 +1,7 @@
 # Paket 2 — Autentikasi dan hak akses sungguhan: SEBAGIAN
 
 Dikerjakan:
+
 - `src/contexts/role-context.tsx` rewritten: sesi dari Supabase Auth (`supabase.auth.getSession()` + `onAuthStateChange`), role/kelompok/target jam dibaca dari tabel `profiles` milik user yang login. Tidak ada lagi `localStorage` sebagai sumber identitas. `currentUser` jadi `null` bila belum login. Ditambah `signIn`, `signOut`, `setDemoUser` (demo saja).
 - `src/proxy.ts` (Next 16: `middleware` deprecated → `proxy`, dibuktikan dari `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/middleware.md`): belum login → redirect `/login?next=...`; `/monitoring` hanya admin & advisor, selain itu redirect ke beranda. Guard memakai `auth.getUser()` (validasi JWT server), bukan cookie tanpa cek.
 - `src/lib/supabase/dal.ts`: `getSessionUser()` — sumber kebenaran identitas sisi server (server component), memakai `cache()`.
@@ -12,6 +13,7 @@ Dikerjakan:
 - `data-context` memuat data setelah `currentUser` tersedia, bukan saat mount.
 
 Verifikasi asli (build + browser, DB uji lokal Supabase di 127.0.0.1:54521):
+
 - `npx tsc --noEmit` → exit 0.
 - `npm run lint` → `✖ 24 problems (6 errors, 18 warnings)`. 6 error: 3× `no-empty-object-type` (input.tsx 4:18, 24:18; textarea.tsx 4:18), `set-state-in-effect` (loan-request-sheet.tsx 39:7, home-banner.tsx 19:21). Semua milik Paket 5; **tidak ada** error `no-explicit-any` atau `set-state-in-effect` di role-context anymore.
 - `NODE_OPTIONS=--max-old-space-size=2048 npx next build` → exit 0, rute: `/`, `/inventaris`, `/jadwal`, `/kotak-masuk`, `/login`, `/monitoring`, `ƒ Proxy (Middleware)`.
@@ -27,12 +29,14 @@ Verifikasi asli (build + browser, DB uji lokal Supabase di 127.0.0.1:54521):
   - Login `rina.robo@labmanage.test` → kartu "Status Kelompok: UKM Roboholic / Bebas Target Jam" tampil.
 
 Belum beres:
+
 - **Paket 2 but 5 belum ada**: tidak ada test otomatis per role (UI maupun API). Skenario di atas diverifikasi manual lewat browser dan skrip DB, bukan regression test. Butuh `vitest` (Paket 6).
 - `auth.users` untuk akun nyata belum dibuat (akun demo masih `password123`, hanya untuk DB uji).
 - Halaman login belum punya "ingat saya"/reset kata sandi; belum diminta.
 - Proxy tidak meng-hoist session ke cookie server secara manual (`@supabase/ssr` server client membaca cookie, jadi refresh token http-only ditangani library; sesi tetap valid setelah refresh — terverifikasi: login bertahan saat navigasi).
 
 Butuh darimu:
+
 1. Konfirmasi alur akun nyata: siapa yang membuat akun `auth.users` + `profiles` untuk staf/anggota, dan bagaimana kata sandi dibagikan. Saat ini seed demo (`scripts/seed-dummy.ts`) memakai `password123` dan hanya boleh untuk DB uji.
 2. Pembatasan advisor "Hanya Admin yang dapat memverifikasi" ditampilkan sebagai teks, bukan tombol nonaktif. Setuju?
 

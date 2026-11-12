@@ -91,36 +91,49 @@ LabManage menyatukan pencatatan inventaris, reservasi arena, dan pelacakan jam r
 flowchart TD
   subgraph Client ["Frontend (Next.js 16 App Router)"]
     UI["Antarmuka Ocean Breeze (React 19 + Tailwind v4)"]
-    RoleCtx["Role Context (Simulasi Peran & Switcher)"]
-    DataCtx["Data Context (State Optimistik & Sinkronisasi)"]
+    RoleCtx["Role Context (Supabase Auth + Role dari tabel profiles)"]
+    DataCtx["Data Context (state dari database, error jujur)"]
   end
 
   subgraph ServerLayer ["Server & API"]
     SSR["Next.js Server Client (@supabase/ssr)"]
+    Proxy["Guard Server (src/proxy.ts)"]
     AdminClient["Supabase Admin Client (Service Role)"]
   end
 
   subgraph SupabaseDB ["Basis Data PostgreSQL 15+"]
-    Tables[("Tabel: kelompok, profiles, inventory_items, loan_requests, room_bookings, attendance_sessions")]
-    RLS{"Row Level Security (14 Kebijakan)"}
+    Tables[("Tabel: kelompok, profiles, inventory_items, loan_requests, room_bookings, attendance_sessions, reports")]
+    RLS{"Row Level Security (20 Kebijakan)"}
     ExclConstraint["GiST Exclusion Constraint (Anti-Bentrok Ruangan)"]
     RPCSecDef["Fungsi Atomik: labmanage.tambah_stok_inventory"]
+    LoanRPC["RPC Siklus Pinjam: verifikasi_pinjam, selesaikan_pinjam"]
   end
 
   UI --> RoleCtx
   UI --> DataCtx
+  Proxy --> SSR
   DataCtx --> SSR
   AdminClient -.->|Khusus Seeder & Migrasi| SupabaseDB
   SSR --> RLS
   RLS --> Tables
   DataCtx -->|Panggilan RPC Tambah Stok| RPCSecDef
+  DataCtx -->|Verifikasi & Penyelesaian Pinjam| LoanRPC
   RPCSecDef --> Tables
+  LoanRPC --> Tables
   Tables --> ExclConstraint
 ```
 
-- **Frontend**: Dibangun dengan Next.js 16 App Router dan React 19, menggunakan tema visual *Ocean Breeze* (Alice Blue `#f0f8ff` dan Emerald Green `#047857`) sesuai `DESIGN.md`.
-- **Keamanan Data**: Setiap tabel di schema `public` dilindungi Row Level Security (RLS). Seluruh fungsi pembantu otentikasi disimpan di schema terisolasi `labmanage` untuk mencegah paparan API publik.
+- **Frontend**: Dibangun dengan Next.js 16 App Router dan React 19, menggunakan tema visual *Ocean Breeze* (Alice Blue `#f0f8ff` dan Emerald Green `#22c55e`) sesuai `DESIGN.md`.
+- **Autentikasi & Hak Akses**: Login memakai Supabase Auth. Role dan kelompok diambil dari tabel `profiles` milik user yang login. Rute yang butuh sesi dilindungi guard server (`src/proxy.ts`, memakai `auth.getUser()`), bukan sekadar menyembunyikan menu. Simulator peran hanya ada di mode demo (`NEXT_PUBLIC_DEMO_MODE=true`).
+- **Keamanan Data**: Setiap tabel di schema `public` dilindungi Row Level Security (RLS) — 20 policy aktif. Seluruh fungsi pembantu otentikasi disimpan di schema terisolasi `labmanage` untuk mencegah paparan API publik. Transisi status pinjam hanya dapat dilakukan lewat RPC `SECURITY DEFINER` yang memeriksa peran admin di dalam database.
 - **Pencegahan Bentrok Jadwal**: Tabel `room_bookings` mengimplementasikan ekstensi `btree_gist` dan *PostgreSQL Exclusion Constraint* (`tstzrange(waktu_mulai, waktu_selesai) WITH && WHERE status = 'aktif'`) sehingga penumpukan jadwal ruangan yang sama pada jam yang sama ditolak langsung di level database.
+
+### Keterbatasan yang masih ada
+
+- Belum ada akun produksi; yang tersedia hanya akun seed `password123` untuk **DB uji** (lihat `docs/SETUP-TES.md`).
+- `room_bookings.ruangan_id` masih berupa `TEXT`; identitas ruangan dijaga konstanta `src/lib/rooms.ts`, belum ada tabel `ruangan`.
+- Jam mingguan anggota dihitung di sisi browser dari baris `attendance_sessions`; perlu agregasi server (view/RPC) bila skala membesar.
+- Detail status fitur per komponen ada di `docs/STATUS.md`; pekerjaan yang sengaja ditunda ada di `docs/BACKLOG.md`.
 
 ---
 

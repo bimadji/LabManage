@@ -1,6 +1,7 @@
 # Paket 5 — Bug kecil yang terlihat user: SELESAI
 
 Dikerjakan:
+
 - `src/components/common/status-badge.tsx`: dead code (blok `return` kedua yang tak terjangkau) dihapus; `dipinjam`, `ditangani`, `aktif` kini punya token ungu DESIGN.md §3 (`bg-purple-100 border-purple-200 text-purple-800`) beserta labelnya.
 - `src/types/index.ts`: `ItemStatus` diselaraskan dengan enum DB `inventory_status` (`tersedia | rusak | habis`) — `dipinjam` dihapus dari tipe; `src/lib/mock-data.ts` item osiloskop diubah dari `dipinjam` → `habis`. Enum DB **tidak** diubah (sesuai keputusan default).
 - `npm run lint` → **0 error** (sebelumnya 7-9 error):
@@ -17,6 +18,7 @@ Dikerjakan:
 - Teks Inggris: "Off" → "Nonaktif" (sidebar). Scan `src/` untuk `aria-label`/`placeholder`/`title` berbahasa Inggris: tidak ada lagi yang tersisa.
 
 Verifikasi asli (build + browser, DB uji lokal 127.0.0.1:54521, viewport 375 px):
+
 - `npx tsc --noEmit` → exit 0.
 - `npm run lint` → `✖ 13 problems (0 errors, 13 warnings)` — **0 error**. Sisa warning: import tak terpakai + `window.location.href` (2 lokasi) + `exhaustive-deps`.
 - `NODE_OPTIONS=--max-old-space-size=2048 npx next build` → exit 0.
@@ -28,11 +30,13 @@ Verifikasi asli (build + browser, DB uji lokal 127.0.0.1:54521, viewport 375 px)
   - `/inventaris`: item dari DB tampil, tidak ada teks "[object".
 
 Belum beres:
+
 - 13 warning lint tersisa (import tak terpakai di beberapa file, `window.location.href` di header & home-banner, `exhaustive-deps`). Bukan error; belum dirapikan.
 - Target sentuh 44px baru dijamin untuk kontrol utama; beberapa kontrol sekunder (badge, avatar, select kecil) masih lebih kecil dari 44px.
 - `hover:underline` pada elemen non-Tombol (mis. link `<a>` mentah) masih ada di beberapa widget; aturan `a { text-decoration: none }` di `globals.css` sudah menutupnya.
 
 Butuh darimu:
+
 1. Konfirmasi perubahan ukuran tombol (semua tombol utama jadi 44 px) — ini mengubah tampilan, bukan hanya bug. Kalau ingin tombol sekunder tetap 36 px, bilang saja.
 
 File: `src/components/common/status-badge.tsx`, `src/types/index.ts`, `src/lib/mock-data.ts`, `src/components/ui/button.tsx`, `src/components/ui/input.tsx`, `src/components/ui/textarea.tsx`, `src/app/globals.css`, `src/components/layout/app-shell.tsx`, `src/components/layout/header.tsx`, `src/contexts/attendance-context.tsx`, `src/contexts/data-context.tsx`, `src/components/overlays/loan-request-sheet.tsx`, `src/components/widgets/*`. Commit: `32ca3d3`.

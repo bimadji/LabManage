@@ -1,6 +1,7 @@
 # Paket 3 — Presensi dan jam riset yang benar: SELESAI
 
 Dikerjakan:
+
 - `src/lib/attendance.ts` (baru): perhitungan jam dari baris nyata `attendance_sessions`. `getWeekRange()` menghasilkan rentang Senin–Minggu zona `Asia/Jakarta`; `minutesWithin()` memotong sesi di batas periode; `hoursForUser()` menjumlahkan per user; `openSessionFor()` mencari sesi tanpa `check_out`.
 - `src/contexts/attendance-context.tsx`: `weeklyAccumulatedHours` sekarang `useMemo` dari `attendanceSessions` milik user yang login. Angka fiktif `6.5` dan `resetWeeklyDemo` dihapus. `weeklyTargetHours` dari `kelompok.target_jam_mingguan`. Setelah check-in/check-out, data dimuat ulang dari DB (`refreshData()`), lalu sesi aktif dipulihkan dari baris DB (reload tidak menghilangkan sesi). Ditambah `hasOpenSession`.
 - Label hardcode "Target Wajib: 10 Jam / Minggu" → `Target Wajib: {weeklyTargetHours} Jam / Minggu` (`attendance-widget.tsx`); teks "Target 10 jam tercapai!" → "Target {weeklyTargetHours} jam tercapai!".
@@ -10,6 +11,7 @@ Dikerjakan:
 - Guard role di monitoring dipindah setelah semua hook (aturan react-hooks), tetap sama secara perilaku.
 
 Verifikasi asli (build + browser + DB uji lokal 127.0.0.1:54521):
+
 - `npx tsc --noEmit` → exit 0.
 - `npm run lint` → `✖ 26 problems (7 errors, 19 warnings)`. 7 error: 3× `no-empty-object-type` (input.tsx 4:18, 24:18; textarea.tsx 4:18), 4× `set-state-in-effect` (loan-request-sheet.tsx 39:7, home-banner.tsx 19:21 & 62:5, data-context.tsx 301:7). Semua milik Paket 5.
 - `NODE_OPTIONS=--max-old-space-size=2048 npx next build` → exit 0.
@@ -22,11 +24,13 @@ Verifikasi asli (build + browser + DB uji lokal 127.0.0.1:54521):
 - Browser, login `admin.lab@labmanage.test`, buka `/monitoring`: `Semua Kelompok (6 Anggota)`, bar chart Dimas/Farhan/Bayu, tabel rekap `Dimas Aditya ... 12.5 Jam Tuntas (125%) 13 Nov, 02.43`, `Farhan Yudha ... 6 Jam Kurang 4.0 Jam`, `Rina Kusuma ... UKM - Bebas Jam (UKM) Belum pernah`; okupansi `Arena Lapangan Kontes 2%` (dihitung dari booking nyata).
 
 Belum beres:
+
 - Baris uji `Uji Anggota (UJI-002)` dari skrip `verify-loan-lifecycle.sql` ikut muncul di monitoring karena memakai `profiles` sungguhan. Bersih saat reset DB uji.
 - Koreksi sesi lupa check-out oleh admin **tidak** dikerjakan (sesuai keputusan: itu backlog).
 - Perhitungan durasi sesi memakai `Math.round` per menit; durasi < 30 detik tercatat 0 menit (batas akurasi, bukan bug).
 
 Butuh darimu:
+
 1. Konfirmasi aturan hitung: sesi yang belum ditutup dihitung sampai sekarang, dan durasi dipotong di batas minggu. Benar untuk target mingguan?
 
 File: `src/lib/attendance.ts`, `src/contexts/attendance-context.tsx`, `src/app/monitoring/page.tsx`, `src/components/widgets/team-overview-widget.tsx`, `src/components/widgets/attendance-widget.tsx`, `src/components/layout/sidebar.tsx`. Commit: `349e688`.

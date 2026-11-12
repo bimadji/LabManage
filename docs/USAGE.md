@@ -4,16 +4,16 @@ Dokumen ini memandu pengoperasian dan navigasi fitur **LabManage** bagi seluruh 
 
 ---
 
-## 1. Navigasi Cepat Antar-Peran (Role Switcher)
+## 1. Masuk ke Aplikasi
 
-Untuk keperluan pengujian antarmuka dan evaluasi sistem, tombol profil di pojok kanan atas bilah navigasi (*Header*) dilengkapi menu *Ganti Akun & Simulasi Peran*:
+Seluruh pengguna masuk dengan akun masing-masing. Halaman **/login** meminta email dan kata sandi; peran dan kelompok otomatis diambil dari data akun tersebut, sehingga hak akses tidak bisa diganti dari sisi browser.
 
-- **Ahmad Zaki Fauzan**: Peran **Admin** (Kepala Lab Robotika PENS).
-- **Dimas Aditya**: Peran **Anggota** dari **Tim Riset** (target 10 jam/minggu, presensi aktif).
-- **Rina Kusuma**: Peran **Anggota** dari kelompok **UKM Roboholic** (status kelompok bebas target jam riset).
-- **Dr. Ir. Budi Santoso, M.T.**: Peran **Advisor** (Dosen Pembina Tim Robotika).
+- **Admin** (Kepala Lab Robotika PENS): verifikasi peminjaman, pengelolaan inventaris, laporan kendala.
+- **Anggota Tim Riset**: presensi lab dengan target jam mingguan, peminjaman alat, pemesanan ruang.
+- **Anggota UKM Roboholic**: bebas target jam riset, tetap bisa meminjam alat dan memesan ruang.
+- **Advisor** (Dosen Pembina): memantau jam riset dan rekap peminjaman; verifikasi tetap dilakukan Admin.
 
-Memilih salah satu akun akan secara otomatis menyesuaikan konteks izin, tampilan dashboard, dan ketersediaan tombol aksi di seluruh halaman.
+Untuk pengujian antarmuka tanpa database, jalankan dengan `NEXT_PUBLIC_DEMO_MODE=true`. Dalam mode ini aplikasi menampilkan banner **Mode Demo** dan tersedia menu simulator akun di pojok kanan atas (khusus mode demo).
 
 ---
 
@@ -48,11 +48,14 @@ Memilih salah satu akun akan secara otomatis menyesuaikan konteks izin, tampilan
 1. Buka menu **Inventaris**.
 2. Temukan barang yang berstatus **Tersedia**, lalu klik tombol **Ajukan Pinjam**.
 3. Di panel samping (*slide-over sheet*):
-   - Masukkan jumlah unit yang dipinjam.
+   - Masukkan jumlah unit yang dipinjam (maksimal = stok tersedia).
    - Jelaskan keperluan riset atau proyek robotika Anda.
    - Tentukan tanggal perkiraan pengembalian alat.
-4. Klik **Kirim Permohonan**.
-5. Status permohonan dapat dipantau pada kartu *Pinjaman Alat Saya* di Beranda Utama.
+4. Klik **Ajukan Pinjaman**.
+5. Permohonan tersimpan di database dengan status **Menunggu** dan dapat dipantau pada kartu *Pinjaman Alat Saya* di Beranda Utama.
+6. Admin memverifikasi di **Kotak Masuk**: stok dipotong saat disetujui, dan pulih kembali saat barang ditandai dikembalikan (*Tandai Dikembalikan*).
+
+> Admin tidak dapat membuat permohonan peminjaman (dilarang oleh aturan database), dan Advisor hanya memantau.
 
 ---
 
@@ -71,11 +74,11 @@ Memilih salah satu akun akan secara otomatis menyesuaikan konteks izin, tampilan
 ## 5. Pemesanan Ruangan & Arena Uji Coba
 
 1. Buka menu **Jadwal Ruangan** atau klik tombol **Aksi Cepat $\rightarrow$ Pesan Ruangan** di bilah navigasi.
-2. Pilih fasilitas yang diperlukan: *Arena Lapangan Kontes Robot*, *Ruang Mekanik & Fabrikasi*, atau *Ruang Diskusi & Software*.
-3. Tentukan tanggal dan slot sesi waktu pemakaian.
+2. Pilih fasilitas yang diperlukan: *Arena Uji Coba KRAI / KRI*, *Ruang Mekanik & Fabrikasi*, atau *Ruang Diskusi & Pemrograman*.
+3. Tentukan tanggal (kalender) dan slot sesi waktu (Pagi / Siang / Malam).
 4. Tuliskan deskripsi keperluan pengujian robotika dan jumlah peserta tim.
 5. Klik **Konfirmasi Booking**.
-6. Sistem akan otomatis memvalidasi ketersediaan waktu untuk memastikan tidak ada jadwal bentrok dengan tim lain.
+6. Sistem memvalidasi ketersediaan waktu (rentang jam) sebelum menyimpan, dan database menolak bentrok yang lolos dari pemeriksaan klien.
 
 ---
 
