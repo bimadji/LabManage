@@ -14,7 +14,7 @@ const TZ = "Asia/Jakarta";
 
 /** Awal & akhir minggu berjalan (Senin 00:00 - Senin berikutnya 00:00, zona Jakarta). */
 export function getWeekRange(now: Date = new Date()): { start: Date; end: Date } {
-  // Waktu lokal Jakarta Independent of host timezone.
+  // Tanggal kalender lokal di zona Jakarta.
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: TZ,
     year: "numeric",
@@ -24,10 +24,14 @@ export function getWeekRange(now: Date = new Date()): { start: Date; end: Date }
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
   const iso = `${get("year")}-${get("month")}-${get("day")}`;
 
-  // Sentinel UTC yang mewakili 00:00 WIB (UTC+7).
+  // Hari kerja dihitung dari tanggal kalender (bukan dari instant UTC midnight WIB,
+  // yang jatuh ke hari sebelumnya).
+  const [year, month, day] = iso.split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay(); // 0 = Minggu
+  const daysSinceMonday = (weekday + 6) % 7;
+
   const midnightWib = new Date(`${iso}T00:00:00+07:00`);
-  const dayIndex = (midnightWib.getUTCDay() + 6) % 7; // 0 = Senin
-  const start = new Date(midnightWib.getTime() - dayIndex * 86400000);
+  const start = new Date(midnightWib.getTime() - daysSinceMonday * 86400000);
   const end = new Date(start.getTime() + 7 * 86400000);
   return { start, end };
 }
