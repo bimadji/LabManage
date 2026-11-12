@@ -1,16 +1,66 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Users, ArrowRight } from "lucide-react";
-import { MOCK_TEAM_MONITORING } from "@/lib/mock-data";
-import { DEMO_MODE } from "@/lib/demo";
+import { useData } from "@/contexts/data-context";
+import { createClient } from "@/lib/supabase/client";
+import { getWeekRange, hoursForUser } from "@/lib/attendance";
 import { BRANDING } from "@/lib/branding";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+interface ProfileRow {
+  id: string;
+  nama: string;
+  nim: string;
+  role: "admin" | "anggota" | "advisor";
+  avatar_url: string | null;
+  kelompok: { id: string; nama: string; jenis: "tim_riset" | "ukm"; target_jam_mingguan: number | null } | null;
+}
+
 export function TeamOverviewWidget() {
-  const members = DEMO_MODE ? MOCK_TEAM_MONITORING : [];
+  const { attendanceSessions } = useData();
+  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let active = true;
+
+    async function loadMembers() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, nama, nim, role, avatar_url, kelompok (id, nama, jenis, target_jam_mingguan)");
+      if (!active) return;
+      setProfiles((data ?? []) as unknown as ProfileRow[]);
+    }
+
+    void loadMembers();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const { start, end } = useMemo(() => getWeekRange(), []);
+
+  const members = useMemo(
+    () =>
+      profiles
+        .filter((p) => p.role === "anggota")
+        .map((p) => ({
+          userId: p.id,
+          name: p.nama,
+          nim: p.nim,
+          team: p.kelompok?.nama ?? "-",
+          teamType: p.kelompok?.jenis ?? "tim_riset",
+          avatar: p.avatar_url ?? "",
+          targetHours: p.kelompok?.target_jam_mingguan ?? null,
+          hoursThisWeek: hoursForUser(attendanceSessions, p.id, start, end),
+          isCurrentlyInLab: attendanceSessions.some((s) => s.userId === p.id && !s.checkOut),
+        })),
+    [profiles, attendanceSessions, start, end]
+  );
+
   const inLabCount = members.filter((m) => m.isCurrentlyInLab).length;
   const targetCompletedCount = members.filter(
     (m) => m.targetHours !== null && m.hoursThisWeek >= m.targetHours

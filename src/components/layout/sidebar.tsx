@@ -30,8 +30,13 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
   const { role } = useRole();
   const currentUser = useCurrentUser();
   const { loanRequests, labReports } = useData();
-  const { isCheckedIn, weeklyAccumulatedHours, weeklyTargetHours, formattedElapsed } =
-    useAttendance();
+  const {
+    isCheckedIn,
+    weeklyAccumulatedHours,
+    weeklyTargetHours,
+    formattedElapsed,
+    hasOpenSession,
+  } = useAttendance();
 
   const isAdmin = role === "admin";
 
@@ -180,7 +185,7 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
                     : "bg-slate-100 text-slate-600"
                 )}
               >
-                {isCheckedIn ? "Aktif" : "Off"}
+                {isCheckedIn ? "Aktif" : "Nonaktif"}
               </span>
             </div>
 
@@ -193,6 +198,13 @@ export function Sidebar({ onNavClick, className }: SidebarProps) {
                   {formattedElapsed}
                 </p>
               </div>
+            )}
+
+            {!isCheckedIn && hasOpenSession && (
+              <p className="mb-2 rounded-md border border-amber-200 bg-amber-50 p-1.5 text-[10px] text-amber-800">
+                Ada sesi lama yang belum ditutup (lupa check-out). Tekan Check-Out &amp; Simpan
+                untuk menutupnya.
+              </p>
             )}
 
             <div className="space-y-1.5">

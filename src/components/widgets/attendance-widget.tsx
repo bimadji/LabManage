@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Clock, Play, Square, RotateCcw, CheckCircle2, AlertCircle } from "lucide-react";
+import { Clock, Play, Square, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAttendance } from "@/contexts/attendance-context";
 import { BRANDING } from "@/lib/branding";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -22,7 +22,6 @@ export function AttendanceWidget() {
     weeklyTargetHours,
     checkIn,
     checkOut,
-    resetWeeklyDemo,
     formattedElapsed,
   } = useAttendance();
 
@@ -80,7 +79,7 @@ export function AttendanceWidget() {
               Absensi Kehadiran Lab
             </CardTitle>
             <p className="text-xs text-slate-500">
-              Target Wajib: 10 Jam / Minggu ({BRANDING.scopeName})
+              Target Wajib: {weeklyTargetHours} Jam / Minggu ({BRANDING.scopeName})
             </p>
           </div>
         </div>
@@ -194,20 +193,12 @@ export function AttendanceWidget() {
             <span>
               {remainingHours === 0 ? (
                 <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Target 10 jam tercapai!
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Target {weeklyTargetHours} jam tercapai!
                 </span>
               ) : (
                 `Sisa target: ${remainingHours} jam lagi`
               )}
             </span>
-            <button
-              onClick={resetWeeklyDemo}
-              className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-[10px] cursor-pointer"
-              title="Reset progress untuk demonstrasi testing"
-            >
-              <RotateCcw className="h-3 w-3" />
-              <span>Reset Demo</span>
-            </button>
           </div>
         </div>
       </CardContent>

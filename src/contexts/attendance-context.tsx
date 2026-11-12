@@ -1,10 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { useCurrentUser, useRole } from "@/contexts/role-context";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { useRole } from "@/contexts/role-context";
+import { useData } from "@/contexts/data-context";
 import { DEMO_MODE } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
 import { friendlyError } from "@/contexts/data-context";
+import { getWeekRange, hoursForUser, openSessionFor } from "@/lib/attendance";
 
 export type AttendanceResult = { success: boolean; error?: string };
 
@@ -14,9 +16,10 @@ interface AttendanceContextType {
   elapsedSeconds: number;
   weeklyAccumulatedHours: number;
   weeklyTargetHours: number;
+  /** Sesi yang masih terbuka (lupa check-out) dari database. */
+  hasOpenSession: boolean;
   checkIn: () => Promise<AttendanceResult>;
   checkOut: () => Promise<AttendanceResult>;
-  resetWeeklyDemo: () => void;
   formattedElapsed: string;
 }
 
@@ -24,11 +27,41 @@ const AttendanceContext = createContext<AttendanceContextType | undefined>(undef
 
 export function AttendanceProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useRole();
+  const { attendanceSessions, refreshData } = useData();
   const [isCheckedIn, setIsCheckedIn] = useState<boolean>(false);
   const [checkInTime, setCheckInTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [weeklyAccumulatedHours, setWeeklyAccumulatedHours] = useState<number>(6.5);
   const weeklyTargetHours = currentUser?.weeklyTargetHours || 10;
+
+  // Jam akumulasi dihitung dari baris attendance_sessions, bukan angka manual.
+  const weeklyAccumulatedHours = useMemo(() => {
+    if (!currentUser) return 0;
+    const { start, end } = getWeekRange();
+    return hoursForUser(attendanceSessions, currentUser.id, start, end);
+  }, [attendanceSessions, currentUser?.id]);
+
+  // Sesi terbuka milik user (dari database).
+  const openSession = useMemo(() => {
+    if (!currentUser) return null;
+    return openSessionFor(attendanceSessions, currentUser.id);
+  }, [attendanceSessions, currentUser?.id]);
+
+  const hasOpenSession = Boolean(openSession);
+
+  useEffect(() => {
+    if (!isCheckedIn || !checkInTime) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - checkInTime.getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isCheckedIn, checkInTime]);
+
+  // Pulihkan tampilan sesi aktif dari database setelah reload.
+  useEffect(() => {
+    if (!openSession) return;
+    setCheckInTime(new Date(openSession.checkIn));
+    setIsCheckedIn(true);
+  }, [openSession]);
 
   useEffect(() => {
     if (!isCheckedIn || !checkInTime) return;
@@ -66,6 +99,7 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
       return { success: false, error: friendlyError(error) };
     }
 
+    await refreshData();
     setCheckInTime(now);
     setIsCheckedIn(true);
     setElapsedSeconds(0);
@@ -99,19 +133,11 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
       };
     }
 
-    const addedHours = Math.max(0.2, Number((elapsedSeconds / 3600).toFixed(2)));
-    setWeeklyAccumulatedHours((prev) => Number((prev + addedHours).toFixed(2)));
+    await refreshData();
     setIsCheckedIn(false);
     setCheckInTime(null);
     setElapsedSeconds(0);
     return { success: true };
-  };
-
-  const resetWeeklyDemo = () => {
-    setWeeklyAccumulatedHours(0);
-    setIsCheckedIn(false);
-    setCheckInTime(null);
-    setElapsedSeconds(0);
   };
 
   const hours = Math.floor(elapsedSeconds / 3600);
@@ -127,9 +153,9 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
         elapsedSeconds,
         weeklyAccumulatedHours,
         weeklyTargetHours,
+        hasOpenSession,
         checkIn,
         checkOut,
-        resetWeeklyDemo,
         formattedElapsed,
       }}
     >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   LineChart as ChartIcon,
   CheckCircle2,
@@ -23,34 +23,104 @@ import {
   Cell,
 } from "recharts";
 import { useRole } from "@/contexts/role-context";
-import { MOCK_TEAM_MONITORING } from "@/lib/mock-data";
-import { DEMO_MODE } from "@/lib/demo";
+import { useData } from "@/contexts/data-context";
+import { createClient } from "@/lib/supabase/client";
+import { getWeekRange, hoursForUser } from "@/lib/attendance";
 import { BRANDING } from "@/lib/branding";
 import { Banner } from "@/components/common/banner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ErrorState } from "@/components/common/error-state";
+import { EmptyState } from "@/components/common/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface MemberRow {
+  id: string;
+  name: string;
+  nim: string;
+  avatar: string | null;
+  team: string;
+  teamType: "tim_riset" | "ukm";
+  targetHours: number | null;
+  hoursThisWeek: number;
+  isCurrentlyInLab: boolean;
+  lastActive: string;
+}
+
+interface ProfileRow {
+  id: string;
+  nama: string;
+  nim: string;
+  role: "admin" | "anggota" | "advisor";
+  avatar_url: string | null;
+  kelompok_id: string;
+  kelompok: { id: string; nama: string; jenis: "tim_riset" | "ukm"; target_jam_mingguan: number | null } | null;
+}
 
 export default function MonitoringPage() {
   const { role } = useRole();
+  const { attendanceSessions, roomBookings } = useData();
+  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeGroupFilter, setActiveGroupFilter] = useState<"semua" | "tim_riset" | "ukm">("semua");
 
-  // Proteksi Tampilan: Anggota TIDAK boleh mengakses halaman ini.
-  // Guard utama ada di server (src/proxy.ts): anggota dialihkan ke beranda.
-  if (role === "anggota") {
-    return (
-      <div className="py-12 max-w-xl mx-auto">
-        <ErrorState
-          title={`Akses Terbatas: Khusus Admin & Advisor`}
-          message={`Halaman Monitoring Kehadiran Lab Robotika hanya dapat diakses oleh Kepala Laboratorium (Admin) atau Dosen Pembina (Advisor).`}
-        />
-      </div>
-    );
-  }
+  useEffect(() => {
+    const supabase = createClient();
+    let active = true;
 
-  // Pisahkan anggota Tim Riset (punya kewajiban jam lab) vs UKM Roboholic (tanpa target jam)
-  // Data contoh hanya untuk mode demo; data nyata dipasang pada paket presensi/monitoring.
-  const allMembers = DEMO_MODE ? MOCK_TEAM_MONITORING : [];
+    async function loadMembers() {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, nama, nim, role, avatar_url, kelompok_id, kelompok (id, nama, jenis, target_jam_mingguan)");
+      if (!active) return;
+      if (error) {
+        setLoadError(error.message);
+        return;
+      }
+      setProfiles((data ?? []) as unknown as ProfileRow[]);
+      setLoadError(null);
+    }
+
+    void loadMembers();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const { start, end } = useMemo(() => getWeekRange(), []);
+
+  const allMembers: MemberRow[] = useMemo(
+    () =>
+      profiles
+        .filter((p) => p.role === "anggota")
+        .map((p) => {
+          const open = attendanceSessions.find((s) => s.userId === p.id && !s.checkOut);
+          const last = attendanceSessions
+            .filter((s) => s.userId === p.id)
+            .sort((a, b) => b.checkIn.localeCompare(a.checkIn))[0];
+          return {
+            id: p.id,
+            name: p.nama,
+            nim: p.nim,
+            avatar: p.avatar_url,
+            team: p.kelompok?.nama ?? "-",
+            teamType: p.kelompok?.jenis ?? "tim_riset",
+            targetHours: p.kelompok?.target_jam_mingguan ?? null,
+            hoursThisWeek: hoursForUser(attendanceSessions, p.id, start, end),
+            isCurrentlyInLab: Boolean(open),
+            lastActive: last
+              ? new Date(last.checkIn).toLocaleString("id-ID", {
+                  timeZone: "Asia/Jakarta",
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Belum pernah",
+          };
+        }),
+    [profiles, attendanceSessions, start, end]
+  );
+
   const timRisetMembers = allMembers.filter((m) => m.teamType === "tim_riset");
   const ukmMembers = allMembers.filter((m) => m.teamType === "ukm");
 
@@ -70,13 +140,42 @@ export default function MonitoringPage() {
     target: m.targetHours || 10,
   }));
 
-  const roomOccupancyData = DEMO_MODE
-    ? [
-        { name: "Arena Kontes Robot", value: 45, color: "#22c55e" },
-        { name: "Lab Utama Robotika", value: 35, color: "#0ea5e9" },
-        { name: "Bengkel & Fabrikasi Mekanik", value: 20, color: "#a855f7" },
-      ]
-    : [];
+  // Utilisasi ruangan: jam pemesanan per ruangan pada minggu berjalan.
+  const roomOccupancyData = useMemo(() => {
+    const weekHours = 7 * 24;
+    const hoursByRoom: Record<string, number> = {};
+    for (const b of roomBookings) {
+      if (b.status !== "aktif" || !b.startTime || !b.endTime) continue;
+      const from = new Date(b.startTime);
+      const to = new Date(b.endTime);
+      const s = from > start ? from : start;
+      const e = to < end ? to : end;
+      if (e <= s) continue;
+      const hours = (e.getTime() - s.getTime()) / 3600000;
+      hoursByRoom[b.roomName] = (hoursByRoom[b.roomName] ?? 0) + hours;
+    }
+    const palette = ["#22c55e", "#0ea5e9", "#a855f7", "#f59e0b"];
+    return Object.entries(hoursByRoom)
+      .map(([name, hours], i) => ({
+        name,
+        value: Math.round((hours / weekHours) * 100),
+        color: palette[i % palette.length],
+      }))
+      .filter((r) => r.value > 0);
+  }, [roomBookings, start, end]);
+
+  // Proteksi Tampilan: Anggota TIDAK boleh mengakses halaman ini.
+  // Guard utama ada di server (src/proxy.ts): anggota dialihkan ke beranda.
+  if (role === "anggota") {
+    return (
+      <div className="py-12 max-w-xl mx-auto">
+        <ErrorState
+          title={`Akses Terbatas: Khusus Admin & Advisor`}
+          message={`Halaman Monitoring Kehadiran Lab Robotika hanya dapat diakses oleh Kepala Laboratorium (Admin) atau Dosen Pembina (Advisor).`}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -130,11 +229,11 @@ export default function MonitoringPage() {
       {/* Ringkasan Grafik Utama (Hanya Tampil Jika Tab Tim Riset / Semua Aktif) */}
       {activeGroupFilter !== "ukm" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Bar Chart: Jam Lab Mingguan terhadap Target 10 Jam */}
+          {/* Bar Chart: Jam Lab Mingguan terhadap Target */}
           <Card className="lg:col-span-2 border-slate-200 bg-white shadow-xs">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-bold text-slate-800">
-                Distribusi Jam Riset Anggota Tim Riset (Target: 10 Jam/Minggu)
+                Distribusi Jam Riset Anggota Tim Riset
               </CardTitle>
               <p className="text-xs text-slate-500">
                 Garis hijau menandakan batas minimal pemenuhan kewajiban mingguan anggota tim riset
@@ -142,7 +241,13 @@ export default function MonitoringPage() {
             </CardHeader>
 
             <CardContent className="pt-2">
-              <div className="h-[280px] w-full">
+              {chartData.length === 0 ? (
+                <EmptyState
+                  title="Belum ada data jam riset"
+                  description="Grafik muncul setelah anggota tim riset melakukan check-in dan check-out di laboratorium."
+                />
+              ) : (
+                <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -197,7 +302,8 @@ export default function MonitoringPage() {
                     <Bar dataKey="jam" fill="#3b82f6" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -213,39 +319,48 @@ export default function MonitoringPage() {
             </CardHeader>
 
             <CardContent className="flex-1 flex flex-col justify-center items-center pt-2">
-              <div className="h-[180px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={roomOccupancyData}
-                      innerRadius={50}
-                      outerRadius={75}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {roomOccupancyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="w-full space-y-1.5 pt-2 border-t border-slate-100">
-                {roomOccupancyData.map((room) => (
-                  <div key={room.name} className="flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ backgroundColor: room.color }}
-                      />
-                      <span className="text-slate-700">{room.name}</span>
-                    </div>
-                    <span className="font-bold text-slate-800">{room.value}%</span>
+              {roomOccupancyData.length === 0 ? (
+                <EmptyState
+                  title="Belum ada pemesanan ruangan"
+                  description="Persentase utilisasi muncul setelah ada booking ruang dan arena pada minggu berjalan."
+                />
+              ) : (
+                <>
+                  <div className="h-[180px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={roomOccupancyData}
+                          innerRadius={50}
+                          outerRadius={75}
+                          paddingAngle={4}
+                          dataKey="value"
+                        >
+                          {roomOccupancyData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
+
+                  <div className="w-full space-y-1.5 pt-2 border-t border-slate-100">
+                    {roomOccupancyData.map((room) => (
+                      <div key={room.name} className="flex justify-between items-center text-xs">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ backgroundColor: room.color }}
+                          />
+                          <span className="text-slate-700">{room.name}</span>
+                        </div>
+                        <span className="font-bold text-slate-800">{room.value}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -278,8 +393,9 @@ export default function MonitoringPage() {
               {displayedMembers.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-5 py-10 text-center text-xs text-slate-500">
-                    Belum ada data kehadiran anggota. Data muncul setelah anggota melakukan
-                    check-in/check-out di laboratorium.
+                    {loadError
+                      ? `Gagal memuat data anggota: ${loadError}`
+                      : "Belum ada data kehadiran anggota. Data muncul setelah anggota melakukan check-in/check-out di laboratorium."}
                   </td>
                 </tr>
               )}
@@ -288,10 +404,10 @@ export default function MonitoringPage() {
                 const isMet = isTimRiset && member.hoursThisWeek >= (member.targetHours || 10);
 
                 return (
-                  <tr key={member.userId} className="hover:bg-slate-50/70 transition-colors">
+                  <tr key={member.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-5 py-3.5 flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.avatar} alt={member.name} />
+                        <AvatarImage src={member.avatar ?? ""} alt={member.name} />
                         <AvatarFallback>{member.name.slice(0, 2)}</AvatarFallback>
                       </Avatar>
                       <div>
