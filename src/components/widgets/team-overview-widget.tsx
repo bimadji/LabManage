@@ -4,20 +4,21 @@ import React from "react";
 import Link from "next/link";
 import { Users, ArrowRight } from "lucide-react";
 import { MOCK_TEAM_MONITORING } from "@/lib/mock-data";
+import { DEMO_MODE } from "@/lib/demo";
 import { BRANDING } from "@/lib/branding";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function TeamOverviewWidget() {
-  const members = MOCK_TEAM_MONITORING;
+  const members = DEMO_MODE ? MOCK_TEAM_MONITORING : [];
   const inLabCount = members.filter((m) => m.isCurrentlyInLab).length;
   const targetCompletedCount = members.filter(
     (m) => m.targetHours !== null && m.hoursThisWeek >= m.targetHours
   ).length;
 
-  const avgHours = (
-    members.reduce((acc, m) => acc + m.hoursThisWeek, 0) / members.length
-  ).toFixed(1);
+  const avgHours = members.length
+    ? (members.reduce((acc, m) => acc + m.hoursThisWeek, 0) / members.length).toFixed(1)
+    : "-";
 
   return (
     <Card className="border-slate-200/80 shadow-xs bg-white">
@@ -81,6 +82,11 @@ export function TeamOverviewWidget() {
             Anggota Aktif di Lab
           </span>
           <div className="space-y-1.5">
+            {members.length === 0 && (
+              <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-4 text-center text-[11px] text-slate-500">
+                Belum ada data kehadiran anggota.
+              </p>
+            )}
             {members.slice(0, 4).map((member) => (
               <div
                 key={member.userId}

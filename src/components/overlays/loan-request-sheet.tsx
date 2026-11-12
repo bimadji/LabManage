@@ -71,7 +71,7 @@ export function LoanRequestSheet() {
       return;
     }
 
-    await addLoanRequest({
+    const result = await addLoanRequest({
       itemId: currentItem.id,
       itemName: currentItem.name,
       itemCode: currentItem.code,
@@ -87,6 +87,11 @@ export function LoanRequestSheet() {
       expectedReturnDate,
       notes,
     });
+
+    if (!result.success) {
+      setErrorMsg(result.error ?? "Permohonan gagal disimpan.");
+      return;
+    }
 
     setSuccessNotice(true);
     setTimeout(() => {

@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Clock, Play, Square, RotateCcw, CheckCircle2 } from "lucide-react";
+import React, { useState } from "react";
+import { Clock, Play, Square, RotateCcw, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAttendance } from "@/contexts/attendance-context";
 import { BRANDING } from "@/lib/branding";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -13,6 +13,8 @@ import { useRole } from "@/contexts/role-context";
 
 export function AttendanceWidget() {
   const { currentUser } = useRole();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const {
     isCheckedIn,
     checkInTime,
@@ -129,26 +131,50 @@ export function AttendanceWidget() {
           <div className="flex items-center gap-2">
             {!isCheckedIn ? (
               <Button
-                onClick={checkIn}
+                onClick={async () => {
+                  setBusy(true);
+                  setActionError(null);
+                  const result = await checkIn();
+                  setBusy(false);
+                  if (!result.success) setActionError(result.error ?? "Check-in gagal.");
+                }}
+                disabled={busy}
                 size="lg"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm gap-2 w-full sm:w-auto"
               >
                 <Play className="h-4 w-4 fill-current" />
-                <span>Check-In Sekarang</span>
+                <span>{busy ? "Memproses..." : "Check-In Sekarang"}</span>
               </Button>
             ) : (
               <Button
-                onClick={checkOut}
+                onClick={async () => {
+                  setBusy(true);
+                  setActionError(null);
+                  const result = await checkOut();
+                  setBusy(false);
+                  if (!result.success) setActionError(result.error ?? "Check-out gagal.");
+                }}
+                disabled={busy}
                 size="lg"
                 variant="destructive"
                 className="bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-sm gap-2 w-full sm:w-auto"
               >
                 <Square className="h-4 w-4 fill-current" />
-                <span>Check-Out & Simpan</span>
+                <span>{busy ? "Menyimpan..." : "Check-Out & Simpan"}</span>
               </Button>
             )}
           </div>
         </div>
+
+        {actionError && (
+          <p
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{actionError}</span>
+          </p>
+        )}
 
         {/* Progres Akumulasi Mingguan */}
         <div className="space-y-2">

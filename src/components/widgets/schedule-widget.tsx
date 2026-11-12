@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Plus, Clock, Users, ArrowRight } from "lucide-react";
 import { useData } from "@/contexts/data-context";
@@ -12,10 +12,27 @@ export function ScheduleWidget() {
   const { roomBookings } = useData();
   const { openBookingDialog } = useOverlay();
 
-  // Tampilkan hanya sesi terdekat: hari ini dan besok
-  const nearBookings = roomBookings.filter(
-    (b) => b.date === "Hari Ini" || b.date === "Besok"
-  );
+  // Jam klien baru diketahui setelah mount; menghindari nilai tidak stabil saat prerender.
+  const [nowMs, setNowMs] = useState(0);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- inisialisasi jam sekali saat mount
+    setNowMs(Date.now());
+  }, []);
+
+  // Tampilkan sesi hari ini dan besok (zona Asia/Jakarta), berdasarkan waktu mulai sebenarnya.
+  const today = new Date(nowMs).toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+  const tomorrow = new Date(nowMs + 86_400_000).toLocaleDateString("en-CA", {
+    timeZone: "Asia/Jakarta",
+  });
+  const nearBookings = nowMs
+    ? roomBookings.filter((b) => {
+        if (!b.startTime) return false;
+        const day = new Date(b.startTime).toLocaleDateString("en-CA", {
+          timeZone: "Asia/Jakarta",
+        });
+        return b.status === "aktif" && (day === today || day === tomorrow);
+      })
+    : [];
 
   return (
     <Card className="border-slate-200/80 shadow-xs bg-white">

@@ -30,29 +30,54 @@ export function ReviewRequestSheet() {
   const isOpen = activeSheet === "review";
   const [rejectMode, setRejectMode] = useState(false);
   const [reason, setReason] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const runAction = async (action: () => Promise<{ success: boolean; error?: string }>) => {
+    setBusy(true);
+    setActionError(null);
+    const result = await action();
+    setBusy(false);
+    if (!result.success) {
+      setActionError(result.error ?? "Tindakan gagal disimpan.");
+      return false;
+    }
+    closeAllOverlays();
+    return true;
+  };
 
   const handleApprove = () => {
     if (selectedRequestForReview) {
-      updateLoanRequestStatus(selectedRequestForReview.id, "disetujui");
-    } else if (selectedReportForReview) {
-      updateReportStatus(selectedReportForReview.id, "ditangani");
-    }
-    closeAllOverlays();
-  };
-
-  const handleReject = () => {
-    if (selectedRequestForReview) {
-      updateLoanRequestStatus(
-        selectedRequestForReview.id,
-        "ditolak",
-        reason.trim() || "Tidak memenuhi ketentuan peminjaman lab."
+      void runAction(() =>
+        updateLoanRequestStatus(selectedRequestForReview.id, "disetujui")
       );
     } else if (selectedReportForReview) {
-      updateReportStatus(selectedReportForReview.id, "selesai");
+      void runAction(() => updateReportStatus(selectedReportForReview.id, "ditangani"));
     }
-    setRejectMode(false);
-    setReason("");
-    closeAllOverlays();
+  };
+
+  const handleReject = async () => {
+    const done = selectedRequestForReview
+      ? await runAction(() =>
+          updateLoanRequestStatus(
+            selectedRequestForReview.id,
+            "ditolak",
+            reason.trim() || "Tidak memenuhi ketentuan peminjaman lab."
+          )
+        )
+      : selectedReportForReview
+        ? await runAction(() => updateReportStatus(selectedReportForReview.id, "selesai"))
+        : false;
+
+    if (done) {
+      setRejectMode(false);
+      setReason("");
+    }
+  };
+
+  const handleComplete = () => {
+    if (!selectedRequestForReview) return;
+    void runAction(() => updateLoanRequestStatus(selectedRequestForReview.id, "selesai"));
   };
 
   return (
@@ -195,13 +220,38 @@ export function ReviewRequestSheet() {
           )}
         </div>
 
+        {actionError && (
+          <p
+            role="alert"
+            className="mt-2 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{actionError}</span>
+          </p>
+        )}
+
         <SheetFooter className="mt-4">
-          {!rejectMode && (
+          {!rejectMode && selectedRequestForReview?.status === "disetujui" && (
+            <div className="flex w-full items-center justify-end gap-2">
+              <Button
+                size="sm"
+                onClick={handleComplete}
+                disabled={busy}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+              >
+                <Check className="h-3.5 w-3.5 mr-1" />
+                Tandai Dikembalikan
+              </Button>
+            </div>
+          )}
+          {!rejectMode &&
+            (selectedReportForReview || selectedRequestForReview?.status === "menunggu") && (
             <div className="flex w-full items-center justify-end gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setRejectMode(true)}
+                disabled={busy}
                 className="border-rose-200 text-rose-700 hover:bg-rose-50 text-xs"
               >
                 <X className="h-3.5 w-3.5 mr-1" />
@@ -210,10 +260,11 @@ export function ReviewRequestSheet() {
               <Button
                 size="sm"
                 onClick={handleApprove}
+                disabled={busy}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
               >
                 <Check className="h-3.5 w-3.5 mr-1" />
-                Setujui Peminjaman
+                {selectedReportForReview ? "Tandai Ditangani" : "Setujui Peminjaman"}
               </Button>
             </div>
           )}

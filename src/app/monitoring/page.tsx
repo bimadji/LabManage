@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import { useRole } from "@/contexts/role-context";
 import { MOCK_TEAM_MONITORING } from "@/lib/mock-data";
+import { DEMO_MODE } from "@/lib/demo";
 import { BRANDING } from "@/lib/branding";
 import { Banner } from "@/components/common/banner";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -47,7 +48,8 @@ export default function MonitoringPage() {
   }
 
   // Pisahkan anggota Tim Riset (punya kewajiban jam lab) vs UKM Roboholic (tanpa target jam)
-  const allMembers = MOCK_TEAM_MONITORING;
+  // Data contoh hanya untuk mode demo; data nyata dipasang pada paket presensi/monitoring.
+  const allMembers = DEMO_MODE ? MOCK_TEAM_MONITORING : [];
   const timRisetMembers = allMembers.filter((m) => m.teamType === "tim_riset");
   const ukmMembers = allMembers.filter((m) => m.teamType === "ukm");
 
@@ -67,11 +69,13 @@ export default function MonitoringPage() {
     target: m.targetHours || 10,
   }));
 
-  const roomOccupancyData = [
-    { name: "Arena Kontes Robot", value: 45, color: "#22c55e" },
-    { name: "Lab Utama Robotika", value: 35, color: "#0ea5e9" },
-    { name: "Bengkel & Fabrikasi Mekanik", value: 20, color: "#a855f7" },
-  ];
+  const roomOccupancyData = DEMO_MODE
+    ? [
+        { name: "Arena Kontes Robot", value: 45, color: "#22c55e" },
+        { name: "Lab Utama Robotika", value: 35, color: "#0ea5e9" },
+        { name: "Bengkel & Fabrikasi Mekanik", value: 20, color: "#a855f7" },
+      ]
+    : [];
 
   return (
     <div className="space-y-6">
@@ -270,6 +274,14 @@ export default function MonitoringPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {displayedMembers.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-xs text-slate-500">
+                    Belum ada data kehadiran anggota. Data muncul setelah anggota melakukan
+                    check-in/check-out di laboratorium.
+                  </td>
+                </tr>
+              )}
               {displayedMembers.map((member) => {
                 const isTimRiset = member.teamType === "tim_riset";
                 const isMet = isTimRiset && member.hoursThisWeek >= (member.targetHours || 10);

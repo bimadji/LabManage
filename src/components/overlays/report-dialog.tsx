@@ -31,12 +31,16 @@ export function ReportDialog() {
   const [location, setLocation] = useState("Meja Fabrikasi & Solder D-1");
   const [urgency, setUrgency] = useState<"normal" | "tinggi" | "darurat">("normal");
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
 
-    addLabReport({
+    setBusy(true);
+    setErrorMsg("");
+    const result = await addLabReport({
       type: tabType,
       title,
       description,
@@ -44,7 +48,15 @@ export function ReportDialog() {
       reporterName: currentUser.name,
       reporterRole: role,
       urgency,
+      userId: currentUser.id,
+      kelompokId: currentUser.teamId,
     });
+    setBusy(false);
+
+    if (!result.success) {
+      setErrorMsg(result.error ?? "Laporan gagal disimpan.");
+      return;
+    }
 
     setSuccess(true);
     setTimeout(() => {
@@ -165,6 +177,16 @@ export function ReportDialog() {
               />
             </div>
 
+            {errorMsg && (
+              <p
+                role="alert"
+                className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700"
+              >
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </p>
+            )}
+
             <DialogFooter className="pt-2">
               <Button
                 type="button"
@@ -178,9 +200,10 @@ export function ReportDialog() {
               <Button
                 type="submit"
                 size="sm"
+                disabled={busy}
                 className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
               >
-                Kirim Laporan
+                {busy ? "Menyimpan..." : "Kirim Laporan"}
               </Button>
             </DialogFooter>
           </form>

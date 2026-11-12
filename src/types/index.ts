@@ -93,6 +93,13 @@ export interface RoomBooking {
   status: "aktif" | "selesai" | "dibatalkan";
 }
 
+export interface AttendanceSession {
+  id: string;
+  userId: string;
+  checkIn: string;
+  checkOut: string | null;
+}
+
 export interface AttendanceRecord {
   id: string;
   userId: string;

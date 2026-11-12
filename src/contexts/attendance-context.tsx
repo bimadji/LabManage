@@ -2,7 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRole } from "@/contexts/role-context";
+import { DEMO_MODE } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/client";
+import { friendlyError } from "@/contexts/data-context";
+
+export type AttendanceResult = { success: boolean; error?: string };
 
 interface AttendanceContextType {
   isCheckedIn: boolean;
@@ -10,8 +14,8 @@ interface AttendanceContextType {
   elapsedSeconds: number;
   weeklyAccumulatedHours: number;
   weeklyTargetHours: number;
-  checkIn: () => Promise<void>;
-  checkOut: () => Promise<void>;
+  checkIn: () => Promise<AttendanceResult>;
+  checkOut: () => Promise<AttendanceResult>;
   resetWeeklyDemo: () => void;
   formattedElapsed: string;
 }
@@ -27,63 +31,74 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
   const weeklyTargetHours = currentUser.weeklyTargetHours || 10;
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
-    if (isCheckedIn && checkInTime) {
-      interval = setInterval(() => {
-        const diff = Math.floor((Date.now() - checkInTime.getTime()) / 1000);
-        setElapsedSeconds(diff);
-      }, 1000);
-    } else {
-      setElapsedSeconds(0);
-    }
+    if (!isCheckedIn || !checkInTime) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - checkInTime.getTime()) / 1000));
+    }, 1000);
     return () => clearInterval(interval);
   }, [isCheckedIn, checkInTime]);
 
-  const checkIn = async () => {
-    // UKM users are blocked from checking in
+  const checkIn = async (): Promise<AttendanceResult> => {
     if (currentUser.teamType === "ukm") {
-      alert("Anggota UKM Roboholic tidak memiliki kewajiban absensi jam lab.");
-      return;
+      return {
+        success: false,
+        error: "Anggota UKM Roboholic tidak memiliki kewajiban absensi jam lab.",
+      };
+    }
+    if (DEMO_MODE) {
+      return { success: false, error: "MODE DEMO: presensi tidak disimpan ke database." };
     }
 
     const now = new Date();
+    const supabase = createClient();
+    const { error } = await supabase.from("attendance_sessions").insert([
+      {
+        user_id: currentUser.id,
+        kelompok_id: currentUser.teamId,
+        check_in: now.toISOString(),
+      },
+    ]);
+
+    if (error) {
+      return { success: false, error: friendlyError(error) };
+    }
+
     setCheckInTime(now);
     setIsCheckedIn(true);
     setElapsedSeconds(0);
-
-    try {
-      const supabase = createClient();
-      await supabase.from("attendance_sessions").insert([
-        {
-          user_id: currentUser.id,
-          kelompok_id: currentUser.teamId,
-          check_in: now.toISOString(),
-        },
-      ]);
-    } catch {
-      // optimistic update maintained
-    }
+    return { success: true };
   };
 
-  const checkOut = async () => {
-    if (checkInTime) {
-      const addedHours = Math.max(0.2, Number((elapsedSeconds / 3600).toFixed(2)));
-      setWeeklyAccumulatedHours((prev) => Number((prev + addedHours).toFixed(2)));
-
-      try {
-        const supabase = createClient();
-        await supabase
-          .from("attendance_sessions")
-          .update({ check_out: new Date().toISOString() })
-          .eq("user_id", currentUser.id)
-          .is("check_out", null);
-      } catch {
-        // optimistic update maintained
-      }
+  const checkOut = async (): Promise<AttendanceResult> => {
+    if (!checkInTime) return { success: false, error: "Tidak ada sesi aktif." };
+    if (DEMO_MODE) {
+      return { success: false, error: "MODE DEMO: presensi tidak disimpan ke database." };
     }
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("attendance_sessions")
+      .update({ check_out: new Date().toISOString() })
+      .eq("user_id", currentUser.id)
+      .is("check_out", null)
+      .select("id");
+
+    if (error) {
+      return { success: false, error: friendlyError(error) };
+    }
+    if (!data || data.length === 0) {
+      return {
+        success: false,
+        error: "Sesi aktif tidak ditemukan di database. Hubungi admin laboratorium.",
+      };
+    }
+
+    const addedHours = Math.max(0.2, Number((elapsedSeconds / 3600).toFixed(2)));
+    setWeeklyAccumulatedHours((prev) => Number((prev + addedHours).toFixed(2)));
     setIsCheckedIn(false);
     setCheckInTime(null);
     setElapsedSeconds(0);
+    return { success: true };
   };
 
   const resetWeeklyDemo = () => {

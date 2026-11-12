@@ -15,7 +15,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useData } from "@/contexts/data-context";
 import { useRole } from "@/contexts/role-context";
 import type { Item, ItemCategory } from "@/types";
-import { MOCK_KELOMPOK } from "@/lib/mock-data";
 import { PlusCircle, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface AddItemDialogProps {
@@ -24,7 +23,7 @@ interface AddItemDialogProps {
 }
 
 export function AddItemDialog({ open, onOpenChange }: AddItemDialogProps) {
-  const { addInventoryItem } = useData();
+  const { addInventoryItem, kelompok } = useData();
   const { role } = useRole();
 
   const [nama, setNama] = useState("");
@@ -68,7 +67,7 @@ export function AddItemDialog({ open, onOpenChange }: AddItemDialogProps) {
 
     const targetKelompok = pemilikKelompokId === "lab"
       ? null
-      : MOCK_KELOMPOK.find((k) => k.id === pemilikKelompokId);
+      : kelompok.find((k) => k.id === pemilikKelompokId);
 
     const result = await addInventoryItem({
       name: nama.trim(),
@@ -216,7 +215,7 @@ export function AddItemDialog({ open, onOpenChange }: AddItemDialogProps) {
                   className="w-full h-8 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs shadow-2xs outline-none"
                 >
                   <option value="lab">Milik Bersama Lab (Dapat dipinjam semua kelompok)</option>
-                  {MOCK_KELOMPOK.map((k) => (
+                  {kelompok.map((k) => (
                     <option key={k.id} value={k.id}>
                       Milik Khusus: {k.nama} ({k.jenis === "tim_riset" ? "Tim Riset" : "UKM"})
                     </option>
