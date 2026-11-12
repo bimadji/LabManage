@@ -273,9 +273,14 @@ const DEMO_BLOCKED: ActionResult = {
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useRole();
   const [snapshot, setSnapshot] = useState(DEMO_MODE ? DEMO_SNAPSHOT : EMPTY_SNAPSHOT);
-  const [isLoading, setIsLoading] = useState(!DEMO_MODE);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // Id user yang datanya sudah dimuat; dipakai untuk men derives status muat.
+  const [loadedForUserId, setLoadedForUserId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<{ userId: string; message: string } | null>(null);
   const mounted = useRef(true);
+
+  const userId = currentUser?.id ?? null;
+  const errorMessage = loadError && loadError.userId === userId ? loadError.message : null;
+  const isLoading = !DEMO_MODE && Boolean(userId) && loadedForUserId !== userId && !errorMessage;
 
   const refreshData = async () => {
     if (DEMO_MODE) return;
@@ -284,11 +289,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (!mounted.current) return;
       setSnapshot(next);
       setLoadError(null);
+      setLoadedForUserId(userId);
     } catch (err) {
       if (!mounted.current) return;
-      setLoadError(err instanceof Error ? err.message : "Gagal memuat data dari database.");
-    } finally {
-      if (mounted.current) setIsLoading(false);
+      setLoadError({
+        userId: userId ?? "",
+        message: err instanceof Error ? err.message : "Gagal memuat data dari database.",
+      });
     }
   };
 
@@ -301,17 +308,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   // Muat data setelah sesi tersedia (identitas & RLS butuh user yang login).
   useEffect(() => {
-    if (DEMO_MODE) return;
-    if (!currentUser) {
-      setSnapshot(EMPTY_SNAPSHOT);
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    // Muat data sekali per pengguna; setState terjadi setelah await, bukan render berantai.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refreshData();
-  }, [currentUser?.id]);
+    if (DEMO_MODE || !userId) return;
+    void (async () => {
+      const next = await fetchSnapshot();
+      if (!mounted.current) return;
+      setSnapshot(next);
+      setLoadError(null);
+      setLoadedForUserId(userId);
+    })().catch((err) => {
+      if (!mounted.current) return;
+      setLoadError({
+        userId,
+        message: err instanceof Error ? err.message : "Gagal memuat data dari database.",
+      });
+    });
+  }, [userId]);
 
   const addInventoryItem = async (newItem: Omit<Item, "id">): Promise<ActionResult> => {
     if (DEMO_MODE) return DEMO_BLOCKED;
@@ -479,7 +490,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...snapshot,
         isLoading,
-        loadError,
+        loadError: errorMessage,
         addInventoryItem,
         addStockToItem,
         addLoanRequest,

@@ -56,7 +56,7 @@ export function AdminInboxWidget() {
 
         <Link
           href="/kotak-masuk"
-          className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 no-underline"
+          className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 no-underline min-h-11"
         >
           Lihat semua ({totalWaiting}) <ArrowRight className="h-3.5 w-3.5" />
         </Link>
@@ -106,7 +106,7 @@ export function AdminInboxWidget() {
                     <Button
                       size="sm"
                       onClick={() => openReviewSheet(req)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 font-semibold"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
                     >
                       Tinjau
                     </Button>
@@ -145,7 +145,7 @@ export function AdminInboxWidget() {
                     size="sm"
                     variant="outline"
                     onClick={() => openReportReviewSheet(rep)}
-                    className="text-xs h-8 text-slate-700 shrink-0 self-end sm:self-center border-slate-200 hover:bg-white"
+                    className="text-xs text-slate-700 shrink-0 self-end sm:self-center border-slate-200 hover:bg-white"
                   >
                     Detail
                   </Button>

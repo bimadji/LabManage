@@ -51,6 +51,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[#f0f8ff]">
+      <a href="#main-content" className="skip-link">
+        Lewati ke konten utama
+      </a>
+
       {DEMO_MODE && (
         <div className="fixed inset-x-0 top-0 z-50 bg-amber-400 py-1 text-center text-[11px] font-bold uppercase tracking-widest text-amber-950">
           Mode Demo — data contoh, perubahan tidak disimpan
@@ -64,15 +68,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar Mobile Drawer (Radix Sheet) */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="p-0 w-72 max-w-[80vw]">
+        <SheetContent id="menu-navigasi-mobile" side="left" className="p-0 w-72 max-w-[80vw]">
           <Sidebar onNavClick={() => setMobileMenuOpen(false)} />
         </SheetContent>
       </Sheet>
 
       {/* Konten Utama */}
       <div className="flex flex-col flex-1 md:pl-64 min-w-0">
-        <Header onMenuToggle={() => setMobileMenuOpen(true)} />
-        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-300">
+        <Header onMenuToggle={() => setMobileMenuOpen(true)} menuOpen={mobileMenuOpen} />
+        <main
+          id="main-content"
+          className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-300"
+        >
           {loadError ? (
             <ErrorState
               title="Gagal Memuat Data dari Database"

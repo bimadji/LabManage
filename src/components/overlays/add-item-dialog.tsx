@@ -212,7 +212,7 @@ export function AddItemDialog({ open, onOpenChange }: AddItemDialogProps) {
                 <select
                   value={pemilikKelompokId}
                   onChange={(e) => setPemilikKelompokId(e.target.value)}
-                  className="w-full h-8 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs shadow-2xs outline-none"
+                  className="w-full h-11 rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs shadow-2xs outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="lab">Milik Bersama Lab (Dapat dipinjam semua kelompok)</option>
                   {kelompok.map((k) => (

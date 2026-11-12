@@ -97,7 +97,7 @@ export default function JadwalPage() {
             <select
               value={filterRoom}
               onChange={(e) => setFilterRoom(e.target.value)}
-              className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="h-11 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="semua">Semua Ruangan</option>
               {RUANGAN.map((r) => (

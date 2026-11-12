@@ -54,7 +54,7 @@ export function ScheduleWidget() {
         <div className="flex items-center gap-2">
           <Link
             href="/jadwal"
-            className="text-xs font-semibold text-teal-700 hover:text-teal-800 hidden sm:flex items-center gap-1 no-underline"
+            className="text-xs font-semibold text-teal-700 hover:text-teal-800 hidden sm:flex items-center gap-1 no-underline min-h-11"
           >
             Lihat semua ({roomBookings.length}) <ArrowRight className="h-3 w-3" />
           </Link>
@@ -62,7 +62,7 @@ export function ScheduleWidget() {
             size="sm"
             variant="outline"
             onClick={() => openBookingDialog()}
-            className="h-8 gap-1 text-xs border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-300"
+            className="gap-1 text-xs border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-300"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Pesan Slot</span>

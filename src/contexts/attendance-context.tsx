@@ -28,40 +28,31 @@ const AttendanceContext = createContext<AttendanceContextType | undefined>(undef
 export function AttendanceProvider({ children }: { children: React.ReactNode }) {
   const { currentUser } = useRole();
   const { attendanceSessions, refreshData } = useData();
-  const [isCheckedIn, setIsCheckedIn] = useState<boolean>(false);
-  const [checkInTime, setCheckInTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const weeklyTargetHours = currentUser?.weeklyTargetHours || 10;
 
+  const userId = currentUser?.id ?? null;
+
   // Jam akumulasi dihitung dari baris attendance_sessions, bukan angka manual.
   const weeklyAccumulatedHours = useMemo(() => {
-    if (!currentUser) return 0;
+    if (!userId) return 0;
     const { start, end } = getWeekRange();
-    return hoursForUser(attendanceSessions, currentUser.id, start, end);
-  }, [attendanceSessions, currentUser?.id]);
+    return hoursForUser(attendanceSessions, userId, start, end);
+  }, [attendanceSessions, userId]);
 
   // Sesi terbuka milik user (dari database).
   const openSession = useMemo(() => {
-    if (!currentUser) return null;
-    return openSessionFor(attendanceSessions, currentUser.id);
-  }, [attendanceSessions, currentUser?.id]);
+    if (!userId) return null;
+    return openSessionFor(attendanceSessions, userId);
+  }, [attendanceSessions, userId]);
 
   const hasOpenSession = Boolean(openSession);
-
-  useEffect(() => {
-    if (!isCheckedIn || !checkInTime) return;
-    const interval = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - checkInTime.getTime()) / 1000));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isCheckedIn, checkInTime]);
-
-  // Pulihkan tampilan sesi aktif dari database setelah reload.
-  useEffect(() => {
-    if (!openSession) return;
-    setCheckInTime(new Date(openSession.checkIn));
-    setIsCheckedIn(true);
-  }, [openSession]);
+  // Status check-in diturunkan dari database: tidak ada state manual yang bisa menyimpang.
+  const isCheckedIn = hasOpenSession;
+  const checkInTime = useMemo(
+    () => (openSession ? new Date(openSession.checkIn) : null),
+    [openSession]
+  );
 
   useEffect(() => {
     if (!isCheckedIn || !checkInTime) return;
@@ -100,8 +91,6 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
     }
 
     await refreshData();
-    setCheckInTime(now);
-    setIsCheckedIn(true);
     setElapsedSeconds(0);
     return { success: true };
   };
@@ -134,8 +123,6 @@ export function AttendanceProvider({ children }: { children: React.ReactNode }) 
     }
 
     await refreshData();
-    setIsCheckedIn(false);
-    setCheckInTime(null);
     setElapsedSeconds(0);
     return { success: true };
   };

@@ -89,7 +89,7 @@ export function TeamOverviewWidget() {
 
         <Link
           href="/monitoring"
-          className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 no-underline"
+          className="text-xs font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 no-underline min-h-11"
         >
           Lihat Detail <ArrowRight className="h-3.5 w-3.5" />
         </Link>

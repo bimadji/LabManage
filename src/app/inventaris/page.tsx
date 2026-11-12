@@ -285,7 +285,7 @@ export default function InventarisPage() {
                             size="sm"
                             variant="outline"
                             onClick={() => setStockItemTarget(item)}
-                            className="h-8 text-xs font-semibold border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                            className="text-xs font-semibold border-indigo-200 text-indigo-700 hover:bg-indigo-50"
                             title="Tambah stok unit barang ini"
                           >
                             + Stok
@@ -296,7 +296,7 @@ export default function InventarisPage() {
                             size="sm"
                             disabled={!isAvailable}
                             onClick={() => openLoanSheet(item)}
-                            className={`h-8 text-xs font-semibold ${
+                            className={`text-xs font-semibold ${
                               isAvailable
                                 ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                                 : "bg-slate-100 text-slate-400 border border-slate-200"

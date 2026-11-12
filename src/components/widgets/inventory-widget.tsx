@@ -35,7 +35,7 @@ export function InventoryWidget() {
 
         <Link
           href="/inventaris"
-          className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 no-underline"
+          className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 no-underline min-h-11"
         >
           Lihat Semua ({items.length}) <ArrowRight className="h-3.5 w-3.5" />
         </Link>
@@ -73,7 +73,7 @@ export function InventoryWidget() {
                 variant="outline"
                 disabled={item.availableStock <= 0}
                 onClick={() => openLoanSheet(item)}
-                className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                className="text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50"
               >
                 Pinjam
               </Button>

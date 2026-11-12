@@ -283,7 +283,7 @@ export default function KotakMasukPage() {
                     <Button
                       size="sm"
                       onClick={() => openReviewSheet(item.loanData!)}
-                      className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
                       Tinjau Permohonan
                     </Button>
@@ -295,7 +295,7 @@ export default function KotakMasukPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => openReportReviewSheet(item.reportData!)}
-                    className="h-8 text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
+                    className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
                   >
                     Detail Laporan
                   </Button>

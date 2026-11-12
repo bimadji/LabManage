@@ -79,17 +79,29 @@ export function StatusBadge({
           icon: <AlertTriangle className="h-3 w-3 text-red-700" />,
           defaultLabel: "Habis",
         };
+      case "dipinjam":
         return {
           bg: "bg-purple-100",
           border: "border-purple-200",
           text: "text-purple-800",
           icon: <Box className="h-3 w-3 text-purple-700" />,
-          defaultLabel:
-            status === "dipinjam"
-              ? "Dipinjam"
-              : status === "ditangani"
-              ? "Ditangani"
-              : "Aktif",
+          defaultLabel: "Dipinjam",
+        };
+      case "ditangani":
+        return {
+          bg: "bg-purple-100",
+          border: "border-purple-200",
+          text: "text-purple-800",
+          icon: <Box className="h-3 w-3 text-purple-700" />,
+          defaultLabel: "Ditangani",
+        };
+      case "aktif":
+        return {
+          bg: "bg-purple-100",
+          border: "border-purple-200",
+          text: "text-purple-800",
+          icon: <Box className="h-3 w-3 text-purple-700" />,
+          defaultLabel: "Aktif",
         };
       default:
         return {

@@ -15,11 +15,15 @@ export function HomeBanner() {
   const [greeting, setGreeting] = useState("Selamat Datang");
 
   useEffect(() => {
-    const hours = new Date().getHours();
-    if (hours < 11) setGreeting("Selamat Pagi");
-    else if (hours < 15) setGreeting("Selamat Siang");
-    else if (hours < 18) setGreeting("Selamat Sore");
-    else setGreeting("Selamat Malam");
+    // Ditunda ke frame berikutnya: jam berjalan tidak boleh dihitung saat render server.
+    const id = setTimeout(() => {
+      const hours = new Date().getHours();
+      if (hours < 11) setGreeting("Selamat Pagi");
+      else if (hours < 15) setGreeting("Selamat Siang");
+      else if (hours < 18) setGreeting("Selamat Sore");
+      else setGreeting("Selamat Malam");
+    }, 0);
+    return () => clearTimeout(id);
   }, []);
 
   const getBannerContent = () => {
@@ -32,7 +36,7 @@ export function HomeBanner() {
           action: (
             <div className="flex flex-wrap items-center gap-2">
               <Button
-                size="sm"
+                size="default"
                 onClick={() => openBookingDialog()}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
               >
@@ -50,7 +54,7 @@ export function HomeBanner() {
           action: (
             <div className="flex flex-wrap items-center gap-2">
               <Button
-                size="sm"
+                size="default"
                 variant="outline"
                 onClick={() => (window.location.href = "/monitoring")}
                 className="bg-white/90 text-slate-800 border-slate-200 hover:bg-slate-50 gap-1.5"
@@ -71,14 +75,14 @@ export function HomeBanner() {
           action: (
             <div className="flex flex-wrap items-center gap-2">
               <Button
-                size="sm"
+                size="default"
                 onClick={() => openLoanSheet()}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
               >
                 Ajukan Pinjam Alat
               </Button>
               <Button
-                size="sm"
+                size="default"
                 variant="outline"
                 onClick={() => openBookingDialog()}
                 className="bg-white/90 text-slate-700 border-slate-200 hover:bg-slate-50"

@@ -17,14 +17,14 @@ const buttonVariants = cva(
           "bg-sky-100 text-sky-800 hover:bg-sky-200 active:bg-sky-300",
         ghost:
           "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-        link: "text-emerald-600 underline-offset-4 hover:underline",
+        link: "text-emerald-600 hover:text-emerald-700",
         subtle: "bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-xs",
+        default: "h-11 px-4 py-2",
+        sm: "h-11 rounded-lg px-3 text-xs",
         lg: "h-11 rounded-lg px-6 text-base",
-        icon: "h-9 w-9",
+        icon: "h-11 w-11",
       },
     },
     defaultVariants: {

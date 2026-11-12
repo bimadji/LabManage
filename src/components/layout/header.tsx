@@ -22,9 +22,10 @@ import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onMenuToggle?: () => void;
+  menuOpen?: boolean;
 }
 
-export function Header({ onMenuToggle }: HeaderProps) {
+export function Header({ onMenuToggle, menuOpen = false }: HeaderProps) {
   const pathname = usePathname();
   const { role, isDemoMode, setDemoUser, signOut } = useRole();
   const currentUser = useCurrentUser();
@@ -75,8 +76,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuToggle}
-          className="inline-flex md:hidden items-center justify-center rounded-lg p-2 text-slate-500 hover:bg-slate-100 focus:outline-none"
-          aria-label="Toggle menu"
+          className="inline-flex md:hidden h-11 w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          aria-label="Buka menu navigasi"
+          aria-expanded={menuOpen}
+          aria-controls="menu-navigasi-mobile"
         >
           <Menu className="h-5 w-5" />
         </button>

@@ -149,7 +149,7 @@ export const MOCK_ITEMS: Item[] = [
     totalStock: 1,
     availableStock: 0,
     location: "Meja Kalibrasi 2",
-    status: "dipinjam",
+    status: "habis",
     specs: "50MHz 4-channel, 1GSa/s real-time sample rate",
     pemilikKelompokId: null,
     pemilikKelompokNama: "Milik Bersama Lab",

@@ -180,7 +180,7 @@ export function ReviewRequestSheet() {
                       size="sm"
                       variant="outline"
                       onClick={() => setRejectMode(false)}
-                      className="text-xs h-7"
+                      className="text-xs"
                     >
                       Batal
                     </Button>
@@ -188,7 +188,7 @@ export function ReviewRequestSheet() {
                       size="sm"
                       variant="destructive"
                       onClick={handleReject}
-                      className="text-xs h-7"
+                      className="text-xs"
                     >
                       Konfirmasi Tolak
                     </Button>

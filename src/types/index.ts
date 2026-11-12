@@ -2,7 +2,7 @@ export type KelompokType = "tim_riset" | "ukm";
 
 export type UserRole = "admin" | "anggota" | "advisor";
 
-export type ItemStatus = "tersedia" | "dipinjam" | "rusak" | "habis";
+export type ItemStatus = "tersedia" | "rusak" | "habis";
 
 export type RequestStatus = "menunggu" | "disetujui" | "ditolak" | "selesai";
 

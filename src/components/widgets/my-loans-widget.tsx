@@ -41,7 +41,7 @@ export function MyLoansWidget() {
         <div className="flex items-center gap-2">
           <Link
             href="/kotak-masuk"
-            className="text-xs font-semibold text-sky-700 hover:text-sky-800 hidden sm:flex items-center gap-1 no-underline"
+            className="text-xs font-semibold text-sky-700 hover:text-sky-800 hidden sm:flex items-center gap-1 no-underline min-h-11"
           >
             Lihat semua ({myLoans.length}) <ArrowRight className="h-3 w-3" />
           </Link>
@@ -49,7 +49,7 @@ export function MyLoansWidget() {
             size="sm"
             variant="outline"
             onClick={() => openLoanSheet()}
-            className="h-8 gap-1 text-xs border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-300"
+            className="gap-1 text-xs border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-300"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Pinjam Baru</span>
