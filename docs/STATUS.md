@@ -31,7 +31,7 @@ Legend: **Selesai** = ada di kode dan terverifikasi (DB nyata atau test otomatis
 | Lint (`npm run lint`) | Selesai | 0 error, 16 warning |
 | Unit test (`npm run test`) | Selesai | 54 test, 9 file |
 | Build produksi | Selesai | `NODE_OPTIONS=--max-old-space-size=4096` |
-| CI GitHub Actions | Sebagian | `.github/workflows/ci.yml` ada; **belum pernah jalan** (branch belum di-push) |
+| CI GitHub Actions | Belum | `.github/workflows/ci.yml` ada dan 2 langkah baru (matriks role + run-db-checks) sudah ditambah; **push pertama branch `stabilisasi` ditolak** — token OAuth pemilik tanpa scope `workflow` (lihat `docs/laporan/PAKET-8B.md`). CI belum pernah jalan. |
 | TypeScript strict, tanpa `any` eksplisit | Selesai | 0 pelanggaran `no-explicit-any` |
 | Aksesibilitas dasar (skip link, aria-expanded, focus ring, reduced motion, target 44px) | Selesai | `src/app/globals.css`, `app-shell.tsx`, `header.tsx` |
 | one-click deploy (Vercel) | Belum | repo memakai branch `main` untuk deploy; branch `stabilisasi` belum di-deploy |
@@ -46,7 +46,7 @@ Rekap absensi bulanan, peringatan advisor, notifikasi anggota, koreksi sesi lupa
 2. **Tidak ada tabel `ruangan`** — identitas ruangan dijaga konstanta `src/lib/rooms.ts`; `room_bookings.ruangan_id` tetap `TEXT`.
 3. **Agregasi absensi di sisi klien** — mengunduh seluruh sesi yang terlihat RLS; perlu view/RPC bila skala membesar.
 4. **Data uji dari skrip tidak dibersihkan otomatis** — `scripts/test-inventory-admin.ts` menambah baris inventaris tiap dijalankan.
-5. **Job CI untuk DB uji belum terverifikasi di runner GitHub** — hanya berjalan lokal.
+5. **Job CI untuk DB uji belum terverifikasi di runner GitHub** — hanya berjalan lokal. Push pertama branch `stabilisasi` ditolak oleh GitHub: token OAuth tanpa scope `workflow`; perlu token baru dengan scope itu atau PAT klasik dengan `workflow`.
 6. **Widget "Ringkasan Tim" dan halaman Monitoring menghitung ulang di browser** — untuk data besar perlu agregasi di server.
 7. **Tidak ada monitoring uptime** aplikasi di produksi.
 8. **Durasi sesi dihitung per menit** — sesi < 30 detik tercatat 0 menit.
