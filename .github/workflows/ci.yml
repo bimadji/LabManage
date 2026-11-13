@@ -58,17 +58,27 @@ jobs:
 
       - name: Seed akun demo
         run: |
-          npx supabase status -o env > supabase.env
+          # Output CLI menyertakan baris non-KV ("Stopped services: [...]");
+          # satu baris invalid membuat GitHub membuang SELURUH isi $GITHUB_ENV.
+          # Jadi supabase.env difilter ke baris KEY=VALUE saja sebelum dipakai.
+          npx supabase status -o env | grep -E '^[A-Z_]+=' > supabase.env
           cat supabase.env >> "$GITHUB_ENV"
-          # CLI menulis API_URL / ANON_KEY / SERVICE_ROLE_KEY (bukan SUPABASE_URL).
-          # Skrip test membaca SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY / SUPABASE_TEST_SERVICE_ROLE_KEY.
-          echo "SUPABASE_TEST_URL=$API_URL" >> "$GITHUB_ENV"
-          echo "SUPABASE_TEST_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
-          echo "SUPABASE_TEST_SERVICE_ROLE_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
-          # seed-dummy membaca .env.local; dotenv tidak menimpa env yang sudah ada
-          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
-          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
-          echo "SUPABASE_SECRET_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
+          # CLI menulis API_URL / ANON_KEY / SECRET_KEY (bukan SUPABASE_URL).
+          # Skrip test membaca SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY /
+          # SUPABASE_TEST_SERVICE_ROLE_KEY; seed-dummy membaca NEXT_PUBLIC_* & SUPABASE_SECRET_KEY.
+          # nilai ditulis CLI dengan tanda kutip: API_URL="http://..." -> kutip dilepas
+          api_url="$(grep -E '^API_URL=' supabase.env | cut -d= -f2- | tr -d '"')"
+          anon_key="$(grep -E '^ANON_KEY=' supabase.env | cut -d= -f2- | tr -d '"')"
+          secret_key="$(grep -E '^SECRET_KEY=' supabase.env | cut -d= -f2- | tr -d '"')"
+          pub_key="$(grep -E '^PUBLISHABLE_KEY=' supabase.env | cut -d= -f2- | tr -d '"')"
+          {
+            echo "SUPABASE_TEST_URL=$api_url"
+            echo "SUPABASE_TEST_ANON_KEY=$anon_key"
+            echo "SUPABASE_TEST_SERVICE_ROLE_KEY=$secret_key"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$api_url"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$pub_key"
+            echo "SUPABASE_SECRET_KEY=$secret_key"
+          } >> "$GITHUB_ENV"
           npx tsx scripts/seed-dummy.ts
           rm -f supabase.env
 
