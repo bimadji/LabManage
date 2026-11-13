@@ -15,7 +15,8 @@ function makeRequest(pathname: string) {
   } as unknown as Parameters<typeof proxy>[0];
 }
 
-function mockSupabase(options: { user: { id: string } | null; role?: string }) {
+/** Sesi dengan profil ber-peran; role null berarti user tanpa baris profiles. */
+function mockSupabase(options: { user: { id: string } | null; role?: string | null }) {
   const getUser = vi.fn().mockResolvedValue({ data: { user: options.user } });
   const from = vi.fn().mockReturnValue({
     select: () => ({
@@ -27,41 +28,69 @@ function mockSupabase(options: { user: { id: string } | null; role?: string }) {
   mockedCreateClient.mockResolvedValue({ auth: { getUser }, from } as never);
 }
 
+const RUTE_TANPA_LOGIN = ["/", "/inventaris", "/jadwal", "/kotak-masuk", "/monitoring"];
+const RUTE_ADMIN_ADVISOR = ["/monitoring"];
+
 describe("proxy — guard server", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("mengalihkan ke /login bila belum login", async () => {
-    mockSupabase({ user: null });
-    const res = await proxy(makeRequest("/inventaris"));
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toContain("/login");
+  describe("tanpa sesi", () => {
+    for (const rute of RUTE_TANPA_LOGIN) {
+      it(`${rute} dialihkan ke /login`, async () => {
+        mockSupabase({ user: null });
+        const res = await proxy(makeRequest(rute));
+        expect(res.status).toBe(307);
+        expect(res.headers.get("location")).toContain("/login");
+      });
+    }
+
+    it("halaman login boleh tanpa sesi", async () => {
+      mockSupabase({ user: null });
+      const res = await proxy(makeRequest("/login"));
+      expect(res.status).toBe(200);
+    });
   });
 
-  it("membolehkan halaman login tanpa sesi", async () => {
-    mockSupabase({ user: null });
-    const res = await proxy(makeRequest("/login"));
-    expect(res.status).toBe(200);
+  describe("user tanpa baris profiles", () => {
+    for (const rute of RUTE_TANPA_LOGIN) {
+      it(`${rute} dialihkan ke /login`, async () => {
+        mockSupabase({ user: { id: "u-tanpa-profil" }, role: null });
+        const res = await proxy(makeRequest(rute));
+        expect(res.status).toBe(307);
+        expect(res.headers.get("location")).toContain("/login");
+      });
+    }
   });
 
-  it("membolehkan admin ke /monitoring", async () => {
-    mockSupabase({ user: { id: "u1" }, role: "admin" });
-    const res = await proxy(makeRequest("/monitoring"));
-    expect(res.status).toBe(200);
-  });
+  describe("peran dengan profil", () => {
+    for (const peran of ["admin", "advisor"] as const) {
+      for (const rute of RUTE_ADMIN_ADVISOR) {
+        it(`${peran} boleh membuka ${rute}`, async () => {
+          mockSupabase({ user: { id: "u1" }, role: peran });
+          const res = await proxy(makeRequest(rute));
+          expect(res.status).toBe(200);
+        });
+      }
+    }
 
-  it("mengalihkan anggota dari /monitoring ke beranda", async () => {
-    mockSupabase({ user: { id: "u1" }, role: "anggota" });
-    const res = await proxy(makeRequest("/monitoring"));
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toContain("/");
-    expect(res.headers.get("location")).not.toContain("/monitoring");
-  });
+    for (const peran of ["anggota", "advisor"] as const) {
+      it(`${peran} boleh membuka halaman biasa`, async () => {
+        mockSupabase({ user: { id: "u1" }, role: peran });
+        for (const rute of ["/", "/inventaris", "/jadwal", "/kotak-masuk"]) {
+          const res = await proxy(makeRequest(rute));
+          expect(res.status).toBe(200);
+        }
+      });
+    }
 
-  it("membolehkan advisor ke /monitoring", async () => {
-    mockSupabase({ user: { id: "u1" }, role: "advisor" });
-    const res = await proxy(makeRequest("/monitoring"));
-    expect(res.status).toBe(200);
+    it("anggota dialihkan dari /monitoring ke beranda", async () => {
+      mockSupabase({ user: { id: "u1" }, role: "anggota" });
+      const res = await proxy(makeRequest("/monitoring"));
+      expect(res.status).toBe(307);
+      expect(res.headers.get("location")).toContain("/");
+      expect(res.headers.get("location")).not.toContain("/monitoring");
+    });
   });
 });

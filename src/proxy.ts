@@ -8,6 +8,7 @@ const ADMIN_ONLY = ["/monitoring"];
 /**
  * Guard sisi server (Next 16: `proxy`, bukan `middleware`).
  * - belum login -> /login
+ * - login tapi belum punya baris profiles -> /login (belum didaftarkan admin lab)
  * - role tidak berhak pada rute khusus -> / (bukan 403 kosong)
  */
 export async function proxy(request: NextRequest) {
@@ -28,13 +29,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Profil wajib ada: tanpa baris profiles role tidak diketahui dan RLS menolak semua akses.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("alasan", "belum-terdaftar");
+    return NextResponse.redirect(loginUrl);
+  }
+
+  const role = (profile as { role?: string }).role;
+
   if (ADMIN_ONLY.some((p) => pathname.startsWith(p))) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    const role = (profile as { role?: string } | null)?.role;
     if (role !== "admin" && role !== "advisor") {
       return NextResponse.redirect(new URL("/", request.url));
     }

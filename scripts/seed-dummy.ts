@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
+import { isLocalUrl } from './test-harness'
 
 dotenv.config({ path: '.env.local' })
 
@@ -10,6 +11,14 @@ if (!supabaseUrl || !supabaseServiceKey || supabaseUrl.includes('placeholder')) 
   console.log('Skipping real Supabase connection: placeholder or missing keys in .env.local')
   console.log('Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY in .env.local to execute seed against live Supabase.')
   process.exit(0)
+}
+
+// Pengaman: skrip ini membuat akun dengan kata sandi 'password123'.
+// Wajib hanya terhadap Supabase lokal, tidak pernah produksi.
+if (!isLocalUrl(supabaseUrl)) {
+  console.error('TOLAK: seed-dummy membuat akun demo berpassword lemah dan hanya boleh dijalankan pada Supabase lokal.')
+  console.error(`URL yang diberikan: ${supabaseUrl}`)
+  process.exit(2)
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {

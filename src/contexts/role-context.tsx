@@ -42,7 +42,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   );
   const [isLoading, setIsLoading] = useState(!DEMO_MODE);
 
-  const loadProfile = useCallback(async (userId: string) => {
+  const loadProfile = useCallback(async (userId: string): Promise<boolean> => {
     const supabase = createClient();
     const { data: profiles, error } = await supabase
       .from("profiles")
@@ -52,7 +52,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
 
     if (error || !profiles) {
       setCurrentUser(null);
-      return;
+      return false;
     }
 
     const row = profiles as unknown as ProfileRow;
@@ -73,6 +73,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       teamType: kelompok?.jenis,
       weeklyTargetHours: kelompok?.target_jam_mingguan ?? null,
     });
+    return true;
   }, []);
 
   useEffect(() => {
@@ -120,7 +121,15 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: error.message };
     }
     if (data.user) {
-      await loadProfile(data.user.id);
+      const found = await loadProfile(data.user.id);
+      if (!found) {
+        // Login berhasil tapi akun belum didaftarkan admin lab.
+        return {
+          success: false,
+          error:
+            "Akunmu belum didaftarkan oleh admin lab. Hubungi Kepala Laboratorium Robotika PENS.",
+        };
+      }
     }
     return { success: true };
   };

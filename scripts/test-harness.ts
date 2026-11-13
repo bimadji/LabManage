@@ -46,9 +46,15 @@ export function requireEnv() {
     )
     process.exit(2)
   }
-  if (/supabase\.co$/i.test(new URL(url).hostname)) {
+  if (!isLocalUrl(url)) {
     console.error('TOLAK: skrip ini menulis data; arahkan hanya ke DB uji lokal, bukan *.supabase.co.')
     process.exit(2)
   }
   return { url, anonKey }
+}
+
+/** Hanya host lokal yang boleh dipakai skrip yang menulis data. */
+export function isLocalUrl(url: string): boolean {
+  const hostname = new URL(url).hostname.replace(/^\[|\]$/g, '');
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
 }

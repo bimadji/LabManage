@@ -18,6 +18,10 @@ function LoginForm() {
   const [errorMsg, setErrorMsg] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Server mengalihkan ke /login dengan alasan=belum-terdaftar bila akun login
+  // tapi belum punya baris profiles.
+  const belumTerdaftar = params.get("alasan") === "belum-terdaftar";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -49,6 +53,19 @@ function LoginForm() {
             kepala laboratorium.
           </p>
         </div>
+
+        {belumTerdaftar && (
+          <p
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>
+              Akunmu belum didaftarkan oleh admin lab. Hubungi Kepala Laboratorium Robotika PENS
+              agar akunmu ditambahkan ke daftar pengguna.
+            </span>
+          </p>
+        )}
 
         <form
           onSubmit={handleSubmit}
