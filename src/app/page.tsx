@@ -1,3 +1,8 @@
+// Halaman dashboard penuh "use client" dengan data Supabase sisi klien
+// (DataProvider) — tidak mengadopsi instant navigation; insight dev-only
+// diabaikan lewat validationLevel di next.config.ts (Next 16
+// instant-navigation §Validate / §Opting out).
+
 "use client";
 
 import React from "react";
