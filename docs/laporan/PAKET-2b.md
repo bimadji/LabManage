@@ -14,7 +14,7 @@ Dikerjakan:
 
 Verifikasi asli:
 
-- `npx tsx scripts/test-role-matrix.ts` → `44/44 lulus`, exit 0.
+- `npx tsx scripts/test-role-matrix.ts` → `44/44 lulus`, exit 0 (diulang 3× berturut-turut: 44/44, 44/44, 44/44).
 - `npx vitest run` → `Test Files 9 passed (9)`, `Tests 54 passed (54)` (sebelumnya 32 test / 5 file).
 - `npx vitest run src/proxy.test.ts` → `16 passed (16)`, exit 0.
 - `npx tsc --noEmit` → exit 0.
@@ -37,13 +37,13 @@ Temuan selama pengerjaan:
 Belum beres:
 
 - Tidak ada test UI end-to-end per role (hanya unit + level konteks + guard server). Skenario manual tetap pakai `docs/QA-CHECKLIST.md`.
-- `scripts/test-role-matrix.ts` menulis data uji ke DB (baris inventaris/booking/laporan) dan **tidak membersihkannya**.
+- `scripts/test-role-matrix.ts` kini **membersihkan data uji** di akhir run (baris inventaris/booking/laporan/presensi uji). Slot booking memakai penanda menit jam proses supaya run berurutan tidak saling bentrok — terverifikasi 3× berturut-turut (`44/44 lulus`, exit 0).
 - User tanpa profil diuji lewat satu akun (`tanpa-profil@labmanage.test`) yang dibuat skrip; tidak diuji untuk banyak akun sekaligus.
 - Uji concurrency dua persetujuan bersamaan masih hanya di `scripts/test-inventory-admin.ts` (bukan di matriks role).
 
 Butuh darimu:
 
-1. Keputusan: apakah `scripts/test-role-matrix.ts` boleh membersihkan data uji otomatis setelah run, atau dibiarkan (memudahkan debugging)?
+1. ~~Keputusan: apakah `scripts/test-role-matrix.ts` boleh membersihkan data uji otomatis~~ — sudah dijawab: **ya, dibersihkan** (default aman).
 2. Konfirmasi aturan laporan: anggota **tidak boleh** mengubah status laporan miliknya sendiri (koreksi policy ini mengubah perilaku lama PRD §3).
 
 File: `scripts/test-role-matrix.ts`, `scripts/test-harness.ts`, `scripts/test-harness.test.ts`, `scripts/seed-dummy.ts`, `src/proxy.ts`, `src/proxy.test.ts`, `src/app/login/page.tsx`, `src/contexts/role-context.tsx`, `src/app/inventaris/page.test.tsx`, `src/components/overlays/review-request-sheet.test.tsx`, `src/components/widgets/attendance-widget.test.tsx`, `supabase/migrations/20261113000100_fase5_profile_guard.sql`, `supabase/migrations/20261113000200_fase6_rpc_role_guard.sql`, `vitest.config.ts`. Commit: `7f09e81`, `c59d5a0`.

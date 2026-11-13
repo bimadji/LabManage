@@ -16,7 +16,7 @@ Daftar hal yang **sengaja tidak dikerjakan** pada fase stabilisasi. Bukan janji 
 ## Nanti — temuan audit yang tidak memblokir tes nyata
 
 1. **CI belum pernah jalan** di GitHub Actions (branch `stabilisasi` belum di-push). Job `db` (Supabase lokal di runner) belum terverifikasi.
-2. **Data uji dari skrip tidak dibersihkan** — `scripts/test-inventory-admin.ts` menambah baris inventaris `TEST-ITEM-*` tiap dijalankan.
+2. **Data uji dari `scripts/test-inventory-admin.ts` dan `scripts/test-role-matrix.ts`** — matriks role sudah dibersihkan otomatis; skrip inventaris masih menambah baris `TEST-ITEM-*` tiap dijalankan.
 3. **Tidak ada tabel `ruangan`** — `room_bookings.ruangan_id` berupa `TEXT`; identitas ruangan dijaga konstanta `src/lib/rooms.ts`.
 4. **Nama ruangan seed lama tidak kanonik** — `scripts/seed-dummy.ts` masih menulis "Arena Lapangan Kontes", sedangkan konstanta memakai "Arena Uji Coba KRAI / KRI".
 5. **Agregasi absensi di sisi klien** — seluruh sesi yang terlihat RLS diunduh ke browser; perlu view/RPC untuk skala besar.

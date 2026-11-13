@@ -24,7 +24,7 @@ Tanggal: 2026-11-12. Branch: `stabilisasi` (belum di-push, belum di-deploy).
 5. **Aturan stok**: dipotong saat **disetujui** (bukan saat diajukan) — sudah diterapkan di kode & PRD §4.2, tetap perlu konfirmasi.
 6. **Perubahan ukuran tombol** (semua tombol utama 44 px) mengubah tampilan — konfirmasi dulu kalau tidak diinginkan.
 7. **Matriks role menutup policy baru**: anggota tidak boleh mengubah status laporan miliknya sendiri lagi, dan admin/advisor tidak boleh check-in. Kalau ada kebutuhan lain, perlu RPC terpisah — konfirmasi.
-8. **`scripts/test-role-matrix.ts` tidak membersihkan data uji** setelah run (baris inventaris/booking/laporan menumpuk). Bersihkan otomatis atau dibiarkan?
+8. ~~Matriks role membersihkan data uji~~ — sudah dijawab: **ya, dibersihkan** (default aman).
 
 ## Keputusan default yang diambil (karena tidak bisa ditanyakan)
 

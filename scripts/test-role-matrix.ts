@@ -230,12 +230,21 @@ async function main() {
   // ------------------------------------------------------------------
   // Tiap peran memakai slot berbeda: booking yang sama di ruangan & jam yang sama
   // memang bentrok (constraint GiST), jadi slot digeser per peran.
+  // Slot dihitung dari slot harian (Pagi/Siang/Malam) + hari ke-N agar tidak
+  // pernah bentrok dengan booking hasil seed atau run sebelumnya.
+  // Jam proses dijadikan penanda slot supaya run berurutan tidak saling bentrok
+  // walau run sebelumnya gagal sebelum pembersihan.
+  const hariKedepan = 7 + Number(process.env.MATRIX_HARI_OFFSET ?? '0')
+  const menitPenanda = new Date().getMinutes()
   const slotPeran: Record<Peran, number> = { admin: 0, anggota: 1, 'anggota-ukm': 2, advisor: 3 }
   for (const peran of ['admin', 'anggota', 'anggota-ukm', 'advisor'] as Peran[]) {
     const profil = peran === 'admin' ? profilAdmin : peran === 'anggota' ? profilAnggota : peran === 'advisor' ? profilAdvisor : profilUkm
-    // 3 hari ke depan:避开 booking hasil seed di hari ke-2.
-    const mulai = new Date(Date.now() + (3 * 86400000 + slotPeran[peran] * 3600000)).toISOString()
-    const selesai = new Date(Date.now() + (3 * 86400000 + (slotPeran[peran] + 1) * 3600000)).toISOString()
+    const mulai = new Date(
+      Date.now() + (hariKedepan * 86400000 + slotPeran[peran] * 3600000 + menitPenanda * 60000)
+    ).toISOString()
+    const selesai = new Date(
+      Date.now() + (hariKedepan * 86400000 + (slotPeran[peran] + 1) * 3600000 + menitPenanda * 60000)
+    ).toISOString()
     const { error } = await clients[peran].from('room_bookings').insert([{
       ruangan_id: 'arena-kontes', nama_ruangan: 'Arena Uji', user_id: profil!.id, kelompok_id: profil!.kelompok_id,
       waktu_mulai: mulai, waktu_selesai: selesai, keperluan: 'uji matriks', jumlah_peserta: 3, status: 'aktif',
@@ -292,8 +301,7 @@ async function main() {
   {
     // Sesi terbuka milik anggota lain dibuat lewat service role (RLS tidak bisa
     // disimulasikan dari admin karena admin memang tidak boleh check-in).
-    const service = createClient(url, process.env.SUPABASE_TEST_SERVICE_ROLE_KEY!)
-    await service.from('attendance_sessions').insert([{
+    await createClient(url, process.env.SUPABASE_TEST_SERVICE_ROLE_KEY!).from('attendance_sessions').insert([{
       user_id: profilFarhan!.id, kelompok_id: profilFarhan!.kelompok_id, check_in: new Date().toISOString(),
     }])
     const { data: sesiOrangLain } = await admin
@@ -393,6 +401,15 @@ async function main() {
     const { error } = await tanpaProfil.rpc('tambah_stok_inventory', { p_item_id: item!.id, p_jumlah: 1 })
     check('tanpa profil: DITOLAK menambah stok (RPC)', Boolean(error), error?.message ?? 'LOLOS')
   }
+
+  // Bersihkan data uji yang dibuat skrip ini (biar run berikutnya tidak bentrok).
+  const service = createClient(url, process.env.SUPABASE_TEST_SERVICE_ROLE_KEY!)
+  await service.from('room_bookings').delete().like('keperluan', 'uji matriks')
+  await service.from('loan_requests').delete().like('keperluan', 'uji matriks')
+  await service.from('reports').delete().like('deskripsi', 'Uji')
+  await service.from('inventory_items').delete().like('kode', `${kode}%`)
+  await service.from('attendance_sessions').delete().eq('user_id', profilFarhan!.id).is('check_out', null)
+  console.log('🧹 Data uji dibersihkan.')
 
   finish()
 }
