@@ -125,7 +125,7 @@ flowchart TD
 
 - **Frontend**: Dibangun dengan Next.js 16 App Router dan React 19, menggunakan tema visual *Ocean Breeze* (Alice Blue `#f0f8ff` dan Emerald Green `#22c55e`) sesuai `DESIGN.md`.
 - **Autentikasi & Hak Akses**: Login memakai Supabase Auth. Role dan kelompok diambil dari tabel `profiles` milik user yang login. Rute yang butuh sesi dilindungi guard server (`src/proxy.ts`, memakai `auth.getUser()`), bukan sekadar menyembunyikan menu. Simulator peran hanya ada di mode demo (`NEXT_PUBLIC_DEMO_MODE=true`).
-- **Keamanan Data**: Setiap tabel di schema `public` dilindungi Row Level Security (RLS) — 22 policy aktif. Seluruh fungsi pembantu otentikasi disimpan di schema terisolasi `labmanage` untuk mencegah paparan API publik. Transisi status pinjam hanya dapat dilakukan lewat RPC `SECURITY DEFINER` yang memeriksa peran admin di dalam database.
+- **Keamanan Data**: Setiap tabel di schema `public` dilindungi Row Level Security (RLS) — 22 policy aktif. Seluruh fungsi pembantu otentikasi disimpan di schema terisolasi `labmanage` untuk mencegah paparan API publik. Transisi status pinjam hanya dapat dilakukan lewat RPC `SECURITY DEFINER` yang memeriksa peran admin di dalam database. Helper `labmanage.has_profile()` & `labmanage.is_admin()` juga `SECURITY DEFINER` dengan `search_path` terkunci — tanpa itu, `has_profile()` membaca `profiles` di bawah RLS yang memanggilnya sendiri (rekursi) — dibuktikan di `scripts/verify-security-definer.sql`.
 - **Pencegahan Bentrok Jadwal**: Tabel `room_bookings` mengimplementasikan ekstensi `btree_gist` dan *PostgreSQL Exclusion Constraint* (`tstzrange(waktu_mulai, waktu_selesai) WITH && WHERE status = 'aktif'`) sehingga penumpukan jadwal ruangan yang sama pada jam yang sama ditolak langsung di level database.
 
 ### Keterbatasan yang masih ada
@@ -228,9 +228,16 @@ LabManage/
 
 4. Menjalankan skema basis data di Supabase:
    - Buka menu **SQL Editor** pada Supabase Dashboard Anda.
-   - Jalankan skrip migrasi utama: `supabase/migrations/20261027000100_fase2_group_based_schema.sql`.
-   - Jalankan skrip fungsi admin stok: `supabase/migrations/20261027000200_fase3_admin_inventory_management.sql`.
-   - Jalankan skrip siklus pinjam: `supabase/migrations/20261112_fase4_loan_lifecycle.sql`.
+   - Jalankan **lima** skrip migrasi **berurutan** (urutan penting — `fase5` & `fase6` bergantung pada `fase4`):
+
+     1. `supabase/migrations/20261027000100_fase2_group_based_schema.sql` — skema kelompok, `profiles`, policy RLS dasar.
+     2. `supabase/migrations/20261027000200_fase3_admin_inventory_management.sql` — RPC `tambah_stok_inventory` + policy inventaris admin.
+     3. `supabase/migrations/20261112_fase4_loan_lifecycle.sql` — RPC `verifikasi_pinjam` / `selesaikan_pinjam`, kolom laporan.
+     4. `supabase/migrations/20261113000100_fase5_profile_guard.sql` — helper `labmanage.has_profile()`; semua policy wajib profil.
+     5. `supabase/migrations/20261113000200_fase6_rpc_role_guard.sql` — helper `labmanage.is_admin()`; guard NULL-safe untuk RPC admin-only.
+
+   - Kalau pakai CLI, cukup `npx supabase db push` (menerapkan semua migrasi sesuai urut nama file).
+   - **Penting:** migrasi 4 & 5 mengunci user yang ada di `auth.users` tapi belum punya baris `profiles`. Cek dulu siapa yang belum terdaftar — query & cara membuat profilnya ada di `docs/RUNBOOK-PRODUKSI.md`.
 
 5. Mengisi data awal realistis:
 

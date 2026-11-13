@@ -69,3 +69,9 @@ jobs:
 
       - name: Uji siklus pinjam dan stok
         run: npx tsx scripts/test-inventory-admin.ts
+
+      - name: Uji matriks hak akses per role
+        run: npx tsx scripts/test-role-matrix.ts
+
+      - name: Uji konfigurasi SECURITY DEFINER helper
+        run: ./scripts/run-db-checks.sh

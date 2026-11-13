@@ -11,7 +11,7 @@ Legend: **Selesai** = ada di kode dan terverifikasi (DB nyata atau test otomatis
 |---|---|---|
 | Login Supabase Auth, role dari tabel `profiles` | Selesai | `src/contexts/role-context.tsx`, `src/app/login/page.tsx`; terverifikasi di browser (4 peran) |
 | Guard server (proxy) untuk `/monitoring` + halaman needing login | Selesai | `src/proxy.ts`; test `src/proxy.test.ts` (5 test) |
-| RLS PostgreSQL per peran (22 policy aktif) | Selesai | `supabase/migrations/`; `scripts/test-rls.ts` 7/7 + `scripts/test-role-matrix.ts` 44/44 lulus di DB uji |
+| RLS PostgreSQL per peran (22 policy aktif) | Selesai | `supabase/migrations/`; `scripts/test-rls.ts` 7/7 + `scripts/test-role-matrix.ts` 44/44 + `scripts/verify-security-definer.sql` 5/5 lulus di DB uji |
 | Inventaris: katalog, filter kepemilikan, tambah barang/stok atomik | Selesai | `supabase/migrations/20261027000200_*.sql` (RPC `tambah_stok_inventory`); `scripts/test-inventory-admin.ts` 9/9 lulus |
 | Siklus pinjam: setujui / tolak / selesai + stok pulih atomik | Selesai | RPC `verifikasi_pinjam` & `selesaikan_pinjam`; `scripts/verify-loan-lifecycle.sql` 10/10 PASS |
 | Booking ruang dengan rentang waktu nyata + deteksi bentrok | Selesai | `src/lib/rooms.ts`, constraint GiST di DB; terverifikasi via browser (booking tersimpan 13:30–17:30 WIB, booking duplikat ditolak) |
@@ -29,7 +29,7 @@ Legend: **Selesai** = ada di kode dan terverifikasi (DB nyata atau test otomatis
 |---|---|---|
 | Type check (`npx tsc --noEmit`) | Selesai | 0 error |
 | Lint (`npm run lint`) | Selesai | 0 error, 16 warning |
-| Unit test (`npm run test`) | Selesai | 32 test, 5 file |
+| Unit test (`npm run test`) | Selesai | 54 test, 9 file |
 | Build produksi | Selesai | `NODE_OPTIONS=--max-old-space-size=4096` |
 | CI GitHub Actions | Sebagian | `.github/workflows/ci.yml` ada; **belum pernah jalan** (branch belum di-push) |
 | TypeScript strict, tanpa `any` eksplisit | Selesai | 0 pelanggaran `no-explicit-any` |

@@ -13,6 +13,18 @@ Daftar hal yang **sengaja tidak dikerjakan** pada fase stabilisasi. Bukan janji 
 | Target jam riset dinamis (admin mengatur, bukan `kelompok.target_jam_mingguan`) | Butuh tabel pengaturan |
 | Statistik admin (tren mingguan, rasio sesi malam) | Fitur baru |
 
+## Keputusan hak akses yang sudah dikunci (Paket 2b & 2c)
+
+Tiga aturan ini **sengaja** ditutup di DB (policy RLS) + UI. Bukan bug, bukan feature — hasil baca PRD §3 dan matriks role. Kalau nanti aturan berubah, ubah policy-nya (migrasi baru), bukan longgarkan test.
+
+| Aturan | Kenapa | Di mana ditegakkan |
+|---|---|---|
+| **Anggota tidak boleh mengubah status laporannya sendiri** — hanya Admin yang boleh (termasuk anggota yang membuat laporan itu) | PRD §3: verifikasi laporan = Admin. Sebelumnya anggota bisa menutup laporannya sendiri | `reports_update_policy` (fase 5) — `current_role() = 'admin'` |
+| **Advisor boleh mengajukan pinjam, tapi tidak boleh memverifikasi/menolak/selesaikan** | PRD §3 "Pinjam Alat Lab & Barang Terbuka" = Ya; verifikasi = Admin | `loan_insert_policy` (boleh) vs `loan_update_admin` + RPC `verifikasi_pinjam`/`selesaikan_pinjam` (hanya Admin) |
+| **Admin & Advisor tidak bisa mencatat presensi (check-in/out)** — hanya anggota tim riset | Absensi adalah catatan anggota; widget UI juga hanya untuk anggota | `attendance_insert_tim_riset` / `attendance_update_tim_riset` (fase 5) — `role = 'anggota'` + kelompok `tim_riset` |
+
+**Kalau nanti admin perlu mencatat kehadiran** (mis. mencatat sesi untuk anggota yang lupa check-out), itu butuh **RPC terpisah** yang memeriksa admin — bukan melonggarkan policy `attendance_sessions` (kalau dilonggarkan, admin/advisor bisa mengisi sesi untuk kelompok mana pun). Yang tidak masuk backlog sebagai "belum dikerjakan" karena memang fitur baru, belum diminta.
+
 ## Nanti — temuan audit yang tidak memblokir tes nyata
 
 1. **CI belum pernah jalan** di GitHub Actions (branch `stabilisasi` belum di-push). Job `db` (Supabase lokal di runner) belum terverifikasi.

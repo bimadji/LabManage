@@ -12,15 +12,16 @@ Panduan singkat untuk menyiapkan aplikasi agar bisa dites sungguhan oleh staf la
 
 ```bash
 npm ci
-npx supabase init          # sekali saja, membuat supabase/config.toml
 npx supabase start         # menjalankan stack lokal (butuh Docker)
+# supabase/config.toml sudah ada di repo: port API 54521, DB 54522
+# (digeser dari default 5432x karena port itu dipakai stack Supabase lain di mesin ini)
 npx supabase status -o env > supabase.env   # nilai URL & key lokal
 ```
 
 Salin isi `supabase.env` ke `.env.local` (ubah nama variabel bila perlu):
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54521
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<ANON_KEY dari supabase.env>
 SUPABASE_SECRET_KEY=<SERVICE_ROLE_KEY dari supabase.env>
 ```
@@ -107,16 +108,25 @@ Uji hak akses & siklus pinjam (butuh DB uji lokal; keluar non-zero bila gagal):
 
 ```bash
 # Isi .env.test.local dengan SUPABASE_TEST_URL & SUPABASE_TEST_ANON_KEY lokal
-npx tsx scripts/test-rls.ts
-npx tsx scripts/test-inventory-admin.ts
+npx tsx scripts/test-rls.ts              # 7/7   RLS inti per peran
+npx tsx scripts/test-inventory-admin.ts  # 9/9   stok, verifikasi, penyelesaian
+npx tsx scripts/test-role-matrix.ts      # 44/44 matriks hak akses 4 peran
 ```
 
-Uji SQL siklus pinjam langsung di database:
+Uji SQL langsung di database (memakai container DB dari `supabase/config.toml`):
 
 ```bash
+# Semua skrip SQL sekaligus (siklus pinjam + konfigurasi SECURITY DEFINER)
+bash scripts/run-db-checks.sh            # 15/15 PASS
+
+# Satu per satu
 docker exec -i <container-db> psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-  < scripts/verify-loan-lifecycle.sql
+  < scripts/verify-loan-lifecycle.sql     # 10/10 PASS
+docker exec -i <container-db> psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  < scripts/verify-security-definer.sql  # 5/5 PASS
 ```
+
+> `verify-security-definer.sql` **gagal** (exit non-zero) kalau helper `labmanage.has_profile()` atau `labmanage.is_admin()` kehilangan `SECURITY DEFINER` atau `search_path`-nya dilepas. Uji negatifnya sudah dilakukan: menurunkan `has_profile()` ke `SECURITY INVOKER` → 3 skenario FAIL + exit 1.
 
 ## 6. Mode demo (tanpa database)
 

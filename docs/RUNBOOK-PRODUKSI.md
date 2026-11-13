@@ -58,6 +58,20 @@ npx supabase migration list --remote
 
 **Cara memastikan berhasil:** bandingkan kolom version. Local = 5 file (`20261027000100`, `20261027000200`, `20261112`, `20261113000100`, `20261113000200`). Remote = apa yang sudah tercatat di `supabase_migrations.schema_migrations`.
 
+### Urutan kelima migrasi aktif
+
+Diterapkan berurutan di DB uji lokal (`npx supabase start` → "Applying migration …"):
+
+| Urutan | Nama file | Isi | Migrasi baru? |
+|---|---|---|---|
+| 1 | `20261027000100_fase2_group_based_schema.sql` | skema kelompok, `profiles`, policy RLS dasar, helper `labmanage.current_role()` / `current_kelompok_id()` / `current_kelompok_jenis()` | bukan (versi diubah dari `20261027`) |
+| 2 | `20261027000200_fase3_admin_inventory_management.sql` | RPC `tambah_stok_inventory` + policy inventaris admin | bukan (versi diubah dari `20261027`) |
+| 3 | `20261112_fase4_loan_lifecycle.sql` | RPC `verifikasi_pinjam` / `selesaikan_pinjam`, kolom `judul`/`lokasi`/`jenis` pada `reports` | ya |
+| 4 | `20261113000100_fase5_profile_guard.sql` | helper `labmanage.has_profile()`; semua policy wajib profil; `reports_update_policy` jadi Admin-saja; `attendance_sessions` khusus anggota tim riset | ya |
+| 5 | `20261113000200_fase6_rpc_role_guard.sql` | helper `labmanage.is_admin()` (NULL-safe); 3 RPC admin-only memakai guard itu | ya |
+
+> Angka `20261112` (fase 4) **tidak** berawalan `20261113` — itu disengaja, dua migrasi baru harus punya versi berbeda agar CLI tidak menolak versi kembar (error yang pernah terjadi: `duplicate key value violates unique constraint "schema_migrations_pkey"`).
+
 ---
 
 ## 3. Rename `20261027` → `20261027000100` / `20261027000200`
@@ -68,7 +82,7 @@ Masalah: versi `20261027` tercatat di `schema_migrations`, sedangkan repo kini m
 
 Dua jalur, pilih satu (keduanya butuh **`--dry-run` lebih dulu**):
 
-**Jalur A (disarankan, tanpa sentuh DB lewat SQL):** biarkan CLI Applicate ulang. File migrasi bersifat idempoten (`CREATE TABLE IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION`, `DROP POLICY IF EXISTS` + `CREATE POLICY`), jadi apply ulang aman.
+**Jalur A (disarankan, tanpa sentuh DB lewat SQL):** biarkan CLI menerapkan ulang. File migrasi bersifat idempoten (`CREATE TABLE IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION`, `DROP POLICY IF EXISTS` + `CREATE POLICY`), jadi apply ulang aman.
 
 ```bash
 npx supabase db push --remote --dry-run     # <- selalu lihat ini dulu
@@ -87,7 +101,7 @@ SET version = '20261027000100', name = 'fase2_group_based_schema'
 WHERE version = '20261027';
 ```
 
-> Baris `20261027` hanya berisi satu file pada Applicable.log lama (fase 2), sedangkan fase 3 punya nama berbeda — **periksa baris mana yang ada** sebelum mengubah. Kalau keduanya tercatat sebagai `20261027`, tidak bisa dipetakan satu-satu; pakai Jalur A.
+> Baris `20261027` di riwayat lama hanya mewakili satu file (fase 2), sedangkan fase 3 punya nama sendiri — **periksa baris mana yang ada** sebelum mengubah. Kalau keduanya tercatat sebagai `20261027`, tidak bisa dipetakan satu-satu; pakai Jalur A.
 
 **Flag yang diverifikasi ada:** `db push --dry-run`, `--remote`, `--include-all`, `--password`, `--include-seed`, `--skip-vault` (dari `npx supabase db push --help`).
 **TIDAK TERVERIFIKASI:** perilaku `--include-all` untuk kasus versi kembar (dokumentasi CLI menyebut "include all migrations not found in the migration history table" — belum diuji di DB nyata).
@@ -123,13 +137,52 @@ Harus ada 22 policy aktif dan 4 fungsi (termasuk `labmanage.is_admin()`).
 
 **Kalau gagal di tengah:** tidak ada migrasi parsial yang merusak — semua file idempoten, jadi `db push --remote` bisa diulang.
 
+### 4b. ⚠️ Dampak fase 5 & fase 6: user tanpa profil TERKUNCI
+
+**Pemilik.** Dua migrasi terakhir mengunci data untuk user yang ada di `auth.users` tapi **tidak punya baris di `profiles`**:
+
+- `fase5` — semua policy RLS mensyaratkan `labmanage.has_profile()`. User tanpa profil **tidak bisa membaca maupun menulis apa pun** (termasuk `kelompok`, `inventory_items`, `room_bookings`).
+- `fase6` — RPC admin-only (`tambah_stok_inventory`, `verifikasi_pinjam`, `selesaikan_pinjam`) memakai `labmanage.is_admin()`, jadi user tanpa profil tidak bisa memanggilnya.
+
+Efek di aplikasi: user seperti itu **tidak bisa login** (proxy mengalihkan ke `/login?alasan=belum-terdaftar` dengan pesan "Akunmu belum didaftarkan oleh admin lab"). Ini memang perilaku yang diinginkan, tapi kalau ada user lama yang belum pernah dibuatkan profil, mereka terkunci setelah migrasi.
+
+**Cari user seperti itu (READ-ONLY, SQL Editor):**
+
+```sql
+SELECT u.id, u.email, u.created_at, p.id IS NULL AS tanpa_profil
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL
+ORDER BY u.created_at;
+```
+
+**Cara memastikan berhasil:** query di atas mengembalikan **0 baris**. Kalau ada baris, buat profilnya (langkah 6) **sebelum** menjalankan `db push --remote` — atau setelahnya, tapi siapkan akun tersebut.
+
+### 4c. Buat profil untuk user yang terkunci (bila ada)
+
+**Pemilik**, di SQL Editor — untuk tiap UUID hasil query 4b:
+
+```sql
+INSERT INTO public.profiles (id, nama, nim, role, kelompok_id, email)
+VALUES (
+  '<UUID dari query 4b>',
+  'Nama Lengkap',
+  'NIM/NIP',
+  'anggota',                                   -- admin | anggota | advisor
+  (SELECT id FROM public.kelompok WHERE nama = 'Tim Riset EROS'),
+  'email@domain'
+);
+```
+
+**Cara memastikan berhasil:** ulangi query 4b → 0 baris; user tersebut bisa login dan role-nya tampil benar.
+
 ---
 
 ## 5. Matikan sign-up publik (sebelum inviting user)
 
 **Pemilik.** Supabase Dashboard → **Authentication → Sign In / Providers → Email** → matikan **"Allow new users to sign up"**.
 
-**Cara memastikan berhasil:** attempting signup via UI menampilkan "Signups not allowed for otp" / error 403, dan user existing tetap bisa login.
+**Cara memastikan berhasil:** mencoba mendaftar lewat UI menampilkan error 403, dan user yang sudah ada tetap bisa login.
 
 **Alasan:** tanpa ini, siapa pun bisa membuat akun; user tanpa baris `profiles` tidak bisa apa-apa (RLS + guard), tapi tetap menambah beban.
 
@@ -230,16 +283,16 @@ VALUES (
 | Tingkat | Cara | Kapan | Pelaksana |
 |---|---|---|---|
 | A. Rollback aplikasi | Vercel → Deployments → pilih deployment sebelumnya → **Promote to Production** | Bug di kode frontend, skema aman | Pemilik (5 menit) |
-| B. Rollback skema via SQL | Jalankan SQL penudge berlawanan secara manual di SQL Editor (mis. `DROP FUNCTION public.selesaikan_pinjam(UUID);` + `DROP POLICY ...`) | RPC baru merusak data | Pemilik + SLOT_JEDA_MIGRASI |
+| B. Rollback skema via SQL | Jalankan SQL pembatal secara manual di SQL Editor (mis. `DROP FUNCTION public.selesaikan_pinjam(UUID);` + `DROP POLICY ...`) | RPC baru merusak data | Pemilik + SLOT_JEDA_MIGRASI |
 | C. Restore penuh | `npx supabase db dump` sebelum langkah 1 → pulihkan ke DB baru, atau `backups restore` (PITR) | Kerusakan data | Pemilik, siapkan DB baru lebih dulu |
 
-**Penting:** skema **tidak** bisa di-`git revert` di produksi — migrasi sudah_recorded. Untuk rollback skema, tulis **migrasi baru** (bukan edit file lama) yang mengembalikan objek ke kondisi sebelumnya, lalu `db push --remote` lagi.
+**Penting:** skema **tidak** bisa di-`git revert` di produksi — migrasi sudah tercatat. Untuk rollback skema, tulis **migrasi baru** (bukan edit file lama) yang mengembalikan objek ke kondisi sebelumnya, lalu `db push --remote` lagi.
 
-**Cara memastikan berhasil (rollback A):** `/login` versi lama muncul; test satu alur utama.
+**Cara memastikan berhasil (rollback A):** `/login` versi lama muncul; coba satu alur utama.
 
 ---
 
-## Ringkasan Responsibilities
+## Ringkasan Tanggung Jawab
 
 | # | Langkah | Pelaksana | Verifikasi |
 |---|---|---|---|
@@ -256,7 +309,7 @@ VALUES (
 
 ## Yang TIDAK TERVERIFIKASI
 
-1. Perilaku `db push --remote` pada remote yang sudah punya versi `20261027` — **belum pernah diuji ke DB hosted**. Jalur A & B di langkah 3 sama-sama written berdasarkan perilaku CLI, bukan percobaan nyata.
+1. Perilaku `db push --remote` pada remote yang sudah punya versi `20261027` — **belum pernah diuji ke DB hosted**. Jalur A & B di langkah 3 disusun berdasarkan perilaku CLI, bukan percobaan nyata.
 2. `--include-all` untuk kasus versi kembar — flag ada, efeknya belum diuji.
 3. `supabase backups restore --timestamp` — flag terverifikasi ada, prosedurnya belum dicoba (sengaja tidak; pemulihan berisiko).
 4. Urutan persis langkah 5–6 (matikan sign-up dulu vs. buat akun dulu) — **tidak diverifikasi**; urutan dipilih demi keamanan (tutup pintu sebelum membuka akun).
