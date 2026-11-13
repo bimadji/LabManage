@@ -19,6 +19,7 @@ import { StatusBadge, StatusType } from "@/components/common/status-badge";
 import { EmptyState } from "@/components/common/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoanRequest, LabReport } from "@/types";
+import { sortByStatusPriority } from "@/lib/inbox-sort";
 
 interface DisplayItem {
   type: "permohonan" | "laporan";
@@ -51,14 +52,8 @@ export default function KotakMasukPage() {
   const canSeeAll = role === "admin" || role === "advisor";
   // Fase 7: anggota membaca permohonan sekelompok (RLS mengizinkan kelompok sama);
   // aksi verifikasi tetap hanya Admin — anggota melihat sebagai informasi.
-  const isAnggota = !canSeeAll;
-
+  // Jadi tidak perlu filter tambahan di sini: RLS sudah membatasi baris yang masuk.
   const loanItems: DisplayItem[] = loanRequests
-    .filter((req) => {
-      if (canSeeAll) return true;
-      // anggota: milik sendiri + permohonan rekan setim (fase 7, baca-saja)
-      return true;
-    })
     .map((item) => ({
       type: "permohonan",
       id: item.id,
@@ -92,9 +87,11 @@ export default function KotakMasukPage() {
       reportData: item,
     }));
 
-  const allItems: DisplayItem[] = [...loanItems, ...reportItems].sort((a, b) =>
-    b.id.localeCompare(a.id)
-  );
+  // Urutan: status paling perlu perhatian dulu (menunggu → ditolak → disetujui →
+  // ditangani → selesai). Sort stabil, jadi urutan dari server (tiap daftar
+  // newest-first) tetap terjaga di dalam status yang sama. ID UUID tidak
+  // dipakai untuk sort karena urutannya acak, bukan kronologis.
+  const allItems: DisplayItem[] = sortByStatusPriority([...loanItems, ...reportItems]);
 
   const displayedItems = allItems.filter((item) => {
     const matchTab =
