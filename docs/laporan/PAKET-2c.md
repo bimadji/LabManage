@@ -61,6 +61,7 @@ npx tsx scripts/test-role-matrix.ts   → 44/44 lulus  (exit 0)
 bash scripts/run-db-checks.sh         → exit 0
   verify-loan-lifecycle.sql   → 10/10 PASS
   verify-security-definer.sql →  5/5  PASS
+# urutan terbalik (matriks dulu, lalu SQL) juga exit 0
 
 npx tsc --noEmit                      → exit 0
 npm run lint                          → ✖ 16 problems (0 errors, 16 warnings)
@@ -86,6 +87,7 @@ Ditemuan & diperbaiki saat pengerjaan:
 3. **`ROLLBACK` di luar blok transaksi** — versi pertama skrip SQL menaruh `ROLLBACK` sendiri sehingga psql memberi warning "there is no transaction in progress" dan blok `DO` siguientes berjalan sebagai transaksi terpisah. Diperbaiki: blok `BEGIN … EXCEPTION` memakai savepoint implisit, dan skenario 5 baru memverifikasi atribut helper tidak bocor setelah probe.
 4. **Runner salah pilih container** — `docker ps --filter label=…` mengembalikan 9 container; `head -1` mengambil `supabase_pg_meta` (tanpa `psql`) → "executable file not found". Diperbaiki dengan filter `grep -E '^supabase_db_'`.
 5. **Prosa campuran bahasa di runbook** — dibersihkan (lihat Butir 3).
+6. **Bug test: matriks role gagal setelah skrip SQL dijalankan** — `scripts/verify-loan-lifecycle.sql` membuat profil `uji.admin@labmanage.test` (role `admin`). `scripts/test-role-matrix.ts` mencari admin lewat `.eq('role','admin').single()` → 2 baris → `single()` mengembalikan null → crash (`Cannot read properties of null (reading 'id')`). Diperbaiki: cari admin lewat **email** (`AKUN.admin`), bukan role. `scripts/verify-security-definer.sql` punya masalah sama → lookup admin jadi email-first dengan fallback role. Diverifikasi: matriks 3× berturut-turut 44/44, dan urutan `test-role-matrix` → `run-db-checks` (atau sebaliknya) sama-sama exit 0.
 
 Belum beres:
 

@@ -62,7 +62,9 @@ async function main() {
 
   // Identitas & barang uji.
   const admin = clients.admin
-  const { data: profilAdmin } = await admin.from('profiles').select('id, kelompok_id').eq('role', 'admin').single()
+  // Admin dicari lewat email, bukan role: skrip SQL `verify-loan-lifecycle.sql`
+  // membuat profil admin uji (uji.admin@labmanage.test) yang juga role='admin'.
+  const { data: profilAdmin } = await admin.from('profiles').select('id, kelompok_id').eq('email', AKUN.admin).single()
   const { data: profilAnggota } = await clients.anggota.from('profiles').select('id, kelompok_id').eq('email', AKUN.anggota).single()
   const { data: profilUkm } = await clients['anggota-ukm'].from('profiles').select('id, kelompok_id').eq('email', AKUN['anggota-ukm']).single()
   const { data: profilAdvisor } = await clients.advisor.from('profiles').select('id, kelompok_id').eq('email', AKUN.advisor).single()

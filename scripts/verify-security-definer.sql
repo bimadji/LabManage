@@ -41,7 +41,10 @@ END $$;
 DO $$
 DECLARE msg text; v_uid text;
 BEGIN
-  SELECT id::text INTO v_uid FROM public.profiles WHERE role = 'admin' ORDER BY created_at LIMIT 1;
+  SELECT id::text INTO v_uid FROM public.profiles WHERE email = 'admin.lab@labmanage.test' LIMIT 1;
+  IF v_uid IS NULL THEN
+    SELECT id::text INTO v_uid FROM public.profiles WHERE role = 'admin' ORDER BY created_at LIMIT 1;
+  END IF;
   IF v_uid IS NULL THEN
     PERFORM public._secdef_rec('2. tanpa SECURITY DEFINER -> rekursi RLS terdeteksi', false, 'tidak ada profil admin — jalankan seed-dummy dulu');
     RETURN;
@@ -63,7 +66,10 @@ END $$;
 DO $$
 DECLARE msg text; r boolean; v_uid text;
 BEGIN
-  SELECT id::text INTO v_uid FROM public.profiles WHERE role = 'admin' ORDER BY created_at LIMIT 1;
+  SELECT id::text INTO v_uid FROM public.profiles WHERE email = 'admin.lab@labmanage.test' LIMIT 1;
+  IF v_uid IS NULL THEN
+    SELECT id::text INTO v_uid FROM public.profiles WHERE role = 'admin' ORDER BY created_at LIMIT 1;
+  END IF;
   IF v_uid IS NULL THEN
     PERFORM public._secdef_rec('3. dengan SECURITY DEFINER -> jalan normal', false, 'tidak ada profil admin — jalankan seed-dummy dulu');
     RETURN;
@@ -85,7 +91,10 @@ END $$;
 DO $$
 DECLARE msg text; n integer; v_uid text;
 BEGIN
-  SELECT id::text INTO v_uid FROM public.profiles WHERE role = 'admin' ORDER BY created_at LIMIT 1;
+  SELECT id::text INTO v_uid FROM public.profiles WHERE email = 'admin.lab@labmanage.test' LIMIT 1;
+  IF v_uid IS NULL THEN
+    SELECT id::text INTO v_uid FROM public.profiles WHERE role = 'admin' ORDER BY created_at LIMIT 1;
+  END IF;
   IF v_uid IS NULL THEN
     PERFORM public._secdef_rec('4. policy profiles (memakai has_profile) tanpa rekursi', false, 'tidak ada profil admin — jalankan seed-dummy dulu');
     RETURN;
