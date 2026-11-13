@@ -60,9 +60,17 @@ jobs:
         run: |
           npx supabase status -o env > supabase.env
           cat supabase.env >> "$GITHUB_ENV"
-          echo "SUPABASE_TEST_URL=$SUPABASE_URL" >> "$GITHUB_ENV"
+          # CLI menulis API_URL / ANON_KEY / SERVICE_ROLE_KEY (bukan SUPABASE_URL).
+          # Skrip test membaca SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY / SUPABASE_TEST_SERVICE_ROLE_KEY.
+          echo "SUPABASE_TEST_URL=$API_URL" >> "$GITHUB_ENV"
           echo "SUPABASE_TEST_ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_TEST_SERVICE_ROLE_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
+          # seed-dummy membaca .env.local; dotenv tidak menimpa env yang sudah ada
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "SUPABASE_SECRET_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
           npx tsx scripts/seed-dummy.ts
+          rm -f supabase.env
 
       - name: Uji RLS dan hak akses
         run: npx tsx scripts/test-rls.ts
