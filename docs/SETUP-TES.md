@@ -15,6 +15,16 @@ npm ci
 npx supabase start         # menjalankan stack lokal (butuh Docker)
 # supabase/config.toml sudah ada di repo: port API 54521, DB 54522
 # (digeser dari default 5432x karena port itu dipakai stack Supabase lain di mesin ini)
+#
+# PORT ALTERNATIF — kalau 54521/54522 juga bentrok:
+#   1. Edit supabase/config.toml (satu tempat): [api].port, [db].port, [studio].port,
+#      [local_smtp].port, [analytics].port, [db.pooler].port.
+#   2. Jangan ubah port standar supabase (5432x) — di mesin ini dipakai stack lain.
+#   3. Salin nilai baru ke .env.test.local (SUPABASE_TEST_URL) dari
+#      `npx supabase status -o env` setelah start.
+#   4. CI otomatis mengikuti: .github/workflows/ci.yml membaca $API_URL dari
+#      `supabase status -o env`, jadi tidak perlu diubah.
+#   Simpan juga sebagai env var lokal, bukan commit kredensial.
 npx supabase status -o env > supabase.env   # nilai URL & key lokal
 ```
 
