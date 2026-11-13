@@ -20,7 +20,7 @@ Dikerjakan:
 Verifikasi asli (build + browser, DB uji lokal 127.0.0.1:54521, viewport 375 px):
 
 - `npx tsc --noEmit` → exit 0.
-- `npm run lint` → `✖ 13 problems (0 errors, 13 warnings)` — **0 error**. Sisa warning: import tak terpakai + `window.location.href` (2 lokasi) + `exhaustive-deps`.
+- `npm run lint` → `✖ 13 problems (0 errors, 13 warnings)` — **0 error**. Sisa warning: import tak terpakai + `window.location.href` (2 lokasi) + `exhaustive-deps`. (Angka saat paket ini; terbaru 16 warning — lihat `docs/laporan/00-RINGKASAN.md`.)
 - `NODE_OPTIONS=--max-old-space-size=2048 npx next build` → exit 0.
 - Browser (Chromium 375×800, login anggota tim riset):
   - Kontrol di `<main>` yang lebih kecil dari 44 px: `[]` (kosong) — semua tombol/link ≥44 px.
@@ -31,7 +31,7 @@ Verifikasi asli (build + browser, DB uji lokal 127.0.0.1:54521, viewport 375 px)
 
 Belum beres:
 
-- 13 warning lint tersisa (import tak terpakai di beberapa file, `window.location.href` di header & home-banner, `exhaustive-deps`). Bukan error; belum dirapikan.
+- 13 warning lint tersisa saat paket ini ditutup (import tak terpakai di beberapa file, `window.location.href` di header & home-banner, `exhaustive-deps`). Bukan error; belum dirapikan. Angka terbaru: 16 warning.
 - Target sentuh 44px baru dijamin untuk kontrol utama; beberapa kontrol sekunder (badge, avatar, select kecil) masih lebih kecil dari 44px.
 - `hover:underline` pada elemen non-Tombol (mis. link `<a>` mentah) masih ada di beberapa widget; aturan `a { text-decoration: none }` di `globals.css` sudah menutupnya.
 

@@ -1,4 +1,6 @@
-# Paket 1 — Data harus nyata dan tersimpan: SEBAGIAN
+# Paket 1 — Data harus nyata dan tersimpan: SELESAI
+
+> Status akhir: **SELESAI** (bukan SEBAGIAN). Saat paket ini ditulis, jalur tulis belum pernah menyentuh DB nyata — itu yang membuat statusnya SEBAGIAN. Kekurangan itu **sudah ditutup di Paket 1b** (`docs/laporan/PAKET-1b.md`): ketiga migrasi ter-apply di DB uji lokal dan 26 skenario (10 SQL + 9 API + 7 RLS) lulus. Isi laporan di bawah tetap apa adanya sebagai catatan saat paket ini ditutup.
 
 Dikerjakan:
 
@@ -24,6 +26,13 @@ Belum beres:
 - Identitas user masih mock (`usr-*`), sehingga tulisan RLS akan ditolak sampai ada login nyata.
 - `npm run build` tanpa `NODE_OPTIONS` OOM di mesin ini (RAM kecil).
 - Tombol "Ajukan Pinjam" masih tampil untuk admin; advisor masih melihat tombol verifikasi.
+
+Belum beres *(status per 2026-11-13, setelah Paket 2b)*:
+
+- SQL sudah dieksekusi & terbukti di DB uji (Paket 1b).
+- Identitas user memakai login Supabase Auth sungguhan (Paket 2).
+- Tombol admin/advisor sudah dibatasi (Paket 2 + 2b).
+- `npm run build` tetap butuh `NODE_OPTIONS` di mesin RAM kecil.
 
 Butuh darimu:
 

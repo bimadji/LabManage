@@ -36,4 +36,4 @@ Butuh darimu:
 
 File: `package.json`, `package-lock.json`, `vitest.config.ts`, `vitest.setup.ts`, `src/**/*.test.ts(x)`, `.github/workflows/ci.yml`, `docs/QA-CHECKLIST.md`, `src/lib/attendance.ts` (perbaikan zona waktu). Commit: `d8fc5a2`.
 
-Skipped: e2e Playwright/Cypress (dependensi besar, tidak diminta). Risiko: test bergantung pada mock Supabase manual — perubahan nama kolom/tabel pada `data-context.tsx` bisa membuat test tetap hijau padahal kueri salah;ikas saja sebelum review.
+Skipped: e2e Playwright/Cypress (dependensi besar, tidak diminta). Risiko: test bergantung pada mock Supabase manual — perubahan nama kolom/tabel pada `data-context.tsx` bisa membuat test tetap hijau padahal kueri salah; periksa saja sebelum review.

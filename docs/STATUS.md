@@ -11,10 +11,10 @@ Legend: **Selesai** = ada di kode dan terverifikasi (DB nyata atau test otomatis
 |---|---|---|
 | Login Supabase Auth, role dari tabel `profiles` | Selesai | `src/contexts/role-context.tsx`, `src/app/login/page.tsx`; terverifikasi di browser (4 peran) |
 | Guard server (proxy) untuk `/monitoring` + halaman needing login | Selesai | `src/proxy.ts`; test `src/proxy.test.ts` (5 test) |
-| RLS PostgreSQL per peran (20 policy aktif) | Selesai | `supabase/migrations/`; `scripts/test-rls.ts` 7/7 lulus di DB uji |
+| RLS PostgreSQL per peran (22 policy aktif) | Selesai | `supabase/migrations/`; `scripts/test-rls.ts` 7/7 + `scripts/test-role-matrix.ts` 44/44 lulus di DB uji |
 | Inventaris: katalog, filter kepemilikan, tambah barang/stok atomik | Selesai | `supabase/migrations/20261027000200_*.sql` (RPC `tambah_stok_inventory`); `scripts/test-inventory-admin.ts` 9/9 lulus |
 | Siklus pinjam: setujui / tolak / selesai + stok pulih atomik | Selesai | RPC `verifikasi_pinjam` & `selesaikan_pinjam`; `scripts/verify-loan-lifecycle.sql` 10/10 PASS |
-| Booking ruang dengan rentang waktu nyata + deteksi bentrok | Selesai | `src/lib/rooms.ts`, constraint GiST di DB; terverifikasi via browser (booking tersimpan 13:30–17:30 WIB, duikat ditolak) |
+| Booking ruang dengan rentang waktu nyata + deteksi bentrok | Selesai | `src/lib/rooms.ts`, constraint GiST di DB; terverifikasi via browser (booking tersimpan 13:30–17:30 WIB, booking duplikat ditolak) |
 | Presensi: check-in/check-out, timer, jam mingguan dari DB | Selesai | `src/lib/attendance.ts`, `src/contexts/attendance-context.tsx`; 11 unit test |
 | Monitoring: jam riset per anggota vs target, utilisasi ruangan, rekap | Selesai | `src/app/monitoring/page.tsx` (data nyata, empty state jelas) |
 | Advisor memantau saja (tanpa aksi tulis) | Selesai | `review-request-sheet.tsx`, `kotak-masuk/page.tsx`; RLS menolak tulisan advisor |

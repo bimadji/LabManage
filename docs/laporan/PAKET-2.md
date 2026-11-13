@@ -30,7 +30,7 @@ Verifikasi asli (build + browser, DB uji lokal Supabase di 127.0.0.1:54521):
 
 Belum beres:
 
-- **Paket 2 but 5 belum ada**: tidak ada test otomatis per role (UI maupun API). Skenario di atas diverifikasi manual lewat browser dan skrip DB, bukan regression test. Butuh `vitest` (Paket 6).
+- **Butir 5 Paket 2 sudah selesai di Paket 2b**: test otomatis per role tersedia — `scripts/test-role-matrix.ts` (44 pemeriksaan matriks PRD §3 di DB uji) + test komponen & guard server (`src/proxy.test.ts`, `src/app/inventaris/page.test.tsx`, `src/components/overlays/review-request-sheet.test.tsx`, `src/components/widgets/attendance-widget.test.tsx`). Lihat `docs/laporan/PAKET-2b.md`.
 - `auth.users` untuk akun nyata belum dibuat (akun demo masih `password123`, hanya untuk DB uji).
 - Halaman login belum punya "ingat saya"/reset kata sandi; belum diminta.
 - Proxy tidak meng-hoist session ke cookie server secara manual (`@supabase/ssr` server client membaca cookie, jadi refresh token http-only ditangani library; sesi tetap valid setelah refresh — terverifikasi: login bertahan saat navigasi).

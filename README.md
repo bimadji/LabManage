@@ -103,7 +103,7 @@ flowchart TD
 
   subgraph SupabaseDB ["Basis Data PostgreSQL 15+"]
     Tables[("Tabel: kelompok, profiles, inventory_items, loan_requests, room_bookings, attendance_sessions, reports")]
-    RLS{"Row Level Security (20 Kebijakan)"}
+    RLS{"Row Level Security (22 Kebijakan)"}
     ExclConstraint["GiST Exclusion Constraint (Anti-Bentrok Ruangan)"]
     RPCSecDef["Fungsi Atomik: labmanage.tambah_stok_inventory"]
     LoanRPC["RPC Siklus Pinjam: verifikasi_pinjam, selesaikan_pinjam"]
@@ -125,7 +125,7 @@ flowchart TD
 
 - **Frontend**: Dibangun dengan Next.js 16 App Router dan React 19, menggunakan tema visual *Ocean Breeze* (Alice Blue `#f0f8ff` dan Emerald Green `#22c55e`) sesuai `DESIGN.md`.
 - **Autentikasi & Hak Akses**: Login memakai Supabase Auth. Role dan kelompok diambil dari tabel `profiles` milik user yang login. Rute yang butuh sesi dilindungi guard server (`src/proxy.ts`, memakai `auth.getUser()`), bukan sekadar menyembunyikan menu. Simulator peran hanya ada di mode demo (`NEXT_PUBLIC_DEMO_MODE=true`).
-- **Keamanan Data**: Setiap tabel di schema `public` dilindungi Row Level Security (RLS) — 20 policy aktif. Seluruh fungsi pembantu otentikasi disimpan di schema terisolasi `labmanage` untuk mencegah paparan API publik. Transisi status pinjam hanya dapat dilakukan lewat RPC `SECURITY DEFINER` yang memeriksa peran admin di dalam database.
+- **Keamanan Data**: Setiap tabel di schema `public` dilindungi Row Level Security (RLS) — 22 policy aktif. Seluruh fungsi pembantu otentikasi disimpan di schema terisolasi `labmanage` untuk mencegah paparan API publik. Transisi status pinjam hanya dapat dilakukan lewat RPC `SECURITY DEFINER` yang memeriksa peran admin di dalam database.
 - **Pencegahan Bentrok Jadwal**: Tabel `room_bookings` mengimplementasikan ekstensi `btree_gist` dan *PostgreSQL Exclusion Constraint* (`tstzrange(waktu_mulai, waktu_selesai) WITH && WHERE status = 'aktif'`) sehingga penumpukan jadwal ruangan yang sama pada jam yang sama ditolak langsung di level database.
 
 ### Keterbatasan yang masih ada

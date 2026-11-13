@@ -54,7 +54,7 @@ Baca `docs/STABILISASI_REPORT.md` dan `docs/BACKLOG.md` dulu untuk konteks. Jang
 
 Satu file per paket di `docs/laporan/`: `PAKET-1.md` (salinan laporan Paket 1 lama dengan format ini), `PAKET-1b.md`, `PAKET-2.md`, `PAKET-3.md`, `PAKET-4.md`, `PAKET-5.md`, `PAKET-6.md`, `PAKET-7.md`. Format PERSIS seperti ini (gaya caveman):
 
-```
+```text
 # Paket N — <judul>: <SELESAI|SEBAGIAN|BELUM>
 
 Dikerjakan:
