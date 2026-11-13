@@ -40,7 +40,7 @@ Commit yang ter-push: `b7dfbb7` … `f837f63` (25+8 commit; branch baru di remot
 
 ## 4. CI — dari merah ke hijau, perbaikan per akar masalah
 
-Link run yang hijau: **https://github.com/bimadji/LabManage/actions/runs/43413682629**
+Link run yang hijau: **[run 43413682629](https://github.com/bimadji/LabManage/actions/runs/43413682629)**
 
 | Job | Status | Bukti |
 |---|---|---|
