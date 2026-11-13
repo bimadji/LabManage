@@ -95,4 +95,5 @@ jobs:
         run: npx tsx scripts/test-role-matrix.ts
 
       - name: Uji konfigurasi SECURITY DEFINER helper
-        run: ./scripts/run-db-checks.sh
+        # via 'bash' agar tidak bergantung pada bit +x (Windows tidak menyimpannya)
+        run: bash scripts/run-db-checks.sh
