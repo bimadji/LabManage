@@ -23,8 +23,10 @@ Tanggal: 2026-11-12. Branch: `stabilisasi` (belum di-push, belum di-deploy).
 4. **CI belum pernah jalan** di GitHub Actions — job `db` (Supabase lokal di runner) belum terverifikasi di runner sungguhan.
 5. **Aturan stok**: dipotong saat **disetujui** (bukan saat diajukan) — sudah diterapkan di kode & PRD §4.2, tetap perlu konfirmasi.
 6. **Perubahan ukuran tombol** (semua tombol utama 44 px) mengubah tampilan — konfirmasi dulu kalau tidak diinginkan.
-7. **Matriks role menutup policy baru**: anggota tidak boleh mengubah status laporan miliknya sendiri lagi, dan admin/advisor tidak boleh check-in. Kalau ada kebutuhan lain, perlu RPC terpisah — konfirmasi.
+7. **Tiga aturan hak akses dikunci** (anggota tak boleh ubah status laporan; advisor boleh pinjam tapi tak boleh verifikasi; admin/advisor tak bisa presensi) — sudah ditulis di `docs/BACKLOG.md`. Konfirmasi masih perlu: kalau salah satu mau dilonggarkan, ubah policy-nya (migrasi baru), jangan test-nya.
 8. ~~Matriks role membersihkan data uji~~ — sudah dijawab: **ya, dibersihkan** (default aman).
+9. **Port lokal 54521/54522** dikunci di `supabase/config.toml` (default 5432x dipakai stack Supabase lain di mesin ini). Kalau mesinmu pakai 5452x untuk stack lain, geser.
+10. **`profiles_select_policy` masih mengizinkan anggota satu kelompok melihat profil teman sekelompok** (termasuk email) — temuan lama, belum diputuskan.
 
 ## Keputusan default yang diambil (karena tidak bisa ditanyakan)
 

@@ -12,7 +12,7 @@ Laporan rinci per paket ada di `docs/laporan/` (satu file per paket). Ringkasan 
 | 3 — Presensi & jam riset | **SELESAI** | Jam dihitung dari `attendance_sessions` (11 unit test); monitoring & ringkasan tim pakai data nyata; empty state jelas. |
 | 4 — Booking ruangan | **SELESAI** | Tanggal + jam nyata tersimpan; deteksi bentrok berbasis rentang; constraint GiST jadi penjaga terakhir. |
 | 5 — Bug kecil terlihat user | **SELESAI** | Badge status sesuai DESIGN.md §3; `npm run lint` 0 error; teks Inggris diterjemahkan; skip link, aria-expanded, reduced motion, target 44px. |
-| 6 — Test & pengaman | **SEBAGIAN** | 32 unit test + CI GitHub Actions + QA checklist. CI belum pernah jalan (branch belum di-push). |
+| 6 — Test & pengaman | **SEBAGIAN** | 54 unit test (9 file) + 4 skrip DB + 2 skrip SQL + CI GitHub Actions + QA checklist. CI belum pernah jalan (branch belum di-push). |
 | 7 — Kesiapan tes nyata | **SEBAGIAN** | `.env.example` lengkap, `docs/SETUP-TES.md`, README sinkron, `docs/STATUS.md`, `docs/RUNBOOK-PRODUKSI.md`. Belum ada akun produksi — hanya akun seed untuk DB uji. |
 
 Dokumen pendukung: `docs/BACKLOG.md` (pekerjaan yang ditunda), `docs/STATUS.md` (status fitur), `docs/QA-CHECKLIST.md` (skenario uji manual), `docs/SETUP-TES.md` (panduan setup).
