@@ -49,14 +49,15 @@ export default function KotakMasukPage() {
   const isAdmin = role === "admin";
   // Admin & advisor boleh membaca semua (RLS mengizinkan); advisor tanpa aksi tulis.
   const canSeeAll = role === "admin" || role === "advisor";
+  // Fase 7: anggota membaca permohonan sekelompok (RLS mengizinkan kelompok sama);
+  // aksi verifikasi tetap hanya Admin — anggota melihat sebagai informasi.
+  const isAnggota = !canSeeAll;
 
   const loanItems: DisplayItem[] = loanRequests
     .filter((req) => {
       if (canSeeAll) return true;
-      return (
-        req.requesterId === currentUser.id ||
-        req.requesterNim === currentUser.nimOrNip
-      );
+      // anggota: milik sendiri + permohonan rekan setim (fase 7, baca-saja)
+      return true;
     })
     .map((item) => ({
       type: "permohonan",

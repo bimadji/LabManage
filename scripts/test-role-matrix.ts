@@ -134,6 +134,20 @@ async function main() {
     check('anggota: DITOLAK menulis pinjam atas nama user lain', Boolean(error), error?.message ?? 'LOLOS')
   }
 
+  // 1c. Visibilitas sekelompok (fase 7): rekan setim boleh MEMBACA permohonan,
+  //     tapi tidak boleh mengubahnya (verifikasi tetap Admin).
+  {
+    const loanDimas = (await buatLoan(clients.anggota, profilAnggota!.id, profilAnggota!.kelompok_id, item!.id)).data!
+    const farhan = await signIn('farhan.eros@labmanage.test')
+    const { data: terlihat } = await farhan.from('loan_requests').select('id').eq('id', loanDimas.id)
+    check('rekan setim: boleh membaca permohonan anggota sekelompok', (terlihat ?? []).length === 1, `baris=${terlihat?.length ?? 0}`)
+    const { data: diubah } = await farhan.from('loan_requests').update({ status: 'ditolak' }).eq('id', loanDimas.id).select('id')
+    check('rekan setim: DITOLAK mengubah permohonan milik anggota lain', (diubah ?? []).length === 0, `baris=${diubah?.length ?? 0} — ${diubah?.length ? 'LOLOS' : 'ok'}`)
+    const rina = clients['anggota-ukm']
+    const { data: terlihatLain } = await rina.from('loan_requests').select('id').eq('id', loanDimas.id)
+    check('kelompok lain: TIDAK melihat permohonan kelompok EROS', (terlihatLain ?? []).length === 0, `baris=${terlihatLain?.length ?? 0}`)
+  }
+
   // ------------------------------------------------------------------
   // 2. Verifikasi pinjam (RPC): hanya Admin
   // ------------------------------------------------------------------
@@ -348,8 +362,11 @@ async function main() {
     check('anggota: TIDAK boleh membaca profil kelompok lain', !error && (data ?? []).length === 0, `baris=${(data ?? []).length} err=${error?.message ?? '-'}`)
   }
   {
-    const { data, error } = await clients.anggota.from('loan_requests').select('id').eq('user_id', profilAdvisor!.id)
-    check('anggota: TIDAK boleh membaca permohonan milik orang lain', !error && (data ?? []).length === 0, `baris=${(data ?? []).length} err=${error?.message ?? '-'}`)
+    // fase 7: permohonan milik orang lain tetap terlihat bila satu kelompok
+    // (advisor ditempatkan di kelompok EROS oleh seed) — periksa permohonan milik
+    // kelompok LAIN yang benar-benar terpisah (anggota UKM).
+    const { data, error } = await clients.anggota.from('loan_requests').select('id').eq('user_id', profilUkm!.id)
+    check('anggota: TIDAK boleh membaca permohonan kelompok lain', !error && (data ?? []).length === 0, `baris=${(data ?? []).length} err=${error?.message ?? '-'}`)
   }
 
   // ------------------------------------------------------------------
