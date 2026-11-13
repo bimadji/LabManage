@@ -88,6 +88,6 @@ Setelah push sukses, lanjutkan Fase B langkah 3–4: `gh run list --branch stabi
 2. Konfirmasi: port `54521`/`54522` di `supabase/config.toml` dipakai CI juga. Kalau di runner GitHub ada stack lain di port itu (sangat tidak mungkin), job `db` akan gagal — perlu port lain.
 3. `LabManage_Presentation_Group8_v2.pptx` dan `render/` masih untracked — dikomit atau di-gitignore?
 
-File: `docs/STATUS.md`, `docs/TUGAS-PRODUKSI.md` (di-commit), `docs/laporan/PAKET-8B.md`. Commit: `a1371fc` (docs/TUGAS-PRODUKSI.md), `<hash berikutnya>` (laporan + STATUS).
+File: `docs/STATUS.md`, `docs/TUGAS-PRODUKSI.md` (di-commit), `docs/laporan/PAKET-8B.md`. Commit: `a1371fc` (docs/TUGAS-PRODUKSI.md), `70d4bf4` (laporan + STATUS).
 
 Skipped: pantau CI (tidak ada run), perbaikan CI (bukan akar masalah), Fase A/C/D, dan semua sentuhan ke Supabase produksi / Vercel. Risiko: setelah scope `workflow` ada, CI job `db` di runner GitHub belum pernah dibuktikan (port 54521/54522 + Docker di runner) — bisa saja merah saat pertama jalan; kalau begitu itu pekerjaan Fase B lanjutan, maksimal 3 siklus.
