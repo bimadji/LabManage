@@ -103,6 +103,6 @@ Butuh darimu:
 2. Konfirmasi port lokal 54521/54522 di `supabase/config.toml` — aman untuk mesinmu, atau perlu geser lagi?
 3. Keputusan: `docs/BACKLOG.md` butir 7 — `profiles_select_policy` mengizinkan anggota satu kelompok melihat profil teman sekelompok (termasuk email). Sudah lama jadi temuan, belum diputuskan.
 
-File: `docs/RUNBOOK-PRODUKSI.md`, `docs/BACKLOG.md`, `docs/STATUS.md`, `docs/STABILISASI_REPORT.md`, `docs/laporan/00-RINGKASAN.md`, `docs/SETUP-TES.md`, `README.md`, `.env.example`, `supabase/config.toml`, `supabase/.gitignore`, `scripts/verify-security-definer.sql`, `scripts/run-db-checks.sh`, `.github/workflows/ci.yml`. Commit: `9a7d7f6`.
+File: `docs/RUNBOOK-PRODUKSI.md`, `docs/BACKLOG.md`, `docs/STATUS.md`, `docs/STABILISASI_REPORT.md`, `docs/laporan/00-RINGKASAN.md`, `docs/SETUP-TES.md`, `README.md`, `.env.example`, `supabase/config.toml`, `supabase/.gitignore`, `scripts/verify-security-definer.sql`, `scripts/run-db-checks.sh`, `scripts/test-role-matrix.ts`, `.github/workflows/ci.yml`. Commit: `9a7d7f6`, `51b9d15`, `68ab6e2`.
 
 Skipped: e2e Playwright; eksekusi CI; percobaan `db push --remote` (produksi dilarang disentuh). Risiko: rekursi RLS pada helper `is_admin()` **tidak** terbukti (helper itu dipakai di RPC, bukan policy `profiles`, jadi tidak membentuk siklus) — `is_admin()` tetap dijaga atributnya oleh skenario 1; policy hosted belum diuji; `run-db-checks.sh` bergantung pada `docker ps` + label compose, tidak jalan di environment tanpa Docker.
